@@ -57,12 +57,25 @@ const codomainTree: TreeNode = {
   ],
 };
 
-// Map from domain to codomain (preserves ancestor-descendant relation)
-// Maps domain node id -> codomain node id
-const exampleMap: Record<string, string> = {
+// Test case 1: Domain spread across multiple codomain nodes
+const testMap1: Record<string, string> = {
   d0: "root",
   d1: "a",
   d2: "b",
+};
+
+// Test case 2: Entire domain maps to one codomain node
+const testMap2: Record<string, string> = {
+  d0: "root",
+  d1: "root",
+  d2: "root",
+};
+
+// Test case 3: Domain spanning parent and leaf
+const testMap3: Record<string, string> = {
+  d0: "root",
+  d1: "a1",
+  d2: "a1",
 };
 
 // Interaction state machine
@@ -174,22 +187,125 @@ const addClickHandler = (xywh: XYWH, callback: () => void) => {
   _clickables.push({ xywh, callback });
 };
 
+// Helper: get all domain nodes that map to a specific codomain node
+function getDomainNodesAtCodomainNode(
+  domainTree: TreeNode,
+  map: Record<string, string>,
+  codomainNodeId: string
+): TreeNode[] {
+  const result: TreeNode[] = [];
+
+  function traverse(node: TreeNode) {
+    if (map[node.id] === codomainNodeId) {
+      result.push(node);
+    }
+    for (const child of node.children) {
+      traverse(child);
+    }
+  }
+
+  traverse(domainTree);
+  return result;
+}
+
+// Helper: get domain subtree rooted at a node, but only including nodes that map to target codomain node
+function getDomainSubtreeAtCodomainNode(
+  domainNode: TreeNode,
+  map: Record<string, string>,
+  codomainNodeId: string
+): TreeNode {
+  // Filter children to only those that also map to this codomain node
+  const filteredChildren = domainNode.children
+    .filter((child) => map[child.id] === codomainNodeId)
+    .map((child) => getDomainSubtreeAtCodomainNode(child, map, codomainNodeId));
+
+  return {
+    id: domainNode.id,
+    children: filteredChildren,
+  };
+}
+
+// Compute custom node sizes for codomain based on mapped domain content
+function computeCodomainNodeSizes(
+  codomainTree: TreeNode,
+  domainTree: TreeNode,
+  map: Record<string, string>
+): Map<string, number> {
+  const nodeSizes = new Map<string, number>();
+
+  function traverse(node: TreeNode) {
+    // Get all domain nodes that map to this codomain node
+    const domainNodesHere = getDomainNodesAtCodomainNode(domainTree, map, node.id);
+
+    // For each domain node, get its filtered subtree and measure it
+    let maxRadius = NODE_RADIUS; // Default size
+    for (const domainNode of domainNodesHere) {
+      const filteredSubtree = getDomainSubtreeAtCodomainNode(
+        domainNode,
+        map,
+        node.id
+      );
+      // Measure with small node radius for domain nodes
+      const bbox = measureDomainSubtree(filteredSubtree);
+      // We want the codomain node to contain this domain subtree
+      // So its radius should be at least half the diagonal of the bounding box
+      const diagonal = Math.sqrt(bbox[2] ** 2 + bbox[3] ** 2);
+      const requiredRadius = diagonal / 2 + 10; // Add some padding
+      maxRadius = Math.max(maxRadius, requiredRadius);
+    }
+
+    nodeSizes.set(node.id, maxRadius);
+
+    for (const child of node.children) {
+      traverse(child);
+    }
+  }
+
+  traverse(codomainTree);
+  return nodeSizes;
+}
+
+// Measure domain subtree with small nodes
+function measureDomainSubtree(node: TreeNode): XYWH {
+  const nodeSize = MAPPED_NODE_RADIUS * 2;
+
+  if (node.children.length === 0) {
+    return [0, 0, nodeSize, nodeSize];
+  }
+
+  const childBoxes = node.children.map((child) => measureDomainSubtree(child));
+
+  const childrenWidth =
+    childBoxes.reduce((sum, box) => sum + box[2], 0) +
+    HORIZONTAL_GAP * 0.5 * (node.children.length - 1); // Smaller gaps for domain
+
+  const width = Math.max(nodeSize, childrenWidth);
+
+  const maxChildHeight = Math.max(...childBoxes.map((box) => box[3]));
+  const height = nodeSize + VERTICAL_GAP * 0.5 + maxChildHeight; // Smaller vertical gap
+
+  return [0, 0, width, height];
+}
+
 // Draw subtree and return bounding box
 // Pass null for lyr to only measure without drawing
+// nodeSizes: optional map of custom node sizes (radius) by node id
 function drawSubtree(
   lyr: Layer | null,
   node: TreeNode,
-  pos: Vec2
+  pos: Vec2,
+  nodeSizes?: Map<string, number>
 ): XYWH {
-  const nodeSize = NODE_RADIUS * 2;
+  const nodeRadius = nodeSizes?.get(node.id) ?? NODE_RADIUS;
+  const nodeSize = nodeRadius * 2;
 
   if (node.children.length === 0) {
     // Leaf node: just the node itself
     if (lyr) {
-      const nodeCenter: Vec2 = [pos[0] + NODE_RADIUS, pos[1] + NODE_RADIUS];
+      const nodeCenter: Vec2 = [pos[0] + nodeRadius, pos[1] + nodeRadius];
       lyr.fillStyle = "lightgrey";
       lyr.beginPath();
-      lyr.arc(nodeCenter[0], nodeCenter[1], NODE_RADIUS, 0, Math.PI * 2);
+      lyr.arc(nodeCenter[0], nodeCenter[1], nodeRadius, 0, Math.PI * 2);
       lyr.fill();
     }
     return [pos[0], pos[1], nodeSize, nodeSize];
@@ -197,7 +313,7 @@ function drawSubtree(
 
   // Recursively get child bounding boxes (measurement pass)
   const childBoxes = node.children.map((child) =>
-    drawSubtree(null, child, [0, 0])
+    drawSubtree(null, child, [0, 0], nodeSizes)
   );
 
   // Calculate total width needed for children
@@ -214,17 +330,18 @@ function drawSubtree(
 
   if (lyr) {
     // Calculate node center (center of bounding box)
-    const nodeCenter: Vec2 = [pos[0] + width / 2, pos[1] + NODE_RADIUS];
+    const nodeCenter: Vec2 = [pos[0] + width / 2, pos[1] + nodeRadius];
 
     // Calculate starting X for children (centered below parent)
     let childX = pos[0] + (width - childrenWidth) / 2;
-    const childY = pos[1] + NODE_RADIUS * 2 + VERTICAL_GAP;
+    const childY = pos[1] + nodeRadius * 2 + VERTICAL_GAP;
 
     // Draw edges to children first (so they appear behind nodes)
     for (let i = 0; i < node.children.length; i++) {
       const childBox = childBoxes[i];
+      const childRadius = nodeSizes?.get(node.children[i].id) ?? NODE_RADIUS;
       // Child center is in the middle of its bounding box
-      const childCenter: Vec2 = [childX + childBox[2] / 2, childY + NODE_RADIUS];
+      const childCenter: Vec2 = [childX + childBox[2] / 2, childY + childRadius];
 
       // Draw edge
       lyr.strokeStyle = "lightgrey";
@@ -240,7 +357,7 @@ function drawSubtree(
     // Draw node
     lyr.fillStyle = "lightgrey";
     lyr.beginPath();
-    lyr.arc(nodeCenter[0], nodeCenter[1], NODE_RADIUS, 0, Math.PI * 2);
+    lyr.arc(nodeCenter[0], nodeCenter[1], nodeRadius, 0, Math.PI * 2);
     lyr.fill();
 
     // Draw children
@@ -248,7 +365,7 @@ function drawSubtree(
     for (let i = 0; i < node.children.length; i++) {
       const child = node.children[i];
       const childBox = childBoxes[i];
-      drawSubtree(lyr, child, [childX, childY]);
+      drawSubtree(lyr, child, [childX, childY], nodeSizes);
       childX += childBox[2] + HORIZONTAL_GAP;
     }
   }
@@ -302,45 +419,142 @@ function getNodeCenter(
   return search(tree, basePos);
 }
 
-// Draw mapped tree (foreground)
-function drawMappedTree(
-  lyr: Layer,
-  domainNode: TreeNode,
-  map: Record<string, string>,
-  codomainTreeBasePos: Vec2
-) {
-  const codomainNodeId = map[domainNode.id];
-  if (!codomainNodeId) return;
+// Draw domain subtree with small nodes (for inside codomain nodes)
+function drawDomainSubtree(
+  lyr: Layer | null,
+  node: TreeNode,
+  pos: Vec2
+): XYWH {
+  const nodeSize = MAPPED_NODE_RADIUS * 2;
 
-  const nodeCenter = getNodeCenter(codomainTree, codomainNodeId, codomainTreeBasePos);
-  if (!nodeCenter) return;
+  if (node.children.length === 0) {
+    if (lyr) {
+      const nodeCenter: Vec2 = [pos[0] + MAPPED_NODE_RADIUS, pos[1] + MAPPED_NODE_RADIUS];
+      lyr.fillStyle = "black";
+      lyr.beginPath();
+      lyr.arc(nodeCenter[0], nodeCenter[1], MAPPED_NODE_RADIUS, 0, Math.PI * 2);
+      lyr.fill();
+    }
+    return [pos[0], pos[1], nodeSize, nodeSize];
+  }
 
-  // Draw edges to children first
-  for (const child of domainNode.children) {
-    const childCodomainNodeId = map[child.id];
-    if (!childCodomainNodeId) continue;
+  const childBoxes = node.children.map((child) =>
+    drawDomainSubtree(null, child, [0, 0])
+  );
 
-    const childCenter = getNodeCenter(codomainTree, childCodomainNodeId, codomainTreeBasePos);
-    if (!childCenter) continue;
+  const horizontalGap = HORIZONTAL_GAP * 0.5;
+  const verticalGap = VERTICAL_GAP * 0.5;
 
-    lyr.strokeStyle = "black";
-    lyr.lineWidth = MAPPED_EDGE_WIDTH;
+  const childrenWidth =
+    childBoxes.reduce((sum, box) => sum + box[2], 0) +
+    horizontalGap * (node.children.length - 1);
+
+  const width = Math.max(nodeSize, childrenWidth);
+
+  const maxChildHeight = Math.max(...childBoxes.map((box) => box[3]));
+  const height = nodeSize + verticalGap + maxChildHeight;
+
+  if (lyr) {
+    const nodeCenter: Vec2 = [pos[0] + width / 2, pos[1] + MAPPED_NODE_RADIUS];
+
+    let childX = pos[0] + (width - childrenWidth) / 2;
+    const childY = pos[1] + MAPPED_NODE_RADIUS * 2 + verticalGap;
+
+    // Draw edges first
+    for (let i = 0; i < node.children.length; i++) {
+      const childBox = childBoxes[i];
+      const childCenter: Vec2 = [childX + childBox[2] / 2, childY + MAPPED_NODE_RADIUS];
+
+      lyr.strokeStyle = "black";
+      lyr.lineWidth = MAPPED_EDGE_WIDTH;
+      lyr.beginPath();
+      lyr.moveTo(nodeCenter[0], nodeCenter[1]);
+      lyr.lineTo(childCenter[0], childCenter[1]);
+      lyr.stroke();
+
+      childX += childBox[2] + horizontalGap;
+    }
+
+    // Draw node
+    lyr.fillStyle = "black";
     lyr.beginPath();
-    lyr.moveTo(nodeCenter[0], nodeCenter[1]);
-    lyr.lineTo(childCenter[0], childCenter[1]);
-    lyr.stroke();
+    lyr.arc(nodeCenter[0], nodeCenter[1], MAPPED_NODE_RADIUS, 0, Math.PI * 2);
+    lyr.fill();
+
+    // Draw children
+    childX = pos[0] + (width - childrenWidth) / 2;
+    for (let i = 0; i < node.children.length; i++) {
+      const child = node.children[i];
+      const childBox = childBoxes[i];
+      drawDomainSubtree(lyr, child, [childX, childY]);
+      childX += childBox[2] + horizontalGap;
+    }
   }
 
-  // Draw node
-  lyr.fillStyle = "black";
-  lyr.beginPath();
-  lyr.arc(nodeCenter[0], nodeCenter[1], MAPPED_NODE_RADIUS, 0, Math.PI * 2);
-  lyr.fill();
+  return [pos[0], pos[1], width, height];
+}
 
-  // Recursively draw children
-  for (const child of domainNode.children) {
-    drawMappedTree(lyr, child, map, codomainTreeBasePos);
+// Draw domain nodes inside their corresponding codomain nodes
+function drawDomainInCodomain(
+  lyr: Layer,
+  codomainTree: TreeNode,
+  codomainPos: Vec2,
+  domainTree: TreeNode,
+  map: Record<string, string>,
+  nodeSizes: Map<string, number>
+) {
+  function traverseCodomain(codomainNode: TreeNode, pos: Vec2) {
+    const codomainBbox = drawSubtree(null, codomainNode, [0, 0], nodeSizes);
+    const [_, __, width, height] = codomainBbox;
+    const nodeRadius = nodeSizes.get(codomainNode.id) ?? NODE_RADIUS;
+    const nodeCenter: Vec2 = [pos[0] + width / 2, pos[1] + nodeRadius];
+
+    // Find all domain nodes that map to this codomain node
+    const domainNodesHere = getDomainNodesAtCodomainNode(
+      domainTree,
+      map,
+      codomainNode.id
+    );
+
+    // Draw each domain subtree inside this codomain node
+    for (const domainNode of domainNodesHere) {
+      const filteredSubtree = getDomainSubtreeAtCodomainNode(
+        domainNode,
+        map,
+        codomainNode.id
+      );
+      const domainBbox = measureDomainSubtree(filteredSubtree);
+      // Center the domain subtree inside the codomain node
+      const domainPos: Vec2 = [
+        nodeCenter[0] - domainBbox[2] / 2,
+        nodeCenter[1] - domainBbox[3] / 2,
+      ];
+      drawDomainSubtree(lyr, filteredSubtree, domainPos);
+    }
+
+    // Recurse to children
+    if (codomainNode.children.length > 0) {
+      const childBoxes = codomainNode.children.map((child) =>
+        drawSubtree(null, child, [0, 0], nodeSizes)
+      );
+
+      const childrenWidth =
+        childBoxes.reduce((sum, box) => sum + box[2], 0) +
+        HORIZONTAL_GAP * (codomainNode.children.length - 1);
+
+      let childX = pos[0] + (width - childrenWidth) / 2;
+      const childY = pos[1] + nodeRadius * 2 + VERTICAL_GAP;
+
+      for (let i = 0; i < codomainNode.children.length; i++) {
+        const child = codomainNode.children[i];
+        const childBox = childBoxes[i];
+        traverseCodomain(child, [childX, childY]);
+        childX += childBox[2] + HORIZONTAL_GAP;
+      }
+    }
   }
+
+  traverseCodomain(codomainTree, codomainPos);
 }
 
 // Draw text at a specific position
@@ -373,6 +587,27 @@ function drawText(lyr: Layer, pos: Vec2) {
   );
 }
 
+// Draw a single map visualization
+function drawMapVisualization(
+  lyr: Layer | null,
+  pos: Vec2,
+  map: Record<string, string>
+): XYWH {
+  // Compute custom node sizes based on mapped domain content
+  const nodeSizes = computeCodomainNodeSizes(codomainTree, domainTree, map);
+
+  if (lyr) {
+    // Draw codomain tree (background) with custom sizes
+    drawSubtree(lyr, codomainTree, pos, nodeSizes);
+
+    // Draw domain nodes inside codomain nodes
+    drawDomainInCodomain(lyr, codomainTree, pos, domainTree, map, nodeSizes);
+  }
+
+  // Return bounding box
+  return drawSubtree(null, codomainTree, [0, 0], nodeSizes);
+}
+
 // Drawing function
 function draw() {
   // Reset clickables at the start of each frame
@@ -385,16 +620,24 @@ function draw() {
   lyr.fillStyle = "white";
   lyr.fillRect(0, 0, c.width, c.height);
 
-  // Draw codomain tree (background) at panned position (centered)
-  const codomainBBox = drawSubtree(null, codomainTree, [0, 0]);
-  const codomainPos: Vec2 = add(pan, [
-    c.width / 2 - codomainBBox[2] / 2,
-    100, // some padding from top
-  ]);
-  drawSubtree(lyr, codomainTree, codomainPos);
+  // Get bounding boxes (without drawing)
+  const bbox1 = drawMapVisualization(null, [0, 0], testMap1);
+  const bbox2 = drawMapVisualization(null, [0, 0], testMap2);
+  const bbox3 = drawMapVisualization(null, [0, 0], testMap3);
 
-  // Draw mapped tree (foreground) in black
-  drawMappedTree(lyr, domainTree, exampleMap, codomainPos);
+  // Layout three test cases horizontally
+  const spacing = 50;
+  const totalWidth = bbox1[2] + bbox2[2] + bbox3[2] + spacing * 2;
+  const startX = c.width / 2 - totalWidth / 2;
+  const startY = 100;
+
+  // Draw all three
+  let currentX = startX;
+  drawMapVisualization(lyr, add(pan, [currentX, startY]), testMap1);
+  currentX += bbox1[2] + spacing;
+  drawMapVisualization(lyr, add(pan, [currentX, startY]), testMap2);
+  currentX += bbox2[2] + spacing;
+  drawMapVisualization(lyr, add(pan, [currentX, startY]), testMap3);
 
   // Clickables debug
   if (showClickablesDebug) {
