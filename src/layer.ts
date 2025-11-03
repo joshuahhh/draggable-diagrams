@@ -38,7 +38,6 @@ class LayerImpl {
   constructor(
     private ctx: CanvasRenderingContext2D,
     private drawable: boolean,
-    private spawnParent?: LayerImpl,
   ) {
     this.thisProxy = new Proxy<any>(this, {
       get: (target, prop) => {
@@ -94,25 +93,9 @@ class LayerImpl {
     }
   }
 
-  spawnHere(): Layer {
-    const lyr = LayerImpl.make(this.ctx, false);
-    this.commands.push(lyr);
-    return lyr;
-  }
-
-  // TODO: do we want spawnAtEnd()?
-
-  spawnLater(): Layer {
-    const lyr = LayerImpl.make(this.ctx, false, this);
-    return lyr;
-  }
-
-  place() {
-    if (this.spawnParent) {
-      this.spawnParent.commands.push(this);
-    } else {
-      throw new Error("Can't place a root layer");
-    }
+  place(child: Layer): void {
+    child.drawable = false;
+    this.commands.push(child);
   }
 
   do(f: (lyr: Layer) => void) {

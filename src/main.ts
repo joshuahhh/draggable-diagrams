@@ -372,8 +372,10 @@ function draw() {
   let curX = pan[0] + 20;
   let curY = pan[1] + 20;
 
-  const bgLyr = lyr.spawnHere();
-  const fgLyr = lyr.spawnHere();
+  const bgLyr = layer(ctx);
+  lyr.place(bgLyr);
+  const fgLyr = layer(ctx);
+  lyr.place(fgLyr);
 
   for (const morph of testMorphs) {
     const result = drawBgSubtree(
