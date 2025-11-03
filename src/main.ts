@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { layer, type Layer } from "./layer";
+import { layer, PointOnLayer, type Layer } from "./layer";
 import {
   codomainTree,
   domainTree,
@@ -135,13 +135,12 @@ function drawBgSubtree(
   /** An immutable record of where foreground nodes have been
    * positioned in ancestor background nodes */
   fgNodeCentersAbove: Record<string, Vec2>,
-  /** The center of this background node's parent */
-  parentBgNodeCenter?: Vec2,
 ): {
   bgLyr: Layer;
   fgLyr: Layer;
   w: number;
   h: number;
+  rootCenter: PointOnLayer;
 } {
   const bgLyr = layer(ctx);
   const fgLyr = layer(ctx);
@@ -172,20 +171,6 @@ function drawBgSubtree(
   //   "below",
   // );
 
-  const thisBgNodeCenter: Vec2 = [bgNodeR.w / 2, bgNodeR.h / 2];
-
-  // draw line from parent bg node to this bg node
-  if (parentBgNodeCenter) {
-    bgLyr.do(() => {
-      bgLyr.strokeStyle = "lightgray";
-      bgLyr.lineWidth = 4;
-      bgLyr.beginPath();
-      bgLyr.moveTo(parentBgNodeCenter[0], parentBgNodeCenter[1]);
-      bgLyr.lineTo(thisBgNodeCenter[0], thisBgNodeCenter[1]);
-      bgLyr.stroke();
-    });
-  }
-
   let x = 0;
   let y = bgNodeR.h + BG_NODE_GAP;
   let maxX = bgNodeR.w;
@@ -197,7 +182,6 @@ function drawBgSubtree(
       fgNodesBelow,
       morph,
       bgNodeR.fgNodeCentersAbove,
-      thisBgNodeCenter,
     );
 
     bgLyr.place(childR.bgLyr, v(x, y));
@@ -206,9 +190,18 @@ function drawBgSubtree(
     x += childR.w + BG_NODE_GAP;
     maxX = Math.max(maxX, x - BG_NODE_GAP);
     maxY = Math.max(maxY, y + childR.h);
+
+    bgLyr.do(() => {
+      bgLyr.strokeStyle = "lightgray";
+      bgLyr.lineWidth = 4;
+      bgLyr.beginPath();
+      bgLyr.moveTo(...bgLyr.resolvePoint(bgNodeR.rootCenter));
+      bgLyr.lineTo(...bgLyr.resolvePoint(childR.rootCenter));
+      bgLyr.stroke();
+    });
   }
 
-  return { bgLyr, fgLyr, w: maxX, h: maxY };
+  return { bgLyr, fgLyr, w: maxX, h: maxY, rootCenter: bgNodeR.rootCenter };
 }
 
 /** Draw a background node with all relevant foreground nodes inside
@@ -233,6 +226,7 @@ function drawBgNodeWithDomainStuffInside(
   /** A list of foreground nodes that are descendents of nodes drawn
    * here, but which belong in lower-down background nodes */
   fgNodesBelow: TreeNode[];
+  rootCenter: PointOnLayer;
 } {
   const bgLyr = layer(ctx);
   const fgLyr = layer(ctx);
@@ -280,6 +274,7 @@ function drawBgNodeWithDomainStuffInside(
     h: maxY,
     fgNodeCentersAbove: newFgNodeCentersAbove,
     fgNodesBelow,
+    rootCenter: bgLyr.point([maxX / 2, maxY / 2]),
   };
 }
 

@@ -1,4 +1,4 @@
-import { v, Vec2 } from "./vec2";
+import { add, v, Vec2 } from "./vec2";
 
 /**
  * Properties that return (or directly are) values that don't depend
@@ -37,10 +37,12 @@ class LayerImpl {
 
   private thisProxy: Layer;
 
+  private localTranslation: Vec2 | null = null;
+  private parentLayer: LayerImpl | null = null;
+
   constructor(
     private ctx: CanvasRenderingContext2D,
     private drawable: boolean,
-    private localTranslation: Vec2 | null = null,
   ) {
     this.thisProxy = new Proxy<any>(this, {
       get: (target, prop) => {
@@ -110,6 +112,7 @@ class LayerImpl {
 
   place(child: Layer, localTranslation = v(0)): void {
     child.localTranslation = localTranslation;
+    child.parentLayer = this;
     child.drawable = false;
     this.commands.push(child);
   }
@@ -138,6 +141,29 @@ class LayerImpl {
       )
       .reduce((a, b) => a + b, 0);
   }
+
+  // Point stuff
+
+  point(localPoint: Vec2): PointOnLayer {
+    return { __layer: this, __point: localPoint };
+  }
+
+  resolvePoint(pol: PointOnLayer): Vec2 {
+    let { __layer: layer, __point: point } = pol;
+
+    while (true) {
+      if (layer === this) {
+        return point;
+      }
+      if (layer.localTranslation !== null) {
+        point = add(point, layer.localTranslation);
+      }
+      if (layer.parentLayer === null) {
+        throw new Error("Point's layer is not a descendant of this layer");
+      }
+      layer = layer.parentLayer;
+    }
+  }
 }
 
 export type Layer = CanvasRenderingContext2D & LayerImpl;
@@ -149,6 +175,13 @@ export function layer(lyr: CanvasRenderingContext2D): Layer {
 export function getLayerCommandCount(lyr: Layer): number {
   return LayerImpl.commandCount(lyr);
 }
+
+export type PointOnLayer = {
+  // TODO: just trying to make these hard to accidentally access
+  // directly
+  __layer: LayerImpl;
+  __point: Vec2;
+};
 
 const trashCanvas = document.createElement("canvas");
 const trashCtx = trashCanvas.getContext("2d")!;
