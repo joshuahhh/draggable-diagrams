@@ -1,5 +1,53 @@
 import dagre from "dagre";
 
+export const simpleTree = addParents({
+  id: "root",
+  children: [
+    { id: "a", children: [] },
+    { id: "b", children: [] },
+  ],
+});
+export const biggerTree = addParents({
+  id: "root",
+  children: [
+    { id: "a", children: [{ id: "a1", children: [] }] },
+    { id: "b", children: [] },
+  ],
+});
+export const megaTree = addParents({
+  id: "root",
+  children: [
+    {
+      id: "a",
+      children: [
+        { id: "a1", children: [] },
+        { id: "a2", children: [] },
+      ],
+    },
+    {
+      id: "b",
+      children: [
+        { id: "b1", children: [] },
+        { id: "b2", children: [] },
+      ],
+    },
+  ],
+});
+export const linearTree = addParents({
+  id: "root",
+  children: [
+    {
+      id: "a",
+      children: [
+        {
+          id: "b",
+          children: [],
+        },
+      ],
+    },
+  ],
+});
+
 export type TreeNodeWithoutParents = {
   id: string;
   children: TreeNodeWithoutParents[];
@@ -108,73 +156,94 @@ export const testMorphs: TreeMorph[] = [
  * if x is an ancestor of y in domain, then f(x) must be an ancestor of f(y) in codomain.
  */
 export function allMorphs(domain: TreeNode, codomain: TreeNode): TreeMorph[] {
-  const domainNodes = nodesInTree(domain);
-  const codomainNodes = nodesInTree(codomain);
-
-  // Build ancestor relationships for both trees
-  const isAncestorInDomain = buildAncestorMap(domain);
-  const isAncestorInCodomain = buildAncestorMap(codomain);
-
   const results: TreeMorph[] = [];
-  const currentMorph: TreeMorph = {};
 
-  function backtrack(nodeIndex: number) {
-    if (nodeIndex === domainNodes.length) {
-      // We've assigned all domain nodes, save this morphism
-      results.push({ ...currentMorph });
-      return;
-    }
+  // Memoization cache: key is "domainId->codomainId"
+  const memo = new Map<string, TreeMorph[]>();
 
-    const domainNode = domainNodes[nodeIndex];
-
-    // Try assigning this domain node to each codomain node
-    for (const codomainNode of codomainNodes) {
-      // Check if this assignment is valid
-      if (isValidAssignment(domainNode, codomainNode)) {
-        currentMorph[domainNode.id] = codomainNode.id;
-        backtrack(nodeIndex + 1);
-        delete currentMorph[domainNode.id];
-      }
-    }
-  }
-
-  function isValidAssignment(
+  // Recursively find all morphisms from a domain subtree into a codomain subtree
+  function findMorphsForSubtree(
     domainNode: TreeNode,
     codomainNode: TreeNode,
-  ): boolean {
-    // Check against all previously assigned nodes
-    for (const [assignedDomainId, assignedCodomainId] of Object.entries(
-      currentMorph,
-    )) {
-      const assignedDomainNode = domainNodes.find(
-        (n) => n.id === assignedDomainId,
-      )!;
-      const assignedCodomainNode = codomainNodes.find(
-        (n) => n.id === assignedCodomainId,
-      )!;
+  ): TreeMorph[] {
+    const key = `${domainNode.id}->${codomainNode.id}`;
 
-      // If assignedDomainNode is an ancestor of domainNode in domain,
-      // then assignedCodomainNode must be an ancestor of codomainNode in codomain
-      if (isAncestorInDomain(assignedDomainNode, domainNode)) {
-        if (!isAncestorInCodomain(assignedCodomainNode, codomainNode)) {
-          return false;
-        }
-      }
-
-      // If domainNode is an ancestor of assignedDomainNode in domain,
-      // then codomainNode must be an ancestor of assignedCodomainNode in codomain
-      if (isAncestorInDomain(domainNode, assignedDomainNode)) {
-        if (!isAncestorInCodomain(codomainNode, assignedCodomainNode)) {
-          return false;
-        }
-      }
+    // Check cache first
+    if (memo.has(key)) {
+      return memo.get(key)!;
     }
 
-    return true;
+    // Base case: map this domain node to this codomain node
+    const morphsHere: TreeMorph[] = [{ [domainNode.id]: codomainNode.id }];
+
+    if (domainNode.children.length === 0) {
+      // Domain node is a leaf, we're done with this subtree
+      memo.set(key, morphsHere);
+      return morphsHere;
+    }
+
+    // We need to map each domain child to some node in the codomain subtree
+    // (either codomainNode itself or one of its descendants)
+    const codomainSubtreeNodes = nodesInTree(codomainNode);
+
+    // For each domain child, find all valid mappings into the codomain subtree
+    const childMorphOptions: TreeMorph[][] = domainNode.children.map(
+      (domainChild) => {
+        const morphsForThisChild: TreeMorph[] = [];
+        // Try mapping this domain child to each node in the codomain subtree
+        for (const codomainTarget of codomainSubtreeNodes) {
+          const morphs = findMorphsForSubtree(domainChild, codomainTarget);
+          morphsForThisChild.push(...morphs);
+        }
+        return morphsForThisChild;
+      },
+    );
+
+    // Now combine: take the cartesian product of all child morphism options
+    const combinedChildMorphs = cartesianProduct(childMorphOptions);
+
+    // Merge each combination with the current node's mapping
+    const result: TreeMorph[] = [];
+    for (const childMorphList of combinedChildMorphs) {
+      const merged: TreeMorph = { [domainNode.id]: codomainNode.id };
+      for (const childMorph of childMorphList) {
+        Object.assign(merged, childMorph);
+      }
+      result.push(merged);
+    }
+
+    memo.set(key, result);
+    return result;
   }
 
-  backtrack(0);
+  // Start by trying to map the domain root to each node in the codomain tree
+  const codomainNodes = nodesInTree(codomain);
+  for (const codomainNode of codomainNodes) {
+    const morphs = findMorphsForSubtree(domain, codomainNode);
+    results.push(...morphs);
+  }
+
   return results;
+}
+
+/**
+ * Compute the cartesian product of an array of arrays.
+ * cartesianProduct([[1,2], [3,4]]) => [[1,3], [1,4], [2,3], [2,4]]
+ */
+function cartesianProduct<T>(arrays: T[][]): T[][] {
+  if (arrays.length === 0) return [[]];
+  if (arrays.length === 1) return arrays[0].map((x) => [x]);
+
+  const [first, ...rest] = arrays;
+  const restProduct = cartesianProduct(rest);
+
+  const result: T[][] = [];
+  for (const item of first) {
+    for (const restItems of restProduct) {
+      result.push([item, ...restItems]);
+    }
+  }
+  return result;
 }
 
 /**
@@ -261,13 +330,41 @@ export function buildHasseDiagram(
   const morphs = allMorphs(domain, codomain);
   const edges: [number, number, string][] = [];
 
-  // Check all pairs of morphisms for covering relation
+  // Build a map from morphism to its index for fast lookup
+  const morphToIndex = new Map<string, number>();
   for (let i = 0; i < morphs.length; i++) {
-    for (let j = 0; j < morphs.length; j++) {
-      if (i !== j) {
-        const differingKey = covers(morphs[i], morphs[j], codomain);
-        if (differingKey !== null) {
-          edges.push([i, j, differingKey]); // i covers j
+    const key = JSON.stringify(morphs[i]);
+    morphToIndex.set(key, i);
+  }
+
+  // Build a map of codomain nodes to their parents and children
+  const codomainNodes = nodesInTree(codomain);
+  const nodeById = new Map(codomainNodes.map((n) => [n.id, n]));
+
+  // Track edges we've already found to avoid duplicates
+  const edgeSet = new Set<string>();
+
+  // For each morphism, generate its covering neighbors
+  for (let i = 0; i < morphs.length; i++) {
+    const morph = morphs[i];
+
+    // For each domain node in the morphism
+    for (const domainId of Object.keys(morph)) {
+      const codomainId = morph[domainId];
+      const codomainNode = nodeById.get(codomainId);
+      if (!codomainNode) continue;
+
+      // Try moving this domain node DOWN to each child (creates morphs that this one covers)
+      for (const child of codomainNode.children) {
+        const downMorph = { ...morph, [domainId]: child.id };
+        const downMorphKey = JSON.stringify(downMorph);
+        const downIndex = morphToIndex.get(downMorphKey);
+        if (downIndex !== undefined) {
+          const edgeKey = `${i},${downIndex},${domainId}`;
+          if (!edgeSet.has(edgeKey)) {
+            edgeSet.add(edgeKey);
+            edges.push([i, downIndex, domainId]); // morph covers downMorph
+          }
         }
       }
     }

@@ -2,8 +2,8 @@ import * as d3 from "d3-shape";
 import _ from "lodash";
 import { layer, type Layer } from "./layer";
 import {
-  addParents,
   buildHasseDiagram,
+  megaTree,
   nodesInTree,
   TreeMorph,
   TreeNode,
@@ -712,39 +712,11 @@ function drawFgSubtreeInBgNode(
   };
 }
 
-const simpleTree = addParents({
-  id: "root",
-  children: [
-    { id: "a", children: [] },
-    { id: "b", children: [] },
-  ],
-});
-const biggerTree = addParents({
-  id: "root",
-  children: [
-    { id: "a", children: [{ id: "a1", children: [] }] },
-    { id: "b", children: [] },
-  ],
-});
-const linearTree = addParents({
-  id: "root",
-  children: [
-    {
-      id: "a",
-      children: [
-        {
-          id: "b",
-          children: [],
-        },
-      ],
-    },
-  ],
-});
-
-const codomainTree = biggerTree;
-const domainTree = biggerTree;
+const codomainTree = megaTree;
+const domainTree = megaTree;
 
 const hasseDiagram = buildHasseDiagram(domainTree, codomainTree);
+console.log("Hasse diagram contains:", hasseDiagram.nodes.length);
 
 const drawnTrees = hasseDiagram.nodes.map((morph) =>
   drawBgTree(codomainTree, domainTree, morph),
