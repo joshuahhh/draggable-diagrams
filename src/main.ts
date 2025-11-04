@@ -776,8 +776,6 @@ function draw() {
     };
   }
 
-  const curMorph = hasseDiagram.nodes[curMorphIdx];
-
   // const aBefore = getNode(rBefore.fgGrp, nodeId).center;
   // const aAfter = getNode(rAfter.fgGrp, nodeId).center;
 
@@ -827,16 +825,17 @@ function draw() {
   }
 
   if (selectedNodeId) {
+    const selectedNode = getNode(drawnTree.fgGrp, selectedNodeId);
     const adjMorphIdxes = [
       ...hasseDiagram.edges
         .filter(
-          ([from, to, nodeId]) =>
+          ([from, _to, nodeId]) =>
             from === curMorphIdx && nodeId === selectedNodeId,
         )
         .map(([, to]) => to),
       ...hasseDiagram.edges
         .filter(
-          ([from, to, nodeId]) =>
+          ([_from, to, nodeId]) =>
             to === curMorphIdx && nodeId === selectedNodeId,
         )
         .map(([from]) => from),
@@ -849,6 +848,8 @@ function draw() {
         lyrPan.arc(...fgNode.center, FG_NODE_SIZE / 2, 0, Math.PI * 2);
         lyrPan.strokeStyle = "rgba(128,128,255)";
         lyrPan.lineWidth = 2;
+        lyrPan.moveTo(...selectedNode.center);
+        lyrPan.lineTo(...fgNode.center);
         lyrPan.stroke();
       });
       const bbox: XYWH = [
@@ -858,6 +859,7 @@ function draw() {
       ];
       addClickHandler(bbox, () => {
         curMorphIdx = adjMorphIdx;
+        selectedNodeId = null;
       });
     }
   }
