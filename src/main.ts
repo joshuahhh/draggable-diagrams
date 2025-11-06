@@ -712,7 +712,7 @@ function draw() {
   const lyrPan = layer(ctx);
   lyr.place(lyrPan, pan);
 
-  function getNode(grp: Shape, id: string): Shape & { type: "circle" } {
+  function getCircle(grp: Shape, id: string): Shape & { type: "circle" } {
     return (grp as KeyedGroup).shapes[id] as Shape & {
       type: "circle";
     };
@@ -729,7 +729,7 @@ function draw() {
       selectedNodeId = null;
       dragOffset = null;
     });
-    const selectedNode = getNode(curDrawnTree.fgGrp, selectedNodeId);
+    const selectedCircle = getCircle(curDrawnTree.fgGrp, selectedNodeId);
     const adjMorphIdxes = [
       ...hasseDiagram.edges
         .filter(
@@ -745,15 +745,17 @@ function draw() {
         .map(([from]) => from),
     ];
     // const adjMorphIdxes = _.range(hasseDiagram.nodes.length);
-    const toPointer = normalize(sub(pointerInLyrPan, selectedNode.center));
+    const toPointer = normalize(sub(pointerInLyrPan, selectedCircle.center));
     // which adjacent morphism maximizes the dot product with toPointer?
     const adjMorphDots = adjMorphIdxes.map((adjMorphIdx) => {
       const adjDrawn = drawnTrees[adjMorphIdx];
-      const adjNode = getNode(adjDrawn.fgGrp, selectedNodeId!);
-      const toAdjNode = normalize(sub(adjNode.center, selectedNode.center));
+      const adjCircle = getCircle(adjDrawn.fgGrp, selectedNodeId!);
+      const toAdjCircle = normalize(
+        sub(adjCircle.center, selectedCircle.center),
+      );
       return {
         adjMorphIdx,
-        dot: dot(toPointer, toAdjNode),
+        dot: dot(toPointer, toAdjCircle),
       };
     });
     const bestAdjMorphIdx = _.maxBy(
@@ -763,10 +765,10 @@ function draw() {
 
     if (bestAdjMorphIdx !== undefined) {
       const adjDrawn = drawnTrees[bestAdjMorphIdx];
-      const adjNode = getNode(adjDrawn.fgGrp, selectedNodeId);
-      const totalVec = sub(adjNode.center, selectedNode.center);
+      const adjCircle = getCircle(adjDrawn.fgGrp, selectedNodeId);
+      const totalVec = sub(adjCircle.center, selectedCircle.center);
       const pointerVec = sub(
-        sub(pointerInLyrPan, selectedNode.center),
+        sub(pointerInLyrPan, selectedCircle.center),
         dragOffset!,
       );
       const t = clamp(
@@ -809,7 +811,7 @@ function draw() {
     let cleanup = () => {};
     if (!selectedNodeId) {
       for (const node of nodesInTree(codomainTree)) {
-        const fgNode = getNode(curDrawnTree.fgGrp, node.id);
+        const fgNode = getCircle(curDrawnTree.fgGrp, node.id);
         const bbox: XYWH = [
           ...sub(add(pan, fgNode.center), v(FG_NODE_SIZE / 2)),
           FG_NODE_SIZE,
@@ -825,7 +827,7 @@ function draw() {
         });
       }
     } else {
-      const fgNode = getNode(curDrawnTree.fgGrp, selectedNodeId!);
+      const fgNode = getCircle(curDrawnTree.fgGrp, selectedNodeId!);
       const originalCenter = fgNode.center;
       cleanup = () => (fgNode.center = originalCenter);
 
