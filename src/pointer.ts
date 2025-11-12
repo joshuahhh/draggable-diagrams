@@ -35,10 +35,6 @@ export class PointerManager implements IPointerManager {
       this.dragPointer = this.isDragging ? this.hoverPointer : null;
     };
 
-    this.canvas.addEventListener("pointermove", (e) => {
-      updatePointer(e);
-    });
-
     this.canvas.addEventListener("pointerdown", (e) => {
       this.isDragging = true;
       updatePointer(e);
@@ -47,6 +43,10 @@ export class PointerManager implements IPointerManager {
       if (clickable) {
         clickable.onClick();
       }
+    });
+
+    document.addEventListener("pointermove", (e) => {
+      updatePointer(e);
     });
 
     document.addEventListener("pointerup", (e) => {
