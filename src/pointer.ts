@@ -49,7 +49,7 @@ export class PointerManager implements IPointerManager {
       }
     });
 
-    this.canvas.addEventListener("pointerup", (e) => {
+    document.addEventListener("pointerup", (e) => {
       this.isDragging = false;
       updatePointer(e);
 
