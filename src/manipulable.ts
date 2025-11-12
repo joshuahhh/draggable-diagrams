@@ -151,6 +151,8 @@ export class ManipulableDrawer<T> {
         if (
           projectedDestPt.dist(closestTInfo!.offset) < this.config.snapRadius
         ) {
+          // TODO: maybe this should be optional?
+          this.enterDraggingMode(newT, state.draggableKey, state.pointerOffset);
           return { toDraw: closestTInfo!.interpolatableShape, newT };
         }
 
@@ -222,13 +224,6 @@ export class ManipulableDrawer<T> {
       pointer.addPointerUpHandler(() => {
         this.state = { type: "idle", t: newT };
       });
-
-      // if (false) {
-      //   lyr.do(() => {
-      //     lyr.globalAlpha = 0.5;
-      //     drawInterpolatable(lyr, closestTInfo!.interpolatableShape);
-      //   });
-      // }
     } else if (state.type === "idle") {
       pointer.setCursor("default");
 

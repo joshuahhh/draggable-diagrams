@@ -167,6 +167,18 @@ createDemo(
 );
 
 createDemo(
+  "Lonely tile on a grid; goal is for it to only slide orthogonally",
+  new ManipulableDrawer(manipulableTiles, {
+    w: 5,
+    h: 5,
+    tiles: {
+      A: { x: 2, y: 2 },
+    },
+  }),
+  { height: 300, padding: 20 },
+);
+
+createDemo(
   "Order preserving map",
   new ManipulableDrawer(manipulableOrderPreserving, {
     domainTree,
