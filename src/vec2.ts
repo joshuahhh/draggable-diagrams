@@ -2,7 +2,11 @@
 
 export type Vec2 = Vec2Class;
 
-export type Vec2able = Vec2 | [number, number] | number;
+export type Vec2able =
+  | Vec2
+  | [number, number]
+  | readonly [number, number]
+  | number;
 
 export function Vec2(xy: Vec2able): Vec2;
 export function Vec2(x: number, y: number): Vec2;
@@ -16,7 +20,9 @@ export function Vec2(xOrXY: number | Vec2able, y?: number): Vec2 {
   } else if (Array.isArray(xOrXY)) {
     return new Vec2Class(xOrXY[0], xOrXY[1]);
   } else {
-    return xOrXY;
+    // TS doesn't think `readonly [number, number]` passes the
+    // Array.isArray check
+    return xOrXY as Vec2;
   }
 }
 
@@ -28,6 +34,11 @@ class Vec2Class {
 
   arr(): [number, number] {
     return [this.x, this.y];
+  }
+
+  eq(v: Vec2able): boolean {
+    v = Vec2(v);
+    return this.x === v.x && this.y === v.y;
   }
 
   add(v: Vec2able): Vec2 {

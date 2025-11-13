@@ -8,6 +8,7 @@ import { manipulablePerm } from "./manipulable-perm";
 import { manipulablePermDouble } from "./manipulable-perm-double";
 import { manipulableRushHour } from "./manipulable-rush-hour";
 import { manipulableSimplest } from "./manipulable-simplest";
+import { makeSokobanState, manipulableSokoban } from "./manipulable-sokoban";
 import { manipulableTiles } from "./manipulable-tiles";
 import { PointerManager, pointerManagerWithOffset } from "./pointer";
 import { buildHasseDiagram, tree3, tree7 } from "./trees";
@@ -405,6 +406,23 @@ const allDemos: Array<{
         ],
       }),
     config: { height: 200, padding: 20 },
+  },
+  {
+    title: "Sokoban (WIP)",
+    createDrawer: () =>
+      new ManipulableDrawer(
+        manipulableSokoban,
+        makeSokobanState(`  #####
+###   #
+#gpb  #
+### bg#
+#g##b #
+# # g ##
+#b Bbbg#
+#   g  #
+########`),
+      ),
+    config: { height: 500, padding: 20 },
   },
   {
     title: "Simplest",
