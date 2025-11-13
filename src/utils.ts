@@ -33,3 +33,15 @@ export function set<T>(arr: T[], idx: number, val: T): T[] {
   newArr[idx] = val;
   return newArr;
 }
+
+export function filterMap<A, B>(
+  xs: readonly A[],
+  f: (a: A) => B | undefined,
+): B[] {
+  const out: B[] = [];
+  for (const a of xs) {
+    const v = f(a);
+    if (v !== undefined) out.push(v);
+  }
+  return out;
+}

@@ -705,6 +705,19 @@ export function lerpShapes(
   return { ...lerpShapesImpl(a, b, t), interpolatable: true };
 }
 
+export function lerpShapes3(
+  a: InterpolatableShape,
+  b: InterpolatableShape,
+  c: InterpolatableShape,
+  { l0, l1, l2 }: { l0: number; l1: number; l2: number },
+) {
+  if (l0 + l1 < 1e-6) {
+    return c;
+  }
+  const ab = lerpShapes(a, b, l1 / (l0 + l1));
+  return lerpShapes(ab, c, l2);
+}
+
 function lerpShapesImpl(a: Shape, b: Shape, t: number): Shape {
   function assertSameType<T extends Shape>(a: T, b: Shape): asserts b is T {
     assert(a.type === b.type);

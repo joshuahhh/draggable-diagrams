@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
 import { group, keyed, transform } from "./shape";
+import { filterMap } from "./utils";
 import { Vec2 } from "./vec2";
 import { XYWH } from "./xywh";
 
@@ -40,24 +41,29 @@ export const manipulableTiles: Manipulable<TilesState> = {
 
   accessibleFrom(state, draggableKey) {
     const curLoc = state.tiles[draggableKey];
-    return [
-      state,
-      ...[
-        { dx: -1, dy: 0 },
-        { dx: 1, dy: 0 },
-        { dx: 0, dy: -1 },
-        { dx: 0, dy: 1 },
-      ].flatMap(({ dx, dy }) => {
-        const x = curLoc.x + dx;
-        const y = curLoc.y + dy;
-        if (x < 0 || x >= state.w || y < 0 || y >= state.h) return [];
-        if (Object.values(state.tiles).some((t) => t.x === x && t.y === y))
-          return [];
-        return {
-          ...state,
-          tiles: { ...state.tiles, [draggableKey]: { x, y } },
-        };
-      }),
-    ];
+    return {
+      manifolds: filterMap(
+        [
+          { dx: -1, dy: 0 },
+          { dx: 1, dy: 0 },
+          { dx: 0, dy: -1 },
+          { dx: 0, dy: 1 },
+        ],
+        ({ dx, dy }) => {
+          const x = curLoc.x + dx;
+          const y = curLoc.y + dy;
+          if (x < 0 || x >= state.w || y < 0 || y >= state.h) return;
+          if (Object.values(state.tiles).some((t) => t.x === x && t.y === y))
+            return;
+          return [
+            state,
+            {
+              ...state,
+              tiles: { ...state.tiles, [draggableKey]: { x, y } },
+            },
+          ];
+        },
+      ),
+    };
   },
 };
