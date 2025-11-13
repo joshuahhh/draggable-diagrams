@@ -5,7 +5,7 @@ import { demos } from "./demos";
 
 function DemoList() {
   const [debugView, setDebugView] = useState(false);
-  const [snapRadius, setSnapRadius] = useState(0);
+  const [snapRadius, setSnapRadius] = useState(10);
 
   return (
     <DemoProvider debugView={debugView} snapRadius={snapRadius}>
@@ -20,7 +20,7 @@ function DemoList() {
             <div key={demo.id}>{demo.node}</div>
           ))}
         </div>
-        <div className="mt-auto bg-white/95 py-4 px-5 border-t border-gray-200 flex gap-5 items-center justify-center shadow-[0_-2px_4px_rgba(0,0,0,0.1)]">
+        <div className="sticky bottom-0 bg-white/95 py-4 px-5 border-t border-gray-200 flex gap-5 items-center justify-center shadow-[0_-2px_4px_rgba(0,0,0,0.1)]">
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -86,7 +86,7 @@ function SingleDemo() {
         <div className="flex flex-col gap-5 px-5 pb-5 max-w-6xl mx-auto flex-1">
           {demo.node}
         </div>
-        <div className="mt-auto bg-white/95 py-4 px-5 border-t border-gray-200 flex gap-5 items-center justify-center shadow-[0_-2px_4px_rgba(0,0,0,0.1)]">
+        <div className="sticky bottom-0 bg-white/95 py-4 px-5 border-t border-gray-200 flex gap-5 items-center justify-center shadow-[0_-2px_4px_rgba(0,0,0,0.1)]">
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
