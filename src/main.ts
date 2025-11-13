@@ -2,10 +2,12 @@ import { layer } from "./layer";
 import { ManipulableDrawer } from "./manipulable";
 import { manipulableGridPoly } from "./manipulable-grid-poly";
 import { manipulableInsertAndRemove } from "./manipulable-insert-and-remove";
+import { manipulableNoolTree } from "./manipulable-nool-tree";
 import { manipulableOrderPreserving } from "./manipulable-order-preserving";
 import { manipulablePerm } from "./manipulable-perm";
 import { manipulablePermDouble } from "./manipulable-perm-double";
 import { manipulableRushHour } from "./manipulable-rush-hour";
+import { manipulableSimplest } from "./manipulable-simplest";
 import { manipulableTiles } from "./manipulable-tiles";
 import { PointerManager, pointerManagerWithOffset } from "./pointer";
 import { buildHasseDiagram, tree3, tree7 } from "./trees";
@@ -149,7 +151,7 @@ const allDemos: Array<{
       new ManipulableDrawer(manipulableRushHour, {
         w: 6,
         h: 6,
-        tiles: {
+        cars: {
           A: { x: 0, y: 0, w: 2, h: 1, dir: "h", color: "lightgreen" },
           B: { x: 0, y: 1, w: 1, h: 3, dir: "v", color: "purple" },
           C: { x: 1, y: 2, w: 2, h: 1, dir: "h", color: "red" },
@@ -230,9 +232,9 @@ const allDemos: Array<{
         h: 6,
         points: [
           { x: 1, y: 1 },
-          { x: 2, y: 2 },
-          { x: 3, y: 3 },
-          { x: 4, y: 4 },
+          { x: 4, y: 2 },
+          { x: 3, y: 5 },
+          { x: 1, y: 4 },
         ],
       }),
     config: { height: 250, padding: 20 },
@@ -258,7 +260,7 @@ const allDemos: Array<{
     config: { height: 200 },
   },
   {
-    title: "Inserting & removing items (wip)",
+    title: "Inserting & removing items (WIP)",
     createDrawer: () =>
       new ManipulableDrawer(manipulableInsertAndRemove, {
         store: [
@@ -273,6 +275,141 @@ const allDemos: Array<{
         ],
       }),
     config: { height: 150, padding: 10 },
+  },
+  {
+    title: "Nool tree",
+    createDrawer: () =>
+      new ManipulableDrawer(manipulableNoolTree, {
+        id: "root",
+        label: "+",
+        children: [
+          {
+            id: "root/1",
+            label: "+",
+            children: [
+              {
+                id: "root/1/1",
+                label: "+",
+                children: [
+                  {
+                    id: "root/1/1/1",
+                    label: "⛅",
+                    children: [],
+                  },
+                  {
+                    id: "root/1/1/2",
+                    label: "-",
+                    children: [
+                      {
+                        id: "root/1/1/2/1",
+                        label: "🍄",
+                        children: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                id: "root/1/2",
+                label: "🍄",
+                children: [],
+              },
+            ],
+          },
+          {
+            id: "root/2",
+            label: "+",
+            children: [
+              {
+                id: "root/2/1",
+                label: "×",
+                children: [
+                  {
+                    id: "root/2/1/1",
+                    label: "🎲",
+                    children: [],
+                  },
+                  {
+                    id: "root/2/1/2",
+                    label: "🦠",
+                    children: [],
+                  },
+                ],
+              },
+              {
+                id: "root/2/2",
+                label: "×",
+                children: [
+                  {
+                    id: "root/2/2/1",
+                    label: "🎲",
+                    children: [],
+                  },
+                  {
+                    id: "root/2/2/2",
+                    label: "🐝",
+                    children: [],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    config: { height: 350, padding: 20 },
+  },
+  {
+    title: "Nool tree, simpler",
+    createDrawer: () =>
+      new ManipulableDrawer(manipulableNoolTree, {
+        id: "+1",
+        label: "+",
+        children: [
+          {
+            id: "+2",
+            label: "+",
+            children: [
+              {
+                id: "A",
+                label: "A",
+                children: [],
+              },
+              {
+                id: "B",
+                label: "B",
+                children: [],
+              },
+            ],
+          },
+          {
+            id: "+3",
+            label: "+",
+            children: [
+              {
+                id: "C",
+                label: "C",
+                children: [],
+              },
+              {
+                id: "D",
+                label: "D",
+                children: [],
+              },
+            ],
+          },
+          // {
+          //   id: "C",
+          //   label: "C",
+          //   children: [],
+          // },
+        ],
+      }),
+    config: { height: 200, padding: 20 },
+  },
+  {
+    title: "Simplest",
+    createDrawer: () => new ManipulableDrawer(manipulableSimplest, true),
+    config: { height: 150, padding: 20 },
   },
 ];
 

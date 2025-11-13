@@ -23,6 +23,7 @@ export const manipulablePerm: Manipulable<PermState> = {
             xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
             strokeStyle: "black",
             lineWidth: 2,
+            fillStyle: "white",
             label: `${p}`,
           }),
         ),

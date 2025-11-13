@@ -4,9 +4,17 @@ export function assertNever(_never: never, message?: string): never {
   );
 }
 
-export function assert(condition: boolean, msg?: string): asserts condition {
+export function assert(
+  condition: boolean,
+  msg?: string | (() => void),
+): asserts condition {
   if (!condition) {
-    throw new Error(msg ?? "Assertion failed");
+    if (typeof msg === "function") {
+      console.group("Assertion failed; debug info:");
+      msg();
+      console.groupEnd();
+    }
+    throw new Error(typeof msg === "string" ? msg : "Assertion failed");
   }
 }
 

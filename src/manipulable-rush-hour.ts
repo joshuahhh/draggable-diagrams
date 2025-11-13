@@ -7,7 +7,7 @@ import { XYWH } from "./xywh";
 type RushHourState = {
   w: number;
   h: number;
-  tiles: {
+  cars: {
     [key: string]: {
       x: number;
       y: number;
@@ -23,9 +23,7 @@ export const manipulableRushHour: Manipulable<RushHourState> = {
   render(state) {
     const TILE_SIZE = 50;
     const BORDER_WIDTH = 10;
-    const redCarY = Object.values(state.tiles).find(
-      (t) => t.color === "red",
-    )?.y;
+    const redCarY = Object.values(state.cars).find((t) => t.color === "red")?.y;
     return group(`tiles`, [
       ..._.range(state.w).flatMap((x) =>
         _.range(state.h).map((y) => ({
@@ -35,7 +33,7 @@ export const manipulableRushHour: Manipulable<RushHourState> = {
           lineWidth: 1,
         })),
       ),
-      ...Object.entries(state.tiles).map(([key, tile]) =>
+      ...Object.entries(state.cars).map(([key, tile]) =>
         transform(
           Vec2(tile.x * TILE_SIZE, tile.y * TILE_SIZE),
           keyed(`${key}`, true, {
@@ -79,7 +77,7 @@ export const manipulableRushHour: Manipulable<RushHourState> = {
   },
 
   accessibleFrom(state, draggableKey) {
-    const curLoc = state.tiles[draggableKey];
+    const curLoc = state.cars[draggableKey];
     const nextStates: RushHourState[] = [state];
     function tryMove(dx: number, dy: number) {
       let x = curLoc.x + dx;
@@ -94,7 +92,7 @@ export const manipulableRushHour: Manipulable<RushHourState> = {
         )
           break;
         if (
-          Object.entries(state.tiles).some(([key, t]) => {
+          Object.entries(state.cars).some(([key, t]) => {
             if (key === draggableKey) return false;
             return !(
               x + curLoc.w <= t.x ||
@@ -108,8 +106,8 @@ export const manipulableRushHour: Manipulable<RushHourState> = {
         }
         nextStates.push({
           ...state,
-          tiles: {
-            ...state.tiles,
+          cars: {
+            ...state.cars,
             [draggableKey]: { ...curLoc, x, y },
           },
         });

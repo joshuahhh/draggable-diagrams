@@ -20,17 +20,6 @@ export const manipulablePermDouble: Manipulable<PermDoubleState> = {
         transform(
           Vec2(0, rowIdx * (TILE_SIZE + ROW_PADDING * 2)),
           group(`row-${rowIdx}`, [
-            // {
-            //   type: "rectangle" as const,
-            //   xywh: XYWH(
-            //     0,
-            //     0,
-            //     row.length * TILE_SIZE + ROW_PADDING * 2,
-            //     TILE_SIZE + ROW_PADDING * 2,
-            //   ),
-            //   strokeStyle: "black",
-            //   lineWidth: 2,
-            // } satisfies Shape,
             ...row.map((p, idx) =>
               transform(
                 Vec2(idx * TILE_SIZE + ROW_PADDING, ROW_PADDING),
@@ -39,6 +28,7 @@ export const manipulablePermDouble: Manipulable<PermDoubleState> = {
                   xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
                   strokeStyle: "black",
                   lineWidth: 2,
+                  fillStyle: "white",
                   label: p,
                 }),
               ),

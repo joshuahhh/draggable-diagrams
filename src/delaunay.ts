@@ -132,7 +132,9 @@ export function projectOntoConvexHull(
       const edgeLen2 = edge.len2();
       assert(edgeLen2 > 0);
       const t = pt.sub(pt0).dot(edge) / edgeLen2;
-      assert(t >= 0 && t <= 1);
+      assert(t >= 0 && t <= 1, () => {
+        console.log("t", t);
+      });
       return { type: "edge", ptIdx0, ptIdx1, t, projectedPt: pt, dist: 0 };
     } else {
       return {

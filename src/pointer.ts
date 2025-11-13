@@ -1,3 +1,4 @@
+import _ from "lodash";
 import { Layer } from "./layer";
 import { Vec2 } from "./vec2";
 import { inXYWH, translate, XYWH } from "./xywh";
@@ -60,8 +61,12 @@ export class PointerManager implements IPointerManager {
   hoveredClickable() {
     return (
       this.hoverPointer &&
-      this.clickables.find(({ xywh }) =>
-        inXYWH(...this.hoverPointer!.arr(), xywh),
+      // get smalleset clickable containing hoverPointer
+      _.minBy(
+        this.clickables.filter((c) =>
+          inXYWH(this.hoverPointer.x, this.hoverPointer.y, c.xywh),
+        ),
+        ({ xywh: [_x, _y, w, h] }) => w * h,
       )
     );
   }

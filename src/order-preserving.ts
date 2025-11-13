@@ -89,8 +89,6 @@ function drawBgSubtree(
   };
   const { aOffset, bOffset, length: width } = overlapIntervals(params);
 
-  console.log(params, { aOffset, bOffset, width });
-
   shape.shapes.push(transform(Vec2(aOffset, 0), bgNodeR.shape));
 
   let x = bOffset;

@@ -3,7 +3,7 @@ import _ from "lodash";
 import { Layer } from "./layer";
 import { IPointerManager } from "./pointer";
 import { assert, assertNever } from "./utils";
-import { lerp, Vec2 } from "./vec2";
+import { lerp, Vec2, Vec2able } from "./vec2";
 import { fromCenter, inXYWH, mergeMany, mm, translate, XYWH } from "./xywh";
 
 // Coordinates statement: Offsets are relative. PointInShape is nice.
@@ -75,7 +75,17 @@ export type Shape =
     };
 
 export type Group = Extract<Shape, { type: "group" }>;
-export function group(debugName?: string, shapes: Shape[] = []): Group {
+export function group(debugName?: string, shapes?: Shape[]): Group;
+export function group(shapes: Shape[]): Group;
+export function group(
+  debugNameOrShapes?: string | Shape[],
+  maybeShapes: Shape[] = [],
+): Group {
+  const debugName =
+    typeof debugNameOrShapes === "string" ? debugNameOrShapes : undefined;
+  const shapes = Array.isArray(debugNameOrShapes)
+    ? debugNameOrShapes
+    : maybeShapes;
   return { ...(debugName && { debugName }), type: "group", shapes };
 }
 
@@ -85,8 +95,8 @@ export function keyedGroup(shapes: Record<string, Shape> = {}): KeyedGroup {
 }
 
 export type Transform = Extract<Shape, { type: "transform" }>;
-export function transform(offset: Vec2, shape: Shape): Transform {
-  return { type: "transform", shape, offset };
+export function transform(offset: Vec2able, shape: Shape): Transform {
+  return { type: "transform", shape, offset: Vec2(offset) };
 }
 
 export type Lazy = Extract<Shape, { type: "lazy" }>;
@@ -197,6 +207,7 @@ export function runLazyShapes(
 export function pullOutKeyedShapes(shape: Shape): Shape {
   const kg = keyedGroup();
   function helper(s: Shape, offset: Vec2) {
+    const children = shapeChildren(s, true); // get 'em before we mess around with s
     if (s.type === "keyed") {
       kg.shapes[s.key] = transform(offset, { ...s });
       // TODO: hack
@@ -208,7 +219,7 @@ export function pullOutKeyedShapes(shape: Shape): Shape {
     if (s.type === "transform") {
       offset = offset.add(s.offset);
     }
-    for (const child of shapeChildren(s, true)) {
+    for (const child of children) {
       helper(child, offset);
     }
   }

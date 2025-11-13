@@ -109,7 +109,6 @@ export class ManipulableDrawer<T> {
         // TODO: make this work better lol
         if (state.accessibleDeletionInfo) {
           const deletionDist = bestManifoldProjection.dist;
-          // console.log("deletionDist", deletionDist);
           if (deletionDist > 40) {
             const t = clamp((deletionDist - 40) / 20, 0, 1);
             return {
@@ -150,6 +149,11 @@ export class ManipulableDrawer<T> {
           };
         } else if (bestManifoldProjection.type === "edge") {
           const { ptIdx0, ptIdx1, t } = bestManifoldProjection;
+          console.log(
+            "yo",
+            bestManifoldProjection.manifold.points[ptIdx0].shape,
+            bestManifoldProjection.manifold.points[ptIdx1].shape,
+          );
           return {
             shapeToDraw: lerpShapes(
               bestManifoldProjection.manifold.points[ptIdx0].shape,
@@ -181,7 +185,6 @@ export class ManipulableDrawer<T> {
 
       const orig = this.manipulable.render(state.state);
       const interpolatable = origToInterpolatable(orig);
-      // console.log("interpol", interpolatable);
       drawInterpolatable(lyr, interpolatable, {
         pointer: pointer,
         onDragStart: (key, pointerOffset) => {
