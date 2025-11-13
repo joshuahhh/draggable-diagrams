@@ -5,10 +5,9 @@ import { demos } from "./demos";
 
 function DemoList() {
   const [debugView, setDebugView] = useState(false);
-  const [snapRadius, setSnapRadius] = useState(10);
 
   return (
-    <DemoProvider debugView={debugView} snapRadius={snapRadius}>
+    <DemoProvider debugView={debugView}>
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <div className="text-center py-10 px-5 max-w-3xl mx-auto">
           <h1 className="text-3xl font-normal text-gray-800">
@@ -29,16 +28,6 @@ function DemoList() {
             />
             Debug View
           </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="range"
-              min="0"
-              max="20"
-              value={snapRadius}
-              onChange={(e) => setSnapRadius(Number(e.target.value))}
-            />
-            Snap Radius
-          </label>
         </div>
       </div>
     </DemoProvider>
@@ -48,7 +37,6 @@ function DemoList() {
 function SingleDemo() {
   const { id } = useParams<{ id: string }>();
   const [debugView, setDebugView] = useState(false);
-  const [snapRadius, setSnapRadius] = useState(0);
 
   const demo = demos.find((d) => d.id === id);
 
@@ -68,7 +56,7 @@ function SingleDemo() {
   }
 
   return (
-    <DemoProvider debugView={debugView} snapRadius={snapRadius}>
+    <DemoProvider debugView={debugView}>
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <div className="text-center py-10 px-5 max-w-3xl mx-auto">
           <h1 className="text-3xl font-normal text-gray-800">
@@ -94,16 +82,6 @@ function SingleDemo() {
               onChange={(e) => setDebugView(e.target.checked)}
             />
             Debug View
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="range"
-              min="0"
-              max="20"
-              value={snapRadius}
-              onChange={(e) => setSnapRadius(Number(e.target.value))}
-            />
-            Snap Radius
           </label>
         </div>
       </div>

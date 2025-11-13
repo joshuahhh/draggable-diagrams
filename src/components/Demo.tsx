@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDemoContext } from "../DemoContext";
 import { layer } from "../layer";
@@ -13,10 +13,19 @@ interface DemoProps {
   drawer: ManipulableDrawer<any>;
   height: number;
   padding?: number;
+  initialSnapRadius?: number;
 }
 
-export function Demo({ id, title, drawer, height, padding = 0 }: DemoProps) {
-  const { debugView, snapRadius } = useDemoContext();
+export function Demo({
+  id,
+  title,
+  drawer,
+  height,
+  padding = 0,
+  initialSnapRadius = 10,
+}: DemoProps) {
+  const { debugView } = useDemoContext();
+  const [snapRadius, setSnapRadius] = useState(initialSnapRadius);
   const pointerRef = useRef<PointerManager | null>(null);
 
   // Memoize the draw callback to prevent unnecessary re-renders
@@ -75,7 +84,27 @@ export function Demo({ id, title, drawer, height, padding = 0 }: DemoProps) {
           </a>
         )}
       </div>
-      <Canvas height={height + padding * 2} draw={draw} />
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1">
+          <Canvas height={height + padding * 2} draw={draw} />
+        </div>
+        <div className="w-48 md:w-32 bg-gray-50 rounded p-3 flex flex-col gap-2">
+          <label className="flex flex-col gap-1 text-xs">
+            <span className="font-medium text-gray-700">Snap Radius</span>
+            <input
+              type="range"
+              min="0"
+              max="20"
+              value={snapRadius}
+              onChange={(e) => setSnapRadius(Number(e.target.value))}
+              className="w-full"
+            />
+            <span className="text-gray-500 text-center">
+              {snapRadius} pixels
+            </span>
+          </label>
+        </div>
+      </div>
     </div>
   );
 }

@@ -2,22 +2,19 @@ import { createContext, ReactNode, useContext } from "react";
 
 interface DemoContextValue {
   debugView: boolean;
-  snapRadius: number;
 }
 
 const DemoContext = createContext<DemoContextValue | undefined>(undefined);
 
 export function DemoProvider({
   debugView,
-  snapRadius,
   children,
 }: {
   debugView: boolean;
-  snapRadius: number;
   children: ReactNode;
 }) {
   return (
-    <DemoContext.Provider value={{ debugView, snapRadius }}>
+    <DemoContext.Provider value={{ debugView }}>
       {children}
     </DemoContext.Provider>
   );
