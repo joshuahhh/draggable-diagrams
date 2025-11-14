@@ -112,7 +112,7 @@ export function Demo({
             <input
               type="range"
               min="0"
-              max="20"
+              max="50"
               value={snapRadius}
               onChange={(e) => setSnapRadius(Number(e.target.value))}
               className="w-full"
