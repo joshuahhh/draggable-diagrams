@@ -18,6 +18,7 @@ interface DemoProps {
   height: number;
   padding?: number;
   initialSnapRadius?: number;
+  initialRelativePointerMotion?: boolean;
 }
 
 export function Demo({
@@ -27,11 +28,14 @@ export function Demo({
   height,
   padding = 0,
   initialSnapRadius = 10,
+  initialRelativePointerMotion = false,
 }: DemoProps) {
   const { debugView } = useDemoContext();
   const [snapRadius, setSnapRadius] = useState(initialSnapRadius);
   const [transitionWhileDragging, setTransitionWhileDragging] = useState(true);
-  const [relativePointerMotion, setRelativePointerMotion] = useState(false);
+  const [relativePointerMotion, setRelativePointerMotion] = useState(
+    initialRelativePointerMotion,
+  );
   const [manipulableConfig, setManipulableConfig] = useState(
     manipulableDefaultConfig(drawer.manipulable),
   );

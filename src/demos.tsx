@@ -54,6 +54,7 @@ export const demos: DemoEntry[] = [
         drawer={new ManipulableDrawer(manipulableFifteen, stateFifteen)}
         height={200}
         padding={20}
+        initialRelativePointerMotion={true}
       />
     ),
   },
@@ -66,6 +67,7 @@ export const demos: DemoEntry[] = [
         drawer={new ManipulableDrawer(manipulableTiles, stateTilesLonely)}
         height={300}
         padding={20}
+        initialRelativePointerMotion={true}
       />
     ),
   },
@@ -165,6 +167,7 @@ export const demos: DemoEntry[] = [
         height={350}
         padding={20}
         initialSnapRadius={1}
+        initialRelativePointerMotion={true}
       />
     ),
   },
@@ -178,6 +181,7 @@ export const demos: DemoEntry[] = [
         height={200}
         padding={20}
         initialSnapRadius={1}
+        initialRelativePointerMotion={true}
       />
     ),
   },
@@ -190,6 +194,7 @@ export const demos: DemoEntry[] = [
         drawer={new ManipulableDrawer(manipulableSokoban, stateSokoban1)}
         height={500}
         padding={20}
+        initialRelativePointerMotion={true}
       />
     ),
   },
