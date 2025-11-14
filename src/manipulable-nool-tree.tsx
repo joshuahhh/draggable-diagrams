@@ -10,69 +10,105 @@ type NoolTree = {
   children: NoolTree[];
 };
 
-function renderNoolTree(tree: NoolTree): {
+type A = {
   shape: Shape;
   w: number;
   h: number;
   id: string;
-} {
-  const GAP = 10;
-  const PADDING = 5;
-  const LABEL_WIDTH = 20;
-  const LABEL_MIN_HEIGHT = 20;
-  const renderedChildren = tree.children.map(renderNoolTree);
-  const renderedChildrenShape = keyedGroup();
-  let childY = 0;
-  for (const childR of renderedChildren) {
-    renderedChildrenShape.shapes[childR.id] = transform(
-      [0, childY],
-      childR.shape,
-    );
-    childY += childR.h + GAP;
+};
+
+const StackX = (gap: number) => (id: string, children: A[]) => {
+  const childrenShape = keyedGroup();
+  let childX = 0;
+  for (const childR of children) {
+    childrenShape.shapes[childR.id] = transform([childX, 0], childR.shape);
+    childX += childR.w + gap;
   }
-  const innerW =
-    LABEL_WIDTH +
-    (renderedChildren.length > 0
-      ? GAP + _.max(renderedChildren.map((c) => c.w))!
-      : 0);
-  const innerH =
-    renderedChildren.length > 0
-      ? _.sumBy(renderedChildren, (c) => c.h) +
-        GAP * (renderedChildren.length - 1)
-      : LABEL_MIN_HEIGHT;
+  const w =
+    children.length === 0
+      ? 0
+      : _.sumBy(children, (c) => c.w) + gap * (children.length - 1);
+  const h = children.length === 0 ? 0 : Math.max(...children.map((c) => c.h));
   return {
     shape: keyed(
-      tree.id,
+      id,
       true,
-      group("node", [
-        {
-          // background rectangle
-          type: "rectangle" as const,
-          xywh: [0, 0, innerW + PADDING * 2, innerH + PADDING * 2],
-          strokeStyle: "gray",
-          lineWidth: 1,
-        } satisfies Shape,
-        {
-          // label rectangle
-          type: "rectangle" as const,
-          xywh: [PADDING, PADDING, LABEL_WIDTH, innerH],
-          label: tree.label,
-        } satisfies Shape,
-        ...(renderedChildren.length > 0
-          ? [
-              transform(
-                [PADDING + LABEL_WIDTH + GAP, PADDING],
-                renderedChildrenShape,
-              ),
-            ]
-          : []),
+      group("node", [...(children.length > 0 ? [childrenShape] : [])]),
+    ),
+    w,
+    h,
+    id,
+  };
+};
+const StackY = (gap: number) => (id: string, children: A[]) => {
+  const childrenShape = keyedGroup();
+  let childY = 0;
+  for (const childR of children) {
+    childrenShape.shapes[childR.id] = transform([0, childY], childR.shape);
+    childY += childR.h + gap;
+  }
+  const w = children.length === 0 ? 0 : Math.max(...children.map((c) => c.w));
+  const h =
+    children.length === 0
+      ? 0
+      : _.sumBy(children, (c) => c.h) + gap * (children.length - 1);
+  return {
+    shape: keyed(
+      id,
+      true,
+      group("node", [...(children.length > 0 ? [childrenShape] : [])]),
+    ),
+    w,
+    h,
+    id,
+  };
+};
+const Pad = (pad: number) => (id: string, child: A) => {
+  return {
+    id,
+    shape: transform([pad, pad], child.shape),
+    w: child.w + pad * 2,
+    h: child.h + pad * 2,
+  };
+};
+const Outline = (id: string, child: A) => {
+  return {
+    shape: group("node", [
+      keyed(id + "rect", false, {
+        type: "rectangle" as const,
+        xywh: [0, 0, child.w, child.h],
+        strokeStyle: "gray",
+        lineWidth: 1,
+      } satisfies Shape).shape,
+      child.shape,
+    ]),
+    w: child.w,
+    h: child.h,
+    id,
+  };
+};
+const Label = (id: string, label: string, size: number) => ({
+  shape: {
+    type: "rectangle",
+    xywh: [0, 0, size, size],
+    label: label,
+  } satisfies Shape,
+  w: size,
+  h: size,
+  id,
+});
+
+const renderNoolTree = (tree: NoolTree): A =>
+  Outline(
+    tree.id + "outline",
+    Pad(4)(
+      tree.id + "pad",
+      StackX(4)(tree.id, [
+        Label(tree.id + "label", tree.label, 20),
+        StackY(4)(tree.id + "stackY", tree.children.map(renderNoolTree)),
       ]),
     ),
-    w: innerW + PADDING * 2,
-    h: innerH + PADDING * 2,
-    id: tree.id,
-  };
-}
+  );
 
 function isOp(node: NoolTree): boolean {
   return node.label === "+" || node.label === "×";
