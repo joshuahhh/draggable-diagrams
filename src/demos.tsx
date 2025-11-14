@@ -167,7 +167,7 @@ export const demos: DemoEntry[] = [
         drawer={new ManipulableDrawer(manipulableNoolTree, stateNoolTree1)}
         height={350}
         padding={20}
-        initialSnapRadius={0}
+        initialSnapRadius={1}
       />
     ),
   },
@@ -180,7 +180,7 @@ export const demos: DemoEntry[] = [
         drawer={new ManipulableDrawer(manipulableNoolTree, stateNoolTree2)}
         height={200}
         padding={20}
-        initialSnapRadius={0}
+        initialSnapRadius={1}
       />
     ),
   },

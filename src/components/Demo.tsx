@@ -28,6 +28,17 @@ export function Demo({
   const [snapRadius, setSnapRadius] = useState(initialSnapRadius);
   const pointerRef = useRef<PointerManager | null>(null);
 
+  // Handle manipulable-specific config
+  const manipulable = drawer.manipulable as any;
+  const [manipulableConfig, setManipulableConfig] = useState(
+    manipulable.defaultConfig || {},
+  );
+
+  // Update manipulable config when it changes
+  if (manipulable.config) {
+    manipulable.config = manipulableConfig;
+  }
+
   // Memoize the draw callback to prevent unnecessary re-renders
   const draw = useCallback(
     (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
@@ -59,7 +70,7 @@ export function Demo({
 
       lyr.draw();
     },
-    [drawer, padding, debugView, snapRadius],
+    [drawer, padding, debugView, snapRadius, manipulableConfig],
   );
 
   return (
@@ -88,7 +99,9 @@ export function Demo({
         <div className="flex-1">
           <Canvas height={height + padding * 2} draw={draw} />
         </div>
-        <div className="w-48 md:w-32 bg-gray-50 rounded p-3 flex flex-col gap-2">
+        <div
+          className={`${manipulable.renderConfig ? "w-64 md:w-52" : "w-48 md:w-32"} bg-gray-50 rounded p-3 flex flex-col gap-2`}
+        >
           <label className="flex flex-col gap-1 text-xs">
             <span className="font-medium text-gray-700">Snap Radius</span>
             <input
@@ -103,6 +116,15 @@ export function Demo({
               {snapRadius} pixels
             </span>
           </label>
+          {manipulable.renderConfig && (
+            <>
+              <div className="border-t border-gray-300 my-1" />
+              {manipulable.renderConfig(
+                manipulableConfig,
+                setManipulableConfig,
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>

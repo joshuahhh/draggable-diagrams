@@ -1,4 +1,5 @@
 import _ from "lodash";
+import React from "react";
 import { Manipulable } from "./manipulable";
 import { group, keyed, keyedGroup, Shape, transform } from "./shape";
 import { insert, remove, set } from "./utils";
@@ -81,18 +82,148 @@ function isBinaryOp(node: NoolTree): boolean {
   return isOp(node) && node.children.length === 2;
 }
 
-export const manipulableNoolTree: Manipulable<NoolTree> = {
-  sourceFile: "manipulable-nool-tree.ts",
+type NoolTreeConfig = {
+  commutativity: boolean;
+  pullUpOp: boolean;
+  pullDownOp: boolean;
+  pullUpTail: boolean;
+  pullDownTail: boolean;
+};
+
+export const manipulableNoolTree: Manipulable<NoolTree> & {
+  config: NoolTreeConfig;
+  defaultConfig: NoolTreeConfig;
+  renderConfig: (
+    config: NoolTreeConfig,
+    setConfig: (config: NoolTreeConfig) => void,
+  ) => React.ReactNode;
+} = {
+  sourceFile: "manipulable-nool-tree.tsx",
+
+  config: {
+    commutativity: true,
+    pullUpOp: false,
+    pullDownOp: false,
+    pullUpTail: true,
+    pullDownTail: true,
+  },
+
+  defaultConfig: {
+    commutativity: true,
+    pullUpOp: false,
+    pullDownOp: false,
+    pullUpTail: true,
+    pullDownTail: true,
+  },
+
+  renderConfig: (config, setConfig) => {
+    const plus1 = <span className="text-red-600 font-bold">+</span>;
+    const plus2 = <span className="text-green-600 font-bold">+</span>;
+    const D = ({ children }: { children: React.ReactNode }) => (
+      <span className="bg-amber-200 rounded-sm p-0.5">{children}</span>
+    );
+
+    return (
+      <>
+        <label className="flex items-start gap-2 text-xs">
+          <input
+            type="checkbox"
+            checked={config.commutativity}
+            onChange={(e) =>
+              setConfig({ ...config, commutativity: e.target.checked })
+            }
+          />
+          <span>
+            <b>Commutativity</b>
+            <br />
+            <D>A</D> {plus1} B → B {plus1} <D>A</D>
+          </span>
+        </label>
+        <label className="flex items-start gap-2 text-xs">
+          <input
+            type="checkbox"
+            checked={config.pullUpOp}
+            onChange={(e) =>
+              setConfig({ ...config, pullUpOp: e.target.checked })
+            }
+          />
+          <span>
+            <b>Associativity</b>
+            <br />
+            Pull up op
+            <br />
+            <D>(A {plus1} B)</D> {plus2} C →{" "}
+            <D>
+              A {plus1} (B {plus2} C)
+            </D>
+          </span>
+        </label>
+        <label className="flex items-start gap-2 text-xs">
+          <input
+            type="checkbox"
+            checked={config.pullDownOp}
+            onChange={(e) =>
+              setConfig({ ...config, pullDownOp: e.target.checked })
+            }
+          />
+          <span>
+            <b>Associativity</b>
+            <br />
+            Pull down op
+            <br />
+            <D>
+              A {plus1} (B {plus2} C)
+            </D>{" "}
+            → <D>(A {plus1} B)</D> {plus2} C
+          </span>
+        </label>
+        <label className="flex items-start gap-2 text-xs">
+          <input
+            type="checkbox"
+            checked={config.pullUpTail}
+            onChange={(e) =>
+              setConfig({ ...config, pullUpTail: e.target.checked })
+            }
+          />
+          <span>
+            <b>Associativity</b>
+            <br />
+            Pull up operand
+            <br />(<D>A</D> {plus1} B) {plus2} C → <D>A</D> {plus1} (B {plus2}{" "}
+            C)
+          </span>
+        </label>
+        <label className="flex items-start gap-2 text-xs">
+          <input
+            type="checkbox"
+            checked={config.pullDownTail}
+            onChange={(e) =>
+              setConfig({ ...config, pullDownTail: e.target.checked })
+            }
+          />
+          <span>
+            <b>Associativity</b>
+            <br />
+            Pull down operand
+            <br />
+            <D>A</D> {plus1} (B {plus2} C) → (<D>A</D> {plus1} B) {plus2} C
+          </span>
+        </label>
+      </>
+    );
+  },
+
   render(state) {
     return renderNoolTree(state).shape;
   },
 
   accessibleFrom(state, draggableKey) {
+    const config = this.config;
     const manifolds: NoolTree[][] = [[state]];
     // walk the tree
     function walk(tree: NoolTree, replaceNode: (newNode: NoolTree) => void) {
       // commutativity
-      if (isOp(tree)) {
+      if (config.commutativity && isOp(tree)) {
         const childIdx = tree.children.findIndex((c) => c.id === draggableKey);
         if (childIdx !== -1) {
           const dragged = tree.children[childIdx];
@@ -109,7 +240,7 @@ export const manipulableNoolTree: Manipulable<NoolTree> = {
       }
 
       // pull up op to associate
-      if (false && isBinaryOp(tree)) {
+      if (config.pullUpOp && isBinaryOp(tree)) {
         const childIdx = tree.children.findIndex((c) => c.id === draggableKey);
         if (childIdx !== -1) {
           const dragged = tree.children[childIdx];
@@ -148,7 +279,7 @@ export const manipulableNoolTree: Manipulable<NoolTree> = {
       }
 
       // pull down op to associate; we really need a DSL here huh?
-      if (false && tree.id === draggableKey && isBinaryOp(tree)) {
+      if (config.pullDownOp && tree.id === draggableKey && isBinaryOp(tree)) {
         const child0 = tree.children[0];
         if (isBinaryOp(child0) && child0.label === tree.label) {
           // before: ⟦⟪child[0], child[1]⟫, other⟧
@@ -184,7 +315,7 @@ export const manipulableNoolTree: Manipulable<NoolTree> = {
       // pull up "tail" to associate
       // ⟦⟪*A, B⟫, C⟧ → ⟪A, ⟦B, C⟧⟫
       // ⟦A, ⟪B, *C⟫⟧ → ⟪⟦A, B⟧, C⟫
-      if (isBinaryOp(tree)) {
+      if (config.pullUpTail && isBinaryOp(tree)) {
         const child0 = tree.children[0];
         if (isBinaryOp(child0) && child0.label === tree.label) {
           const grandchild0 = child0.children[0];
@@ -225,7 +356,7 @@ export const manipulableNoolTree: Manipulable<NoolTree> = {
 
       // pull down "tail" to associate
       // ⟦⟪A, B⟫, *C⟧ → ⟪A, ⟦B, C⟧⟫
-      if (isBinaryOp(tree)) {
+      if (config.pullDownTail && isBinaryOp(tree)) {
         const [child0, child1] = tree.children;
         if (
           isBinaryOp(child0) &&
