@@ -5,13 +5,13 @@ import { filterMap } from "./utils";
 import { Vec2 } from "./vec2";
 import { XYWH } from "./xywh";
 
-type TilesState = {
+type FifteenState = {
   w: number;
   h: number;
   tiles: { [key: string]: { x: number; y: number } };
 };
 
-export const manipulableTiles: Manipulable<TilesState> = {
+export const manipulableFifteen: Manipulable<FifteenState> = {
   sourceFile: "manipulable-tiles.ts",
   render(state) {
     const TILE_SIZE = 50;
@@ -27,11 +27,11 @@ export const manipulableTiles: Manipulable<TilesState> = {
       ...Object.entries(state.tiles).map(([key, tile]) =>
         transform(
           Vec2(tile.x * TILE_SIZE, tile.y * TILE_SIZE),
-          keyed(`${key}`, true, {
+          keyed(key, true, {
             type: "rectangle" as const,
             xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
-            fillStyle: "#eee",
-            strokeStyle: "black",
+            fillStyle: key === " " ? "#0000" : "#eee",
+            strokeStyle: key === " " ? "#0000" : "black",
             lineWidth: 2,
             label: key,
           }),
@@ -41,6 +41,8 @@ export const manipulableTiles: Manipulable<TilesState> = {
   },
 
   accessibleFrom(state, draggableKey) {
+    // if we're not blank, we can only swap with blank
+    // if we are blank, we can swap with any neighbor
     const curLoc = state.tiles[draggableKey];
     return {
       manifolds: filterMap(
@@ -54,13 +56,21 @@ export const manipulableTiles: Manipulable<TilesState> = {
           const x = curLoc.x + dx;
           const y = curLoc.y + dy;
           if (x < 0 || x >= state.w || y < 0 || y >= state.h) return;
-          if (Object.values(state.tiles).some((t) => t.x === x && t.y === y))
-            return;
+          const adjTile = Object.entries(state.tiles).find(
+            ([, t]) => t.x === x && t.y === y,
+          );
+          if (!adjTile) return;
+          const canSwap = draggableKey === " " || adjTile[0] === " ";
+          if (!canSwap) return;
           return [
             state,
             {
               ...state,
-              tiles: { ...state.tiles, [draggableKey]: { x, y } },
+              tiles: {
+                ...state.tiles,
+                [draggableKey]: { x, y },
+                [adjTile[0]]: { x: curLoc.x, y: curLoc.y },
+              },
             },
           ];
         },
@@ -69,10 +79,25 @@ export const manipulableTiles: Manipulable<TilesState> = {
   },
 };
 
-export const stateTilesLonely: TilesState = {
-  w: 5,
-  h: 5,
+export const stateFifteen: FifteenState = {
+  w: 4,
+  h: 4,
   tiles: {
-    A: { x: 2, y: 2 },
+    "12": { x: 0, y: 0 },
+    "1": { x: 1, y: 0 },
+    "2": { x: 2, y: 0 },
+    "15": { x: 3, y: 0 },
+    "11": { x: 0, y: 1 },
+    "6": { x: 1, y: 1 },
+    "5": { x: 2, y: 1 },
+    "8": { x: 3, y: 1 },
+    "7": { x: 0, y: 2 },
+    "10": { x: 1, y: 2 },
+    "9": { x: 2, y: 2 },
+    "4": { x: 3, y: 2 },
+    "13": { x: 1, y: 3 },
+    "14": { x: 2, y: 3 },
+    "3": { x: 3, y: 3 },
+    " ": { x: 0, y: 3 },
   },
 };

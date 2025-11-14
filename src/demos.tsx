@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Demo } from "./components/Demo";
 import { ManipulableDrawer } from "./manipulable";
+import { manipulableFifteen, stateFifteen } from "./manipulable-fifteen";
 import { manipulableGridPoly, stateGridPoly1 } from "./manipulable-grid-poly";
 import {
   manipulableInsertAndRemove,
@@ -24,11 +25,7 @@ import {
 import { manipulableRushHour, stateRushHour1 } from "./manipulable-rush-hour";
 import { manipulableSimplest, stateSimplest1 } from "./manipulable-simplest";
 import { manipulableSokoban, stateSokoban1 } from "./manipulable-sokoban";
-import {
-  manipulableTiles,
-  stateTiles15Puzzle,
-  stateTilesLonely,
-} from "./manipulable-tiles";
+import { manipulableTiles, stateTilesLonely } from "./manipulable-tiles";
 
 export interface DemoEntry {
   id: string;
@@ -53,8 +50,8 @@ export const demos: DemoEntry[] = [
     node: (
       <Demo
         id="15-puzzle"
-        title="15 puzzle"
-        drawer={new ManipulableDrawer(manipulableTiles, stateTiles15Puzzle)}
+        title="15 puzzle (with weird draggable blank for fun)"
+        drawer={new ManipulableDrawer(manipulableFifteen, stateFifteen)}
         height={200}
         padding={20}
       />
