@@ -31,7 +31,11 @@ export type Manipulable<T, ManipulableConfig = undefined> = [
   : ManipulableWithConfig<T, ManipulableConfig>;
 
 export type ManipulableBase<T, ManipulableConfig> = {
-  render(state: T, config: ManipulableConfig): Shape;
+  render(
+    state: T,
+    draggableKey: string | null,
+    config: ManipulableConfig,
+  ): Shape;
   accessibleFrom(
     state: T,
     draggableKey: string,
@@ -264,7 +268,7 @@ export class ManipulableDrawer<T, Config = unknown> {
       const easedProgress = easeElastic(progress);
 
       const targetShape = origToInterpolatable(
-        this.manipulable.render(state.targetState, manipulableConfig),
+        this.manipulable.render(state.targetState, null, manipulableConfig),
       );
       const interpolatedShape = lerpShapes(
         state.startShape,
@@ -280,7 +284,11 @@ export class ManipulableDrawer<T, Config = unknown> {
     } else if (state.type === "idle") {
       pointer.setCursor("default");
 
-      const orig = this.manipulable.render(state.state, manipulableConfig);
+      const orig = this.manipulable.render(
+        state.state,
+        null,
+        manipulableConfig,
+      );
       const interpolatable = origToInterpolatable(orig);
       drawInterpolatable(lyr, interpolatable, {
         pointer: pointer,
@@ -311,7 +319,7 @@ export class ManipulableDrawer<T, Config = unknown> {
 
     const makeManifoldPoint = (state: T): ManifoldPoint<T> => {
       const shape = origToInterpolatable(
-        this.manipulable.render(state, manipulableConfig),
+        this.manipulable.render(state, draggableKey, manipulableConfig),
       );
       const foundShape = shapeByKey(shape, draggableKey);
       assert(!!foundShape, "Draggable key not found in rendered shape");

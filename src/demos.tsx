@@ -123,7 +123,7 @@ export const demos: DemoEntry[] = [
         title="Permutation"
         drawer={new ManipulableDrawer(manipulablePerm, statePerm1)}
         height={50}
-        padding={10}
+        padding={15}
       />
     ),
   },
