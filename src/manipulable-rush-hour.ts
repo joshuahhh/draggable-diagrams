@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
-import { group, keyed, transform, zIndex } from "./shape";
+import { group, keyed, translate, zIndex } from "./shape";
 import { Vec2 } from "./vec2";
 import { XYWH } from "./xywh";
 
@@ -35,7 +35,7 @@ export const manipulableRushHour: Manipulable<RushHourState> = {
         })),
       ),
       ...Object.entries(state.cars).map(([key, tile]) =>
-        transform(
+        translate(
           Vec2(tile.x * TILE_SIZE, tile.y * TILE_SIZE),
           keyed(`${key}`, true, {
             type: "rectangle" as const,

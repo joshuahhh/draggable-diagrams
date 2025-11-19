@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { Layer } from "./layer";
 import { Vec2 } from "./vec2";
-import { inXYWH, translate, XYWH } from "./xywh";
+import { inXYWH, translateXYWH, XYWH } from "./xywh";
 
 // Coordinates statement: In PointerManager, all coordinates are in
 // canvas space. Using withOffset produces a PointerManager where
@@ -118,7 +118,7 @@ export class PointerManagerOffset implements IPointerManager {
   }
 
   addClickHandler(xywh: XYWH, onClick: () => void): void {
-    this.pointer.addClickHandler(translate(xywh, this.offset), onClick);
+    this.pointer.addClickHandler(translateXYWH(xywh, this.offset), onClick);
   }
   addPointerUpHandler(onUp: () => void): void {
     this.pointer.addPointerUpHandler(onUp);

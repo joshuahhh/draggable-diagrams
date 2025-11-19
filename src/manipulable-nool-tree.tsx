@@ -1,7 +1,7 @@
 import _ from "lodash";
 import React from "react";
 import { Manipulable } from "./manipulable";
-import { group, keyed, keyedGroup, Shape, transform } from "./shape";
+import { group, keyed, keyedGroup, Shape, translate } from "./shape";
 import { insertImm, removeImm, setImm } from "./utils";
 
 type NoolTree = {
@@ -24,7 +24,7 @@ function renderNoolTree(tree: NoolTree): {
   const renderedChildrenShape = keyedGroup();
   let childY = 0;
   for (const childR of renderedChildren) {
-    renderedChildrenShape.shapes[childR.id] = transform(
+    renderedChildrenShape.shapes[childR.id] = translate(
       [0, childY],
       childR.shape,
     );
@@ -60,7 +60,7 @@ function renderNoolTree(tree: NoolTree): {
         } satisfies Shape,
         ...(renderedChildren.length > 0
           ? [
-              transform(
+              translate(
                 [PADDING + LABEL_WIDTH + GAP, PADDING],
                 renderedChildrenShape,
               ),

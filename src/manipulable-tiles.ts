@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
-import { group, keyed, transform } from "./shape";
+import { group, keyed, translate } from "./shape";
 import { defined } from "./utils";
 import { Vec2 } from "./vec2";
 import { inXYWH, XYWH } from "./xywh";
@@ -25,7 +25,7 @@ export const manipulableTiles: Manipulable<TilesState> = {
         })),
       ),
       ...Object.entries(state.tiles).map(([key, tile]) =>
-        transform(
+        translate(
           Vec2(tile.x * TILE_SIZE, tile.y * TILE_SIZE),
           keyed(`${key}`, true, {
             type: "rectangle" as const,

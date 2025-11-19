@@ -4,7 +4,7 @@ import { Layer } from "./layer";
 import { IPointerManager } from "./pointer";
 import { assert, assertNever } from "./utils";
 import { lerp, Vec2, Vec2able } from "./vec2";
-import { fromCenter, inXYWH, mergeMany, mm, translate, XYWH } from "./xywh";
+import { fromCenter, inXYWH, mergeMany, mm, translateXYWH, XYWH } from "./xywh";
 
 // Coordinates statement: Offsets are relative. PointInShape is nice.
 // The only tricky part is that when we drawFlatShapes, we interact
@@ -63,7 +63,7 @@ export type Shape =
         | { hasRun: true; shape: Shape };
     }
   | {
-      type: "transform";
+      type: "translate";
       shape: Shape;
       offset: Vec2;
     }
@@ -99,9 +99,9 @@ export function keyedGroup(shapes: Record<string, Shape> = {}): KeyedGroup {
   return { type: "keyed-group", shapes };
 }
 
-export type Transform = Extract<Shape, { type: "transform" }>;
-export function transform(offset: Vec2able, shape: Shape): Transform {
-  return { type: "transform", shape, offset: Vec2(offset) };
+export type Translate = Extract<Shape, { type: "translate" }>;
+export function translate(offset: Vec2able, shape: Shape): Translate {
+  return { type: "translate", shape, offset: Vec2(offset) };
 }
 
 export type Lazy = Extract<Shape, { type: "lazy" }>;
@@ -135,7 +135,7 @@ export function shapeChildren(
       return shape.shapes;
     case "keyed-group":
       return Object.values(shape.shapes);
-    case "transform":
+    case "translate":
       return [shape.shape];
     case "keyed":
       return [shape.shape];
@@ -183,7 +183,7 @@ export function makeParentMap(shape: Shape): Map<Shape, Shape> {
 export function makeOffsetMap(shape: Shape, offset: Vec2): Map<Shape, Vec2> {
   const map = new Map<Shape, Vec2>();
   function helper(s: Shape, offset: Vec2) {
-    if (s.type === "transform") {
+    if (s.type === "translate") {
       offset = offset.add(s.offset);
     }
     map.set(s, offset);
@@ -216,14 +216,14 @@ export function pullOutKeyedShapes(shape: Shape): Shape {
   function helper(s: Shape, offset: Vec2) {
     const children = shapeChildren(s, true); // get 'em before we mess around with s
     if (s.type === "keyed") {
-      kg.shapes[s.key] = transform(offset, { ...s });
+      kg.shapes[s.key] = translate(offset, { ...s });
       // TODO: hack
       for (const key in s) {
         delete (s as any)[key];
       }
       Object.assign(s, { type: "group", shapes: [] });
     }
-    if (s.type === "transform") {
+    if (s.type === "translate") {
       offset = offset.add(s.offset);
     }
     for (const child of children) {
@@ -268,7 +268,7 @@ export function resolvePointInShape(
   //   if (srcShape === dstShape) {
   //     return point;
   //   }
-  //   if (srcShape.type === "transform") {
+  //   if (srcShape.type === "translate") {
   //     point = point.add(srcShape.offset);
   //   }
   //   const parent = parentMap.get(srcShape);
@@ -351,11 +351,11 @@ export function flattenShape(
           flatShapes: [
             {
               ...shape,
-              xywh: translate(shape.xywh, offset),
+              xywh: translateXYWH(shape.xywh, offset),
               zIndex,
             },
           ],
-          bbox: translate(shape.xywh, offset),
+          bbox: translateXYWH(shape.xywh, offset),
         };
       case "polygon":
         const minX = _.min(shape.points.map((p) => p.x))!;
@@ -371,7 +371,7 @@ export function flattenShape(
               zIndex,
             },
           ],
-          bbox: translate([minX, minY, maxX - minX, maxY - minY], offset),
+          bbox: translateXYWH([minX, minY, maxX - minX, maxY - minY], offset),
         };
       case "group": {
         const results = shape.shapes.map((s) =>
@@ -391,7 +391,7 @@ export function flattenShape(
           bbox: mergeMany(results.map((r) => r.bbox)),
         };
       }
-      case "transform":
+      case "translate":
         return flattenShape(shape.shape, offset.add(shape.offset), zIndex);
       case "keyed":
         const result = flattenShape(shape.shape, offset, zIndex);
@@ -566,7 +566,7 @@ export function pruneEmptyGroups(shape: Shape): Shape | null {
         shapes: prunedShapes,
       };
     }
-    case "transform": {
+    case "translate": {
       const prunedShape = pruneEmptyGroups(shape.shape);
       if (!prunedShape) {
         return null;
@@ -772,10 +772,10 @@ function lerpShapesImpl(a: Shape, b: Shape, t: number): Shape {
         //   lerpShapes(as, b.shapes[k], t),
         // ),
       };
-    case "transform":
+    case "translate":
       assertSameType(a, b);
       return {
-        type: "transform",
+        type: "translate",
         shape: lerpShapesImpl(a.shape, b.shape, t),
         offset: a.offset.lerp(b.offset, t),
       };
@@ -823,7 +823,7 @@ function shapeByKeyHelper(
   if (shape.type === "keyed" && shape.key === key) {
     return { shape, offset };
   }
-  if (shape.type === "transform") {
+  if (shape.type === "translate") {
     offset = offset.add(shape.offset);
   }
   for (const child of shapeChildren(shape, true)) {

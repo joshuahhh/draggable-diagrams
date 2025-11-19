@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
-import { group, keyed, transform, zIndex } from "./shape";
+import { group, keyed, translate, zIndex } from "./shape";
 import { defined } from "./utils";
 import { Vec2 } from "./vec2";
 import { inXYWH, XYWH } from "./xywh";
@@ -33,7 +33,7 @@ export const manipulableSokoban: Manipulable<SokobanState> = {
         fillStyle: "black",
       })),
       ...state.boxes.map(([x, y, id]) =>
-        transform(
+        translate(
           Vec2(x * TILE_SIZE, y * TILE_SIZE),
           keyed(id, false, {
             type: "rectangle" as const,
@@ -57,7 +57,7 @@ export const manipulableSokoban: Manipulable<SokobanState> = {
         }),
       ),
 
-      transform(
+      translate(
         Vec2(state.player).mul(TILE_SIZE),
         keyed(
           `player`,

@@ -7,7 +7,7 @@ import {
   keyed,
   lazy,
   pointInShape,
-  transform,
+  translate,
   zIndex,
 } from "./shape";
 import { TreeMorph, TreeNode } from "./trees";
@@ -89,14 +89,14 @@ function drawBgSubtree(
   };
   const { aOffset, bOffset, length: width } = overlapIntervals(params);
 
-  shape.shapes.push(transform(Vec2(aOffset, 0), bgNodeR.shape));
+  shape.shapes.push(translate(Vec2(aOffset, 0), bgNodeR.shape));
 
   let x = bOffset;
   let y = bgNodeR.h + BG_NODE_GAP;
   let maxY = bgNodeR.h;
 
   for (const childR of childRs) {
-    shape.shapes.push(transform(Vec2(x, y), childR.shape));
+    shape.shapes.push(translate(Vec2(x, y), childR.shape));
 
     x += childR.w + BG_NODE_GAP;
     maxY = Math.max(maxY, y + childR.h);
@@ -151,7 +151,7 @@ function drawBgNodeWithFgNodesInside(
 
   for (const fgNode of fgNodesHere) {
     const r = drawFgSubtreeInBgNode(fgNode, bgNode.id, morph, fgNodeCenters);
-    shapeInRect.shapes.push(transform(Vec2(x, y), r.shape));
+    shapeInRect.shapes.push(translate(Vec2(x, y), r.shape));
 
     x += r.w + FG_NODE_GAP;
     maxX = Math.max(maxX, x - FG_NODE_GAP);
@@ -169,7 +169,7 @@ function drawBgNodeWithFgNodesInside(
   const offset = nodeCenterInCircle.sub(nodeCenterInRect);
 
   const shape = group(`drawBgNodeWithFgNodesInside(${bgNode.id})`);
-  shape.shapes.push(transform(offset, shapeInRect));
+  shape.shapes.push(translate(offset, shapeInRect));
 
   shape.shapes.push(
     zIndex(-1, {
@@ -212,7 +212,7 @@ function drawFgSubtreeInBgNode(
     const edgeKey = `${fgNode.id}->${child.id}`;
     if (morph[child.id] === bgNodeId) {
       const r = drawFgSubtreeInBgNode(child, bgNodeId, morph, fgNodeCenters);
-      childrenShape.shapes.push(transform(Vec2(childrenX, 0), r.shape));
+      childrenShape.shapes.push(translate(Vec2(childrenX, 0), r.shape));
       fgNodesBelow.push(...r.fgNodesBelow);
       childrenX += r.w;
       childrenMaxH = Math.max(childrenMaxH, r.h);
@@ -269,7 +269,7 @@ function drawFgSubtreeInBgNode(
   if (childrenX < FG_NODE_SIZE) {
     nodeX = FG_NODE_SIZE / 2;
     shape.shapes.push(
-      transform(
+      translate(
         Vec2((FG_NODE_SIZE - childrenX) / 2, FG_NODE_SIZE + FG_NODE_GAP),
         childrenShape,
       ),
@@ -277,7 +277,7 @@ function drawFgSubtreeInBgNode(
   } else {
     nodeX = childrenX / 2;
     shape.shapes.push(
-      transform(Vec2(0, FG_NODE_SIZE + FG_NODE_GAP), childrenShape),
+      translate(Vec2(0, FG_NODE_SIZE + FG_NODE_GAP), childrenShape),
     );
   }
 
@@ -319,7 +319,7 @@ export function drawSubtree(
       childrenX += FG_NODE_GAP;
     }
     const r = drawSubtree(child, keyPrefix, style, nodeCenters);
-    childrenShape.shapes.push(transform(Vec2(childrenX, 0), r.shape));
+    childrenShape.shapes.push(translate(Vec2(childrenX, 0), r.shape));
     childrenX += r.w;
     childrenMaxH = Math.max(childrenMaxH, r.h);
 
@@ -346,7 +346,7 @@ export function drawSubtree(
   if (childrenX < FG_NODE_SIZE) {
     nodeX = FG_NODE_SIZE / 2;
     shape.shapes.push(
-      transform(
+      translate(
         Vec2((FG_NODE_SIZE - childrenX) / 2, FG_NODE_SIZE + FG_NODE_GAP),
         childrenShape,
       ),
@@ -354,7 +354,7 @@ export function drawSubtree(
   } else {
     nodeX = childrenX / 2;
     shape.shapes.push(
-      transform(Vec2(0, FG_NODE_SIZE + FG_NODE_GAP), childrenShape),
+      translate(Vec2(0, FG_NODE_SIZE + FG_NODE_GAP), childrenShape),
     );
   }
 

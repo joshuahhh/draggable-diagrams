@@ -1,11 +1,11 @@
 import { Manipulable } from "./manipulable";
-import { keyed, transform } from "./shape";
+import { keyed, translate } from "./shape";
 import { XYWH } from "./xywh";
 
 export const manipulableSimplest: Manipulable<boolean> = {
   sourceFile: "manipulable-simplest.ts",
   render(state) {
-    return transform(
+    return translate(
       [state ? 100 : 0, 0],
       keyed("switch", true, {
         type: "rectangle" as const,

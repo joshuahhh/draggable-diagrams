@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
-import { group, keyed, transform } from "./shape";
+import { group, keyed, translate } from "./shape";
 import { insertImm, removeImm } from "./utils";
 import { Vec2 } from "./vec2";
 import { XYWH } from "./xywh";
@@ -23,7 +23,7 @@ export const manipulableInsertAndRemove: Manipulable<PermState> = {
         label: "Store:",
       },
       ...state.store.map(({ key, label }, idx) =>
-        transform(
+        translate(
           Vec2(80 + idx * TILE_SIZE, 0),
           keyed(key, true, {
             type: "rectangle" as const,
@@ -35,7 +35,7 @@ export const manipulableInsertAndRemove: Manipulable<PermState> = {
         ),
       ),
       ...state.items.map(({ key, label }, idx) =>
-        transform(
+        translate(
           Vec2(idx * TILE_SIZE, TILE_SIZE * 1.5),
           keyed(key, true, {
             type: "rectangle" as const,

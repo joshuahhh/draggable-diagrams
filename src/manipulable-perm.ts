@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
-import { group, keyed, transform, zIndex } from "./shape";
+import { group, keyed, translate, zIndex } from "./shape";
 import { insertImm, removeImm } from "./utils";
 import { Vec2 } from "./vec2";
 import { XYWH } from "./xywh";
@@ -18,7 +18,7 @@ export const manipulablePerm: Manipulable<PermState> = {
     return group(
       `grid-poly`,
       state.perm.map((p, idx) =>
-        transform(
+        translate(
           Vec2(idx * TILE_SIZE, p === draggableKey ? -10 : 0),
           keyed(
             `${p}`,

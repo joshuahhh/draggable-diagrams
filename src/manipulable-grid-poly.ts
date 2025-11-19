@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
-import { group, keyed, Shape, transform } from "./shape";
+import { group, keyed, Shape, translate } from "./shape";
 import { setImm } from "./utils";
 import { Vec2 } from "./vec2";
 
@@ -32,7 +32,7 @@ export const manipulableGridPoly: Manipulable<GridPolyState> = {
         ),
       ),
       ...state.points.map((pt, idx) =>
-        transform(
+        translate(
           Vec2(pt.x * TILE_SIZE, pt.y * TILE_SIZE),
           keyed(`${idx}`, true, {
             type: "circle" as const,

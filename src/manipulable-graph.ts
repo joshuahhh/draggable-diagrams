@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
-import { group, keyed, transform } from "./shape";
+import { group, keyed, translate } from "./shape";
 import { Vec2 } from "./vec2";
 
 type GraphState = {
@@ -15,7 +15,7 @@ export const manipulableGraph: Manipulable<GraphState> = {
     const NODE_R = 20;
     return group(`nodes-and-edges`, [
       ...Object.entries(state.nodes).map(([key, node]) =>
-        transform(
+        translate(
           Vec2(node.x, node.y),
           keyed(`node-${key}`, true, {
             type: "circle" as const,
@@ -48,7 +48,7 @@ export const manipulableGraph: Manipulable<GraphState> = {
         }
 
         // just draw the edge as an arrow, nothing draggable
-        return transform(
+        return translate(
           offset,
           group([
             {
@@ -58,7 +58,7 @@ export const manipulableGraph: Manipulable<GraphState> = {
               strokeStyle: "black",
               lineWidth: 2,
             },
-            transform(
+            translate(
               toArrow,
               keyed(`head-${key}`, true, {
                 type: "polygon" as const,
@@ -71,7 +71,7 @@ export const manipulableGraph: Manipulable<GraphState> = {
               }),
             ),
             // TODO: hover effect
-            transform(
+            translate(
               fromArrow.towards(toArrow, 5),
               keyed(`tail-${key}`, true, {
                 type: "circle" as const,

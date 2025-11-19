@@ -22,7 +22,7 @@ export const fromCenter = (center: Vec2, w: number, h: number): XYWH => {
   return XYWH(center.x - w / 2, center.y - h / 2, w, h);
 };
 
-export const translate = (xywh: XYWH, v: Vec2): XYWH => {
+export const translateXYWH = (xywh: XYWH, v: Vec2): XYWH => {
   return XYWH(xywh[0] + v.x, xywh[1] + v.y, xywh[2], xywh[3]);
 };
 

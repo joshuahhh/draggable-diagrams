@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
 import { drawBgTree, drawSubtree, FG_NODE_SIZE } from "./order-preserving";
-import { group, keyed, lazy, PointInShape, transform } from "./shape";
+import { group, keyed, lazy, PointInShape, translate } from "./shape";
 import {
   buildHasseDiagram,
   HasseDiagram,
@@ -41,7 +41,7 @@ export const manipulableOrderPreserving: Manipulable<
         "fg",
         domNodeCenters,
       );
-      g.shapes.push(transform([0, state.yForTradRep], domR.shape));
+      g.shapes.push(translate([0, state.yForTradRep], domR.shape));
       const codNodeCenters: Record<string, PointInShape> = {};
       const codR = drawSubtree(
         state.codomainTree,
@@ -49,10 +49,10 @@ export const manipulableOrderPreserving: Manipulable<
         "bg",
         codNodeCenters,
       );
-      g.shapes.push(transform([domR.w + 40, state.yForTradRep], codR.shape));
+      g.shapes.push(translate([domR.w + 40, state.yForTradRep], codR.shape));
       for (const [domElem, codElem] of Object.entries(morph)) {
         g.shapes.push(
-          transform(
+          translate(
             [0, 0],
             keyed(
               `morphism-${domElem}`,
