@@ -81,54 +81,7 @@ export type Shape =
       zIndex: number;
     };
 
-export type Group = Extract<Shape, { type: "group" }>;
-export function group(
-  debugName?: string,
-  ...flattenToShapes: FlattenTo<Shape>[]
-): Group;
-export function group(...flattenToShapes: FlattenTo<Shape>[]): Group;
-export function group(
-  debugNameOrFlattenToShapes?: string | FlattenTo<Shape>,
-  ...flattenToShapes: FlattenTo<Shape>[]
-): Group {
-  const debugName =
-    typeof debugNameOrFlattenToShapes === "string"
-      ? debugNameOrFlattenToShapes
-      : undefined;
-  const shapes = flatten(
-    typeof debugNameOrFlattenToShapes === "string"
-      ? flattenToShapes
-      : [debugNameOrFlattenToShapes, ...flattenToShapes],
-  );
-  return { ...(debugName && { debugName }), type: "group", shapes };
-}
-
-export type KeyedGroup = Extract<Shape, { type: "keyed-group" }>;
-export function keyedGroup(shapes: Record<string, Shape> = {}): KeyedGroup {
-  return { type: "keyed-group", shapes };
-}
-
-export type Translate = Extract<Shape, { type: "translate" }>;
-export function translate(offset: Vec2able, shape: Shape): Translate {
-  return { type: "translate", shape, offset: Vec2(offset) };
-}
-
-export type Lazy = Extract<Shape, { type: "lazy" }>;
-export function lazy(
-  getShape: (Lazy["state"] & { hasRun: false })["getShape"],
-): Lazy {
-  return { type: "lazy", state: { hasRun: false, getShape } };
-}
-
-export type Keyed = Extract<Shape, { type: "keyed" }>;
-export function keyed(key: string, isDraggable: boolean, shape: Shape): Keyed {
-  return { type: "keyed", key, shape, isDraggable };
-}
-
-export type ZIndex = Extract<Shape, { type: "z-index" }>;
-export function zIndex(zIndex: number, shape: Shape): ZIndex {
-  return { type: "z-index", shape, zIndex };
-}
+export type ShapeOfType<T extends Shape["type"]> = Extract<Shape, { type: T }>;
 
 // this is just a way of tagging that we've run the shape through
 // origToInterpolatable
@@ -225,7 +178,7 @@ export function pullOutKeyedShapes(shape: Shape): Shape {
   function helper(s: Shape, offset: Vec2) {
     const children = shapeChildren(s, true); // get 'em before we mess around with s
     if (s.type === "keyed") {
-      kg.shapes[s.key] = translate(offset, { ...s });
+      kg.shapes[s.key] = addMethods(s).translate(offset);
       // TODO: hack
       for (const key in s) {
         delete (s as any)[key];
@@ -857,4 +810,82 @@ function shapeByKeyHelper(
     }
   }
   return null;
+}
+
+// # cute chaining DSL for shapes
+
+const shapeMethods = {
+  translate(this: Shape, offset: Vec2able) {
+    return addMethods({ type: "translate", offset: Vec2(offset), shape: this });
+  },
+
+  keyed(this: Shape, key: string, isDraggable: boolean) {
+    return addMethods({ type: "keyed", key, isDraggable, shape: this });
+  },
+
+  zIndex(this: Shape, z: number) {
+    return addMethods({ type: "z-index", zIndex: z, shape: this });
+  },
+};
+
+export type ShapeWithMethods = Shape & typeof shapeMethods;
+
+// let's not export this, to encourage using the constructors below
+function addMethods<T extends Shape>(s: T): T & typeof shapeMethods {
+  const result = Object.create(shapeMethods);
+  Object.assign(result, s);
+  return result;
+}
+
+function makeConstructorForShapeType<T extends Shape["type"]>(type: T) {
+  return (
+    params: Omit<Extract<Shape, { type: T }>, "type">,
+  ): ShapeWithMethods => {
+    return addMethods({ type, ...params } as Extract<Shape, { type: T }>);
+  };
+}
+
+export const circle = makeConstructorForShapeType("circle");
+export const line = makeConstructorForShapeType("line");
+export const curve = makeConstructorForShapeType("curve");
+export const polygon = makeConstructorForShapeType("polygon");
+export const rectangle = makeConstructorForShapeType("rectangle");
+
+export function group(
+  debugName?: string,
+  ...flattenToShapes: FlattenTo<Shape>[]
+): ShapeOfType<"group"> & ShapeWithMethods;
+export function group(
+  ...flattenToShapes: FlattenTo<Shape>[]
+): ShapeOfType<"group"> & ShapeWithMethods;
+export function group(
+  debugNameOrFlattenToShapes?: string | FlattenTo<Shape>,
+  ...flattenToShapes: FlattenTo<Shape>[]
+): ShapeOfType<"group"> & ShapeWithMethods {
+  const debugName =
+    typeof debugNameOrFlattenToShapes === "string"
+      ? debugNameOrFlattenToShapes
+      : undefined;
+  const shapes = flatten(
+    typeof debugNameOrFlattenToShapes === "string"
+      ? flattenToShapes
+      : [debugNameOrFlattenToShapes, ...flattenToShapes],
+  );
+  return addMethods({
+    ...(debugName && { debugName }),
+    type: "group",
+    shapes,
+  });
+}
+
+export function keyedGroup(
+  shapes: Record<string, Shape> = {},
+): ShapeOfType<"keyed-group"> & ShapeWithMethods {
+  return addMethods({ type: "keyed-group", shapes });
+}
+
+export function lazy(
+  getShape: (ShapeOfType<"lazy">["state"] & { hasRun: false })["getShape"],
+): ShapeOfType<"lazy"> & ShapeWithMethods {
+  return addMethods({ type: "lazy", state: { hasRun: false, getShape } });
 }

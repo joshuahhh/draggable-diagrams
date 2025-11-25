@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
-import { group, keyed, translate } from "./shape";
+import { circle, group, line, polygon } from "./shape";
 import { Vec2 } from "./vec2";
 
 type GraphState = {
@@ -14,18 +14,16 @@ export const manipulableGraph: Manipulable<GraphState> = {
   render(state) {
     const NODE_R = 20;
     return group(`nodes-and-edges`, [
-      ...Object.entries(state.nodes).map(([key, node]) =>
-        translate(
-          Vec2(node.x, node.y),
-          keyed(`node-${key}`, true, {
-            type: "circle" as const,
-            center: Vec2(0),
-            radius: NODE_R,
-            fillStyle: "black",
-          }),
-        ),
+      Object.entries(state.nodes).map(([key, node]) =>
+        circle({
+          center: Vec2(0),
+          radius: NODE_R,
+          fillStyle: "black",
+        })
+          .keyed(`node-${key}`, true)
+          .translate(Vec2(node.x, node.y)),
       ),
-      ...Object.entries(state.edges).flatMap(([key, edge]) => {
+      Object.entries(state.edges).map(([key, edge]) => {
         const fromCenter = Vec2(state.nodes[edge.from]);
         const toCenter = Vec2(state.nodes[edge.to]);
         const fromArrow = fromCenter.towards(toCenter, NODE_R + 5);
@@ -48,40 +46,32 @@ export const manipulableGraph: Manipulable<GraphState> = {
         }
 
         // just draw the edge as an arrow, nothing draggable
-        return translate(
-          offset,
-          group([
-            {
-              type: "line" as const,
-              from: fromArrow,
-              to: toArrow.towards(fromArrow, arrowHeadLength / 2),
-              strokeStyle: "black",
-              lineWidth: 2,
-            },
-            translate(
-              toArrow,
-              keyed(`head-${key}`, true, {
-                type: "polygon" as const,
-                points: [
-                  Vec2(0),
-                  backFromTip.rotate(arrowHeadAngle),
-                  backFromTip.rotate(-arrowHeadAngle),
-                ],
-                fillStyle: "black",
-              }),
-            ),
-            // TODO: hover effect
-            translate(
-              fromArrow.towards(toArrow, 5),
-              keyed(`tail-${key}`, true, {
-                type: "circle" as const,
-                center: Vec2(0),
-                radius: 5,
-                fillStyle: "black",
-              }),
-            ),
-          ]),
-        );
+        return group(
+          line({
+            from: fromArrow,
+            to: toArrow.towards(fromArrow, arrowHeadLength / 2),
+            strokeStyle: "black",
+            lineWidth: 2,
+          }),
+          polygon({
+            points: [
+              Vec2(0),
+              backFromTip.rotate(arrowHeadAngle),
+              backFromTip.rotate(-arrowHeadAngle),
+            ],
+            fillStyle: "black",
+          })
+            .keyed(`head-${key}`, true)
+            .translate(toArrow),
+          // TODO: hover effect
+          circle({
+            center: Vec2(0),
+            radius: 5,
+            fillStyle: "black",
+          })
+            .keyed(`tail-${key}`, true)
+            .translate(fromArrow.towards(toArrow, 5)),
+        ).translate(offset);
       }),
     ]);
   },

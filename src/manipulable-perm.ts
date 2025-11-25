@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
-import { group, keyed, translate, zIndex } from "./shape";
+import { group, rectangle } from "./shape";
 import { insertImm, removeImm } from "./utils";
 import { Vec2 } from "./vec2";
 import { XYWH } from "./xywh";
@@ -18,21 +18,16 @@ export const manipulablePerm: Manipulable<PermState> = {
     return group(
       `grid-poly`,
       state.perm.map((p, idx) =>
-        translate(
-          Vec2(idx * TILE_SIZE, p === draggableKey ? -10 : 0),
-          keyed(
-            `${p}`,
-            true,
-            zIndex(p === draggableKey ? 1 : 0, {
-              type: "rectangle" as const,
-              xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
-              strokeStyle: "black",
-              lineWidth: 2,
-              fillStyle: "white",
-              label: `${p}`,
-            }),
-          ),
-        ),
+        rectangle({
+          xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
+          strokeStyle: "black",
+          lineWidth: 2,
+          fillStyle: "white",
+          label: `${p}`,
+        })
+          .zIndex(p === draggableKey ? 1 : 0)
+          .keyed(`${p}`, true)
+          .translate(Vec2(idx * TILE_SIZE, p === draggableKey ? -10 : 0)),
       ),
     );
   },

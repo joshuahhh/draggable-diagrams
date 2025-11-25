@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
-import { group, keyed, translate, zIndex } from "./shape";
+import { circle, group, line, rectangle } from "./shape";
 import { Vec2 } from "./vec2";
 import { XYWH } from "./xywh";
 
@@ -24,50 +24,33 @@ export const manipulableSpinny: Manipulable<PermState> = {
     );
     return group(
       state.perm.map((p) =>
-        translate(
-          positions[p],
-          keyed(
-            p,
-            true,
-            zIndex(
-              p === draggableKey ? 1 : 0,
-              group(
-                {
-                  type: "circle" as const,
-                  center: Vec2(0),
-                  radius: TILE_SIZE / 2,
-                  fillStyle: "white",
-                  strokeStyle: "black",
-                  lineWidth: 2,
-                },
-                {
-                  type: "rectangle" as const,
-                  xywh: XYWH(
-                    -TILE_SIZE / 2,
-                    -TILE_SIZE / 2,
-                    TILE_SIZE,
-                    TILE_SIZE,
-                  ),
-                  lineWidth: 2,
-                  label: p,
-                },
-              ),
-            ),
-          ),
-        ),
+        group(
+          circle({
+            center: Vec2(0),
+            radius: TILE_SIZE / 2,
+            fillStyle: "white",
+            strokeStyle: "black",
+            lineWidth: 2,
+          }),
+          rectangle({
+            xywh: XYWH(-TILE_SIZE / 2, -TILE_SIZE / 2, TILE_SIZE, TILE_SIZE),
+            lineWidth: 2,
+            label: p,
+          }),
+        )
+          .zIndex(p === draggableKey ? 1 : 0)
+          .keyed(p, true)
+          .translate(positions[p]),
       ),
       state.perm.map((p, idx) => {
-        return keyed(
-          `edge-${p}`,
-          false,
-          zIndex(-1, {
-            type: "line" as const,
-            from: positions[p],
-            to: positions[state.perm[(idx + 1) % state.perm.length]],
-            strokeStyle: "black",
-            lineWidth: 1,
-          }),
-        );
+        return line({
+          from: positions[p],
+          to: positions[state.perm[(idx + 1) % state.perm.length]],
+          strokeStyle: "black",
+          lineWidth: 1,
+        })
+          .zIndex(-1)
+          .keyed(`edge-${p}`, false);
       }),
     );
   },

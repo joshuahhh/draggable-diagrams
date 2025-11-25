@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
-import { group, keyed, Shape, translate } from "./shape";
+import { circle, group, line } from "./shape";
 import { setImm } from "./utils";
 import { Vec2 } from "./vec2";
 
@@ -20,40 +20,33 @@ export const manipulableGridPoly: Manipulable<GridPolyState> = {
     // draw grid as rectangles
     const TILE_SIZE = 50;
     return group(`grid-poly`, [
-      ..._.range(state.w).flatMap((x) =>
-        _.range(state.h).flatMap(
-          (y) =>
-            ({
-              type: "circle" as const,
-              center: Vec2(x * TILE_SIZE, y * TILE_SIZE),
-              radius: 5,
-              fillStyle: "gray",
-            }) satisfies Shape,
-        ),
-      ),
-      ...state.points.map((pt, idx) =>
-        translate(
-          Vec2(pt.x * TILE_SIZE, pt.y * TILE_SIZE),
-          keyed(`${idx}`, true, {
-            type: "circle" as const,
-            center: Vec2(0),
-            radius: 10,
-            fillStyle: "black",
+      _.range(state.w).map((x) =>
+        _.range(state.h).map((y) =>
+          circle({
+            center: Vec2(x * TILE_SIZE, y * TILE_SIZE),
+            radius: 5,
+            fillStyle: "gray",
           }),
         ),
       ),
-      ...state.points.map((pt, idx) =>
-        keyed(`line-${idx}`, false, {
-          type: "line" as const,
+      state.points.map((pt, idx) =>
+        circle({
+          center: Vec2(0),
+          radius: 10,
+          fillStyle: "black",
+        })
+          .keyed(`${idx}`, true)
+          .translate(Vec2(pt.x * TILE_SIZE, pt.y * TILE_SIZE)),
+      ),
+      state.points.map((pt, idx) => {
+        const nextPt = state.points[(idx + 1) % state.points.length];
+        return line({
           from: Vec2(pt.x * TILE_SIZE, pt.y * TILE_SIZE),
-          to: Vec2(
-            state.points[(idx + 1) % state.points.length].x * TILE_SIZE,
-            state.points[(idx + 1) % state.points.length].y * TILE_SIZE,
-          ),
+          to: Vec2(nextPt.x * TILE_SIZE, nextPt.y * TILE_SIZE),
           strokeStyle: "black",
           lineWidth: 2,
-        }),
-      ),
+        }).keyed(`line-${idx}`, false);
+      }),
     ]);
   },
 

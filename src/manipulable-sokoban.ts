@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
-import { group, keyed, translate, zIndex } from "./shape";
+import { group, rectangle } from "./shape";
 import { defined } from "./utils";
 import { Vec2 } from "./vec2";
 import { inXYWH, XYWH } from "./xywh";
@@ -19,34 +19,33 @@ export const manipulableSokoban: Manipulable<SokobanState> = {
   render(state) {
     const TILE_SIZE = 50;
     return group(`tiles`, [
-      ..._.range(state.w).flatMap((x) =>
-        _.range(state.h).map((y) => ({
-          type: "rectangle" as const,
-          xywh: XYWH(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE),
-          strokeStyle: "gray",
-          lineWidth: 1,
-        })),
-      ),
-      ...state.walls.map(([x, y]) => ({
-        type: "rectangle" as const,
-        xywh: XYWH(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE),
-        fillStyle: "black",
-      })),
-      ...state.boxes.map(([x, y, id]) =>
-        translate(
-          Vec2(x * TILE_SIZE, y * TILE_SIZE),
-          keyed(id, false, {
-            type: "rectangle" as const,
-            xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
-            fillStyle: "brown",
-            strokeStyle: "black",
-            lineWidth: 2,
+      _.range(state.w).map((x) =>
+        _.range(state.h).map((y) =>
+          rectangle({
+            xywh: XYWH(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE),
+            strokeStyle: "gray",
+            lineWidth: 1,
           }),
         ),
       ),
-      ...state.goals.map(([x, y]) =>
-        zIndex(1, {
-          type: "rectangle" as const,
+      state.walls.map(([x, y]) =>
+        rectangle({
+          xywh: XYWH(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE),
+          fillStyle: "black",
+        }),
+      ),
+      state.boxes.map(([x, y, id]) =>
+        rectangle({
+          xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
+          fillStyle: "brown",
+          strokeStyle: "black",
+          lineWidth: 2,
+        })
+          .keyed(id, false)
+          .translate(Vec2(x * TILE_SIZE, y * TILE_SIZE)),
+      ),
+      state.goals.map(([x, y]) =>
+        rectangle({
           xywh: XYWH(
             x * TILE_SIZE + TILE_SIZE / 4,
             y * TILE_SIZE + TILE_SIZE / 4,
@@ -54,21 +53,16 @@ export const manipulableSokoban: Manipulable<SokobanState> = {
             TILE_SIZE / 2,
           ),
           fillStyle: "orange",
-        }),
+        }).zIndex(1),
       ),
 
-      translate(
-        Vec2(state.player).mul(TILE_SIZE),
-        keyed(
-          `player`,
-          true,
-          zIndex(2, {
-            type: "rectangle" as const,
-            xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
-            label: "🧍",
-          }),
-        ),
-      ),
+      rectangle({
+        xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
+        label: "🧍",
+      })
+        .zIndex(2)
+        .keyed(`player`, true)
+        .translate(Vec2(state.player).mul(TILE_SIZE)),
     ]);
   },
 

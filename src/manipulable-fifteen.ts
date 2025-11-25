@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
-import { group, keyed, translate } from "./shape";
+import { group, rectangle } from "./shape";
 import { defined } from "./utils";
 import { Vec2 } from "./vec2";
 import { inXYWH, XYWH } from "./xywh";
@@ -17,26 +17,25 @@ export const manipulableFifteen: Manipulable<FifteenState> = {
   render(state) {
     const TILE_SIZE = 50;
     return group(`tiles`, [
-      ..._.range(state.w).flatMap((x) =>
-        _.range(state.h).map((y) => ({
-          type: "rectangle" as const,
-          xywh: XYWH(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE),
-          strokeStyle: "gray",
-          lineWidth: 1,
-        })),
-      ),
-      ...Object.entries(state.tiles).map(([key, tile]) =>
-        translate(
-          Vec2(tile.x * TILE_SIZE, tile.y * TILE_SIZE),
-          keyed(key, true, {
-            type: "rectangle" as const,
-            xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
-            fillStyle: key === " " ? "#0000" : "#eee",
-            strokeStyle: key === " " ? "#0000" : "black",
-            lineWidth: 2,
-            label: key,
+      _.range(state.w).map((x) =>
+        _.range(state.h).map((y) =>
+          rectangle({
+            xywh: XYWH(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE),
+            strokeStyle: "gray",
+            lineWidth: 1,
           }),
         ),
+      ),
+      Object.entries(state.tiles).map(([key, tile]) =>
+        rectangle({
+          xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
+          fillStyle: key === " " ? "#0000" : "#eee",
+          strokeStyle: key === " " ? "#0000" : "black",
+          lineWidth: 2,
+          label: key,
+        })
+          .keyed(key, true)
+          .translate(Vec2(tile.x * TILE_SIZE, tile.y * TILE_SIZE)),
       ),
     ]);
   },

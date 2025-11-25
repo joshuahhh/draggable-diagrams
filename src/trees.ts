@@ -257,7 +257,7 @@ function cartesianProduct<T>(arrays: T[][]): T[][] {
 /**
  * Build a function that checks if node1 is an ancestor of node2 (or equal to node2)
  */
-function buildAncestorMap(
+export function buildAncestorMap(
   root: TreeNode,
 ): (ancestor: TreeNode, descendant: TreeNode) => boolean {
   const ancestorMap = new Map<string, Set<string>>();

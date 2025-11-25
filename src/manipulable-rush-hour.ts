@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
-import { group, keyed, translate, zIndex } from "./shape";
+import { group, line, rectangle } from "./shape";
 import { Vec2 } from "./vec2";
 import { XYWH } from "./xywh";
 
@@ -26,28 +26,26 @@ export const manipulableRushHour: Manipulable<RushHourState> = {
     const BORDER_WIDTH = 10;
     const redCarY = Object.values(state.cars).find((t) => t.color === "red")?.y;
     return group(`tiles`, [
-      ..._.range(state.w).flatMap((x) =>
-        _.range(state.h).map((y) => ({
-          type: "rectangle" as const,
-          xywh: XYWH(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE),
-          strokeStyle: "gray",
-          lineWidth: 1,
-        })),
-      ),
-      ...Object.entries(state.cars).map(([key, tile]) =>
-        translate(
-          Vec2(tile.x * TILE_SIZE, tile.y * TILE_SIZE),
-          keyed(`${key}`, true, {
-            type: "rectangle" as const,
-            xywh: XYWH(0, 0, tile.w * TILE_SIZE, tile.h * TILE_SIZE),
-            fillStyle: tile.color,
-            strokeStyle: "black",
-            lineWidth: 2,
+      _.range(state.w).map((x) =>
+        _.range(state.h).map((y) =>
+          rectangle({
+            xywh: XYWH(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE),
+            strokeStyle: "gray",
+            lineWidth: 1,
           }),
         ),
       ),
-      zIndex(-10, {
-        type: "rectangle" as const,
+      Object.entries(state.cars).map(([key, tile]) =>
+        rectangle({
+          xywh: XYWH(0, 0, tile.w * TILE_SIZE, tile.h * TILE_SIZE),
+          fillStyle: tile.color,
+          strokeStyle: "black",
+          lineWidth: 2,
+        })
+          .keyed(`${key}`, true)
+          .translate(Vec2(tile.x * TILE_SIZE, tile.y * TILE_SIZE)),
+      ),
+      rectangle({
         xywh: XYWH(
           -BORDER_WIDTH / 2,
           -BORDER_WIDTH / 2,
@@ -56,24 +54,20 @@ export const manipulableRushHour: Manipulable<RushHourState> = {
         ),
         strokeStyle: "gray",
         lineWidth: BORDER_WIDTH,
-      }),
-      ...(redCarY !== undefined
-        ? [
-            {
-              type: "line" as const,
-              from: Vec2(
-                state.w * TILE_SIZE + BORDER_WIDTH / 2,
-                redCarY * TILE_SIZE,
-              ),
-              to: Vec2(
-                state.w * TILE_SIZE + BORDER_WIDTH / 2,
-                (redCarY + 1) * TILE_SIZE,
-              ),
-              strokeStyle: "white",
-              lineWidth: BORDER_WIDTH,
-            },
-          ]
-        : []),
+      }).zIndex(-10),
+      redCarY !== undefined &&
+        line({
+          from: Vec2(
+            state.w * TILE_SIZE + BORDER_WIDTH / 2,
+            redCarY * TILE_SIZE,
+          ),
+          to: Vec2(
+            state.w * TILE_SIZE + BORDER_WIDTH / 2,
+            (redCarY + 1) * TILE_SIZE,
+          ),
+          strokeStyle: "white",
+          lineWidth: BORDER_WIDTH,
+        }),
     ]);
   },
 

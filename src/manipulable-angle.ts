@@ -1,5 +1,5 @@
 import { Manipulable } from "./manipulable";
-import { group, keyed, translate } from "./shape";
+import { circle, group, line } from "./shape";
 import { Vec2 } from "./vec2";
 
 type AngleState = {
@@ -14,24 +14,21 @@ export const manipulableAngle: Manipulable<AngleState> = {
     const radius = 100;
     const knobPos = Vec2(radius, 0).rotate(state.angle).add(center);
 
-    return group([
-      translate(
-        knobPos,
-        keyed("knob", true, {
-          type: "circle" as const,
-          center: Vec2(0),
-          radius: 20,
-          fillStyle: "black",
-        }),
-      ),
-      {
-        type: "line" as const,
+    return group(
+      circle({
+        center: Vec2(0),
+        radius: 20,
+        fillStyle: "black",
+      })
+        .keyed("knob", true)
+        .translate(knobPos),
+      line({
         from: center,
         to: knobPos,
         strokeStyle: "black",
         lineWidth: 4,
-      },
-    ]);
+      }),
+    );
   },
 
   accessibleFrom(_state, _draggableKey) {

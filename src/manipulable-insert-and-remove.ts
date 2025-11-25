@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
-import { group, keyed, translate } from "./shape";
+import { group, rectangle } from "./shape";
 import { insertImm, removeImm } from "./utils";
 import { Vec2 } from "./vec2";
 import { XYWH } from "./xywh";
@@ -13,38 +13,37 @@ type PermState = {
 export const manipulableInsertAndRemove: Manipulable<PermState> = {
   sourceFile: "manipulable-insert-and-remove.ts",
 
-  render(state) {
+  render(state, draggableKey) {
     // draw grid as rectangles
     const TILE_SIZE = 50;
     return group(`grid-poly`, [
-      {
-        type: "rectangle" as const,
+      rectangle({
         xywh: XYWH(0, 0, 60, TILE_SIZE),
         label: "Store:",
-      },
-      ...state.store.map(({ key, label }, idx) =>
-        translate(
-          Vec2(80 + idx * TILE_SIZE, 0),
-          keyed(key, true, {
-            type: "rectangle" as const,
-            xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
-            strokeStyle: "black",
-            lineWidth: 2,
-            label,
-          }),
-        ),
+      }),
+      state.store.map(({ key, label }, idx) =>
+        rectangle({
+          xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
+          strokeStyle: "black",
+          lineWidth: 2,
+          fillStyle: "white",
+          label,
+        })
+          .zIndex(key === draggableKey ? 1 : 0)
+          .keyed(key, true)
+          .translate(Vec2(80 + idx * TILE_SIZE, 0)),
       ),
-      ...state.items.map(({ key, label }, idx) =>
-        translate(
-          Vec2(idx * TILE_SIZE, TILE_SIZE * 1.5),
-          keyed(key, true, {
-            type: "rectangle" as const,
-            xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
-            strokeStyle: "black",
-            lineWidth: 2,
-            label,
-          }),
-        ),
+      state.items.map(({ key, label }, idx) =>
+        rectangle({
+          xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
+          strokeStyle: "black",
+          lineWidth: 2,
+          fillStyle: "white",
+          label,
+        })
+          .zIndex(key === draggableKey ? 1 : 0)
+          .keyed(key, true)
+          .translate(Vec2(idx * TILE_SIZE, TILE_SIZE * 1.5)),
       ),
     ]);
   },

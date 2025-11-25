@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
-import { group, keyed, translate, zIndex } from "./shape";
+import { group, rectangle } from "./shape";
 import { assert, insertImm, removeImm } from "./utils";
 import { Vec2 } from "./vec2";
 import { XYWH } from "./xywh";
@@ -18,35 +18,26 @@ export const manipulablePermDouble: Manipulable<PermDoubleState> = {
     return group(
       `grid-poly`,
       state.rows.map((row, rowIdx) =>
-        translate(
-          Vec2(0, rowIdx * (TILE_SIZE + ROW_PADDING * 2)),
-          group(`row-${rowIdx}`, [
-            ...row.map((p, idx) =>
-              translate(
-                Vec2(idx * TILE_SIZE + ROW_PADDING, ROW_PADDING),
-                keyed(
-                  p,
-                  true,
-                  zIndex(
-                    p === draggableKey
-                      ? 2
-                      : draggableKey && row.includes(draggableKey)
-                        ? 1
-                        : 0,
-                    {
-                      type: "rectangle" as const,
-                      xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
-                      strokeStyle: "black",
-                      lineWidth: 2,
-                      fillStyle: "white",
-                      label: p,
-                    },
-                  ),
-                ),
-              ),
-            ),
-          ]),
-        ),
+        group(`row-${rowIdx}`, [
+          row.map((p, idx) =>
+            rectangle({
+              xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
+              strokeStyle: "black",
+              lineWidth: 2,
+              fillStyle: "white",
+              label: p,
+            })
+              .zIndex(
+                p === draggableKey
+                  ? 2
+                  : draggableKey && row.includes(draggableKey)
+                    ? 1
+                    : 0,
+              )
+              .keyed(p, true)
+              .translate(Vec2(idx * TILE_SIZE + ROW_PADDING, ROW_PADDING)),
+          ),
+        ]).translate(Vec2(0, rowIdx * (TILE_SIZE + ROW_PADDING * 2))),
       ),
     );
   },

@@ -1,5 +1,5 @@
 import { Manipulable } from "./manipulable";
-import { group, keyed, Shape, translate } from "./shape";
+import { group, rectangle, Shape, ShapeWithMethods } from "./shape";
 
 type Outline = {
   id: string;
@@ -8,7 +8,7 @@ type Outline = {
 };
 
 function renderOutline(tree: Outline): {
-  shape: Shape;
+  shape: ShapeWithMethods;
   h: number;
 } {
   const HEIGHT = 25;
@@ -16,18 +16,17 @@ function renderOutline(tree: Outline): {
   const INDENT = 20;
   const shapes: Shape[] = [];
   shapes.push(
-    keyed(tree.id, true, {
-      type: "rectangle" as const,
+    rectangle({
       xywh: [0, 0, WIDTH, HEIGHT],
       strokeStyle: "gray",
       lineWidth: 1,
       label: tree.label,
-    }),
+    }).keyed(tree.id, true),
   );
   let y = HEIGHT;
   tree.children.forEach((child) => {
     const childRender = renderOutline(child);
-    shapes.push(translate([INDENT, y], childRender.shape));
+    shapes.push(childRender.shape.translate([INDENT, y]));
     y += childRender.h;
   });
   return {

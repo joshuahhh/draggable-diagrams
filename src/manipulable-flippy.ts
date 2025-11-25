@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Manipulable } from "./manipulable";
-import { group, keyed, translate, zIndex } from "./shape";
+import { circle, group, line, rectangle } from "./shape";
 import { Vec2 } from "./vec2";
 import { XYWH } from "./xywh";
 
@@ -24,37 +24,23 @@ export const manipulableFlippy: Manipulable<PermState> = {
     );
     return group(
       state.perm.map((p) =>
-        translate(
-          positions[p],
-          keyed(
-            p,
-            true,
-            zIndex(
-              p === draggableKey ? 1 : 0,
-              group(
-                {
-                  type: "circle" as const,
-                  center: Vec2(0),
-                  radius: TILE_SIZE / 2,
-                  fillStyle: "white",
-                  strokeStyle: "black",
-                  lineWidth: 2,
-                },
-                {
-                  type: "rectangle" as const,
-                  xywh: XYWH(
-                    -TILE_SIZE / 2,
-                    -TILE_SIZE / 2,
-                    TILE_SIZE,
-                    TILE_SIZE,
-                  ),
-                  lineWidth: 2,
-                  label: p,
-                },
-              ),
-            ),
-          ),
-        ),
+        group(
+          circle({
+            center: Vec2(0),
+            radius: TILE_SIZE / 2,
+            fillStyle: "white",
+            strokeStyle: "black",
+            lineWidth: 2,
+          }),
+          rectangle({
+            xywh: XYWH(-TILE_SIZE / 2, -TILE_SIZE / 2, TILE_SIZE, TILE_SIZE),
+            lineWidth: 2,
+            label: p,
+          }),
+        )
+          .zIndex(p === draggableKey ? 1 : 0)
+          .keyed(p, true)
+          .translate(positions[p]),
       ),
       state.perm.map((p, idx) => {
         // there's a bit of complexity to draw the edges in such a
@@ -64,17 +50,14 @@ export const manipulableFlippy: Manipulable<PermState> = {
           p,
           state.perm[(idx + 1) % state.perm.length],
         ]);
-        return keyed(
-          `edge-${p1}-${p2}`,
-          false,
-          zIndex(-1, {
-            type: "line" as const,
-            from: positions[p1],
-            to: positions[p2],
-            strokeStyle: "black",
-            lineWidth: 1,
-          }),
-        );
+        return line({
+          from: positions[p1],
+          to: positions[p2],
+          strokeStyle: "black",
+          lineWidth: 1,
+        })
+          .zIndex(-1)
+          .keyed(`edge-${p1}-${p2}`, false);
       }),
     );
   },

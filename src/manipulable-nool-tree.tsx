@@ -1,7 +1,7 @@
 import _ from "lodash";
 import React from "react";
 import { Manipulable } from "./manipulable";
-import { group, keyed, keyedGroup, Shape, translate } from "./shape";
+import { group, keyedGroup, rectangle, ShapeWithMethods } from "./shape";
 import { insertImm, removeImm, setImm } from "./utils";
 
 type NoolTree = {
@@ -11,7 +11,7 @@ type NoolTree = {
 };
 
 function renderNoolTree(tree: NoolTree): {
-  shape: Shape;
+  shape: ShapeWithMethods;
   w: number;
   h: number;
   id: string;
@@ -24,10 +24,10 @@ function renderNoolTree(tree: NoolTree): {
   const renderedChildrenShape = keyedGroup();
   let childY = 0;
   for (const childR of renderedChildren) {
-    renderedChildrenShape.shapes[childR.id] = translate(
-      [0, childY],
-      childR.shape,
-    );
+    renderedChildrenShape.shapes[childR.id] = childR.shape.translate([
+      0,
+      childY,
+    ]);
     childY += childR.h + GAP;
   }
   const innerW =
@@ -41,33 +41,27 @@ function renderNoolTree(tree: NoolTree): {
         GAP * (renderedChildren.length - 1)
       : LABEL_MIN_HEIGHT;
   return {
-    shape: keyed(
-      tree.id,
-      true,
-      group("node", [
-        {
-          // background rectangle
-          type: "rectangle" as const,
-          xywh: [0, 0, innerW + PADDING * 2, innerH + PADDING * 2],
-          strokeStyle: "gray",
-          lineWidth: 1,
-        } satisfies Shape,
-        {
-          // label rectangle
-          type: "rectangle" as const,
-          xywh: [PADDING, PADDING, LABEL_WIDTH, innerH],
-          label: tree.label,
-        } satisfies Shape,
-        ...(renderedChildren.length > 0
-          ? [
-              translate(
-                [PADDING + LABEL_WIDTH + GAP, PADDING],
-                renderedChildrenShape,
-              ),
-            ]
-          : []),
-      ]),
-    ),
+    shape: group("node", [
+      rectangle({
+        // background
+        xywh: [0, 0, innerW + PADDING * 2, innerH + PADDING * 2],
+        strokeStyle: "gray",
+        lineWidth: 1,
+      }),
+      rectangle({
+        // label
+        xywh: [PADDING, PADDING, LABEL_WIDTH, innerH],
+        label: tree.label,
+      }),
+      ...(renderedChildren.length > 0
+        ? [
+            renderedChildrenShape.translate([
+              PADDING + LABEL_WIDTH + GAP,
+              PADDING,
+            ]),
+          ]
+        : []),
+    ]).keyed(tree.id, true),
     w: innerW + PADDING * 2,
     h: innerH + PADDING * 2,
     id: tree.id,
