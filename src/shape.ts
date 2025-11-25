@@ -81,17 +81,14 @@ export type Shape =
       zIndex: number;
     };
 
-export type ShapeOfType<T extends Shape["type"]> = Extract<Shape, { type: T }>;
+type ShapeOfType<T extends Shape["type"]> = Extract<Shape, { type: T }>;
 
 // this is just a way of tagging that we've run the shape through
 // origToInterpolatable
 export type InterpolatableShape = Shape & { interpolatable: true };
 
 /** Returns all children of a shape. */
-export function shapeChildren(
-  shape: Shape,
-  okIfLazyHasNotRun: boolean,
-): Shape[] {
+function shapeChildren(shape: Shape, okIfLazyHasNotRun: boolean): Shape[] {
   switch (shape.type) {
     case "group":
       return shape.shapes;
@@ -128,21 +125,7 @@ export function shapeChildren(
   }
 }
 
-export function makeParentMap(shape: Shape): Map<Shape, Shape> {
-  const map = new Map<Shape, Shape>();
-  function helper(s: Shape, parent: Shape | null) {
-    if (parent) {
-      map.set(s, parent);
-    }
-    for (const child of shapeChildren(s, true)) {
-      helper(child, s);
-    }
-  }
-  helper(shape, null);
-  return map;
-}
-
-export function makeOffsetMap(shape: Shape, offset: Vec2): Map<Shape, Vec2> {
+function makeOffsetMap(shape: Shape, offset: Vec2): Map<Shape, Vec2> {
   const map = new Map<Shape, Vec2>();
   function helper(s: Shape, offset: Vec2) {
     if (s.type === "translate") {
@@ -157,10 +140,7 @@ export function makeOffsetMap(shape: Shape, offset: Vec2): Map<Shape, Vec2> {
   return map;
 }
 
-export function runLazyShapes(
-  shape: Shape,
-  offsetMap: Map<Shape, Vec2>,
-): Shape {
+function runLazyShapes(shape: Shape, offsetMap: Map<Shape, Vec2>): Shape {
   if (shape.type === "lazy" && !shape.state.hasRun) {
     const newShape = shape.state.getShape((pis) =>
       resolvePointInShape(pis, shape, offsetMap),
@@ -173,7 +153,7 @@ export function runLazyShapes(
   return shape;
 }
 
-export function pullOutKeyedShapes(shape: Shape): Shape {
+function pullOutKeyedShapes(shape: Shape): Shape {
   const kg = keyedGroup();
   function helper(s: Shape, offset: Vec2) {
     const children = shapeChildren(s, true); // get 'em before we mess around with s
@@ -205,14 +185,7 @@ export function pointInShape(shape: Shape, localPoint: Vec2): PointInShape {
   return { __shape: shape, __point: localPoint };
 }
 
-// export function shapeOffset(shape: Shape): Vec2 {
-//   if (shape.type === "group") {
-//     return shape.offset ?? Vec2(0);
-//   }
-//   return Vec2(0);
-// }
-
-export function resolvePointInShape(
+function resolvePointInShape(
   pis: PointInShape,
   dstShape: Shape,
   offsetMap: Map<Shape, Vec2>,
@@ -223,22 +196,6 @@ export function resolvePointInShape(
   const dstOffset = offsetMap.get(dstShape);
   assert(!!dstOffset, "Destination shape must have offset in offset map");
   return point.add(srcOffset!).sub(dstOffset!);
-
-  // console.log("resolving point", pis, "in", dstShape);
-
-  // while (true) {
-  //   if (srcShape === dstShape) {
-  //     return point;
-  //   }
-  //   if (srcShape.type === "translate") {
-  //     point = point.add(srcShape.offset);
-  //   }
-  //   const parent = parentMap.get(srcShape);
-  //   if (!parent) {
-  //     throw new Error("Point's group is not a descendant of target group");
-  //   }
-  //   srcShape = parent;
-  // }
 }
 
 type DrawShapeContext = {
@@ -246,7 +203,7 @@ type DrawShapeContext = {
   onDragStart: (draggableKey: string, pointerOffset: Vec2) => void;
 };
 
-export type FlatShape =
+type FlatShape =
   | (Extract<
       Shape,
       { type: "circle" | "line" | "curve" | "rectangle" | "polygon" }
@@ -255,7 +212,7 @@ export type FlatShape =
     })
   | { type: "draggable-target"; key: string; bbox: XYWH; origin: Vec2 };
 
-export function flattenShape(
+function flattenShape(
   shape: Shape,
   offset: Vec2,
   zIndex: number,
@@ -389,7 +346,7 @@ export function flattenShape(
 }
 
 /** Returns a bounding box in global coordinates */
-export function drawFlatShapes(
+function drawFlatShapes(
   /** Layer to draw on. We assume drawShape is called without
    * transformations applied to lyr. */
   lyr: Layer,
@@ -503,7 +460,7 @@ export function drawFlatShapes(
 }
 
 // HACK: I don't really know how to do this well
-export function pruneEmptyGroups(shape: Shape): Shape | null {
+function pruneEmptyGroups(shape: Shape): Shape | null {
   switch (shape.type) {
     case "circle":
       return shape;
@@ -586,7 +543,6 @@ export function pruneEmptyGroups(shape: Shape): Shape | null {
 }
 
 export function origToInterpolatable(shape: Shape): InterpolatableShape {
-  // const parentMap = makeParentMap(shape);
   const offsetMap = makeOffsetMap(shape, Vec2(0));
   // console.log("r.shape", r.shape);
   // console.log("parentMap", parentMap);
@@ -606,23 +562,6 @@ export function drawInterpolatable(
   // console.log("flatShapes", flatShapes);
   drawFlatShapes(lyr, flatShapes, ctx);
 }
-
-// export function stripParents(shape: Shape): Shape {
-//   if (shape.type === "group") {
-//     return {
-//       ...shape,
-//       parent: undefined,
-//       shapes: shape.shapes.map(stripParents),
-//     };
-//   } else if (shape.type === "keyed-group") {
-//     return {
-//       ...shape,
-//       parent: undefined,
-//       shapes: _.mapValues(shape.shapes, stripParents),
-//     };
-//   }
-//   return shape;
-// }
 
 export function lerpShapes(
   a: InterpolatableShape,
