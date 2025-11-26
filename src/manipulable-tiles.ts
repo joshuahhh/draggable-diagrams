@@ -39,7 +39,7 @@ export const manipulableTiles: Manipulable<TilesState> = {
     );
   },
 
-  accessibleFrom(state, draggableKey) {
+  onDrag(state, draggableKey) {
     const dragLoc = Vec2(state.tiles[draggableKey]);
     return (
       [

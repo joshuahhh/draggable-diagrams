@@ -76,7 +76,7 @@ export const manipulableGraph: Manipulable<GraphState> = {
     );
   },
 
-  accessibleFrom(state, draggableKey) {
+  onDrag(state, draggableKey) {
     const newStates = [];
     if (draggableKey.startsWith("head-")) {
       const edgeKey = draggableKey.slice("head-".length);

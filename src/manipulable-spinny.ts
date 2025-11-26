@@ -55,7 +55,7 @@ export const manipulableSpinny: Manipulable<PermState> = {
     );
   },
 
-  accessibleFrom(state, _draggableKey) {
+  onDrag(state, _draggableKey) {
     // interesting bit: this doesn't depend on which key is being
     // dragged!
     return [1, state.perm.length - 1].map((idx) =>

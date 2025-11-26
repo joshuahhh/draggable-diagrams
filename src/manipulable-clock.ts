@@ -43,7 +43,7 @@ export const manipulableClock: Manipulable<ClockState> = {
     );
   },
 
-  accessibleFrom(_state, _draggableKey) {
+  onDrag(_state, _draggableKey) {
     return numAtPath(["hours"]);
   },
 };

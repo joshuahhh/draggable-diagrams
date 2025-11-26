@@ -71,7 +71,7 @@ export const manipulableRushHour: Manipulable<RushHourState> = {
     );
   },
 
-  accessibleFrom(state, draggableKey) {
+  onDrag(state, draggableKey) {
     const curLoc = state.cars[draggableKey];
     const nextStates: RushHourState[] = [state];
     function tryMove(dx: number, dy: number) {

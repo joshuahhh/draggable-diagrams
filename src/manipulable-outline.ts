@@ -86,7 +86,7 @@ export const manipulableOutline: Manipulable<Outline> = {
     return renderOutline(state).diagram;
   },
 
-  accessibleFrom(state, draggableKey) {
+  onDrag(state, draggableKey) {
     const newState = structuredClone(state);
     // search for and remove the draggableKey from its current location
     let foundNode: Outline | null = null;

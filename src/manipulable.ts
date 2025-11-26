@@ -37,7 +37,7 @@ export type ManipulableBase<T, ManipulableConfig> = {
     draggableKey: string | null,
     config: ManipulableConfig,
   ): Diagram;
-  accessibleFrom(
+  onDrag(
     state: T,
     draggableKey: string,
     config: ManipulableConfig,
@@ -69,19 +69,6 @@ export function manipulableDefaultConfig<T, ManipulableConfig>(
   // this is totally well-typed I swear
   return (manipulable as any).defaultConfig;
 }
-
-/**
- * accessibleFrom returns one or more "manifolds" – sets of states
- * that can be interpolated between continuously by dragging. Either
- * directly return one manifold, or an object with multiple
- * manifolds. Either way, note that a manifold can either return the
- * starting state or not, as is convenient – in either case the
- * starting state will be considered part of all manifolds.
- *
- * Note: So far, there only seem to be two patterns – either return a
- * single manifold, or a bunch of manifolds each going to a single
- * new state. Hmm.
- */
 
 // TODO: more sophisticated combos
 export type DragSpec<T> = Many<DragSpecManifold<T>> | DragSpecParams<T>;
@@ -416,7 +403,7 @@ export class ManipulableDrawer<T, Config = unknown> {
       return;
     }
 
-    const dragSpec = this.manipulable.accessibleFrom(
+    const dragSpec = this.manipulable.onDrag(
       state,
       draggableKey,
       manipulableConfig,

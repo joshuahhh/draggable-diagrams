@@ -34,7 +34,7 @@ export const manipulableNoolTree: Manipulable<NoolTree, NoolTreeConfig> = {
     return renderNoolTree(state).diagram;
   },
 
-  accessibleFrom(state, draggableKey, configParam) {
+  onDrag(state, draggableKey, configParam) {
     const config = configParam || this.defaultConfig!;
     // walk the tree
     function walk(tree: NoolTree, replaceNode: (newNode: NoolTree) => void) {

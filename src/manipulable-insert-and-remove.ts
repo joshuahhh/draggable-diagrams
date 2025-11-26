@@ -50,7 +50,7 @@ export const manipulableInsertAndRemove: Manipulable<PermState> = {
     );
   },
 
-  accessibleFrom(state, draggableKey) {
+  onDrag(state, draggableKey) {
     const itemIdx = state.items.findIndex((item) => item.key === draggableKey);
     if (itemIdx !== -1) {
       const draggedItem = state.items[itemIdx];

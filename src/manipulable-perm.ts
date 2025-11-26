@@ -32,7 +32,7 @@ export const manipulablePerm: Manipulable<PermState> = {
     );
   },
 
-  accessibleFrom(state, draggableKey) {
+  onDrag(state, draggableKey) {
     const draggedIdx = state.perm.indexOf(draggableKey);
 
     return span(

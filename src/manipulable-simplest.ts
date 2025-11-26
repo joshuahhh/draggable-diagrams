@@ -13,7 +13,7 @@ export const manipulableSimplest: Manipulable<boolean> = {
       .translate([state ? 100 : 0, 0]);
   },
 
-  accessibleFrom(_state, _draggableKey) {
+  onDrag(_state, _draggableKey) {
     return span([false, true]);
   },
 };

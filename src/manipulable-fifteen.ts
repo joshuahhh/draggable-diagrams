@@ -40,7 +40,7 @@ export const manipulableFifteen: Manipulable<FifteenState> = {
     );
   },
 
-  accessibleFrom(state, draggableKey) {
+  onDrag(state, draggableKey) {
     // if we're not blank, we can only swap with blank
     // if we are blank, we can swap with any neighbor
     const dragLoc = Vec2(state.tiles[draggableKey]);

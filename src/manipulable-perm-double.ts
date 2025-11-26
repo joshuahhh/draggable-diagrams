@@ -43,7 +43,7 @@ export const manipulablePermDouble: Manipulable<PermDoubleState> = {
     );
   },
 
-  accessibleFrom(state, draggableKey) {
+  onDrag(state, draggableKey) {
     const draggedRowIdx = state.rows.findIndex((row) =>
       row.includes(draggableKey),
     );

@@ -31,7 +31,7 @@ export const manipulableAngle: Manipulable<AngleState> = {
     );
   },
 
-  accessibleFrom(_state, _draggableKey) {
+  onDrag(_state, _draggableKey) {
     return numAtPath(["angle"]);
   },
 };

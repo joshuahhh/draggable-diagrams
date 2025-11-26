@@ -51,7 +51,7 @@ export const manipulableGridPoly: Manipulable<GridPolyState> = {
     );
   },
 
-  accessibleFrom(state, draggableKey) {
+  onDrag(state, draggableKey) {
     const idx = parseInt(draggableKey, 10);
     assert(!isNaN(idx));
     const states = [];

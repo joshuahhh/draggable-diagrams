@@ -70,7 +70,7 @@ export const manipulableSokoban: Manipulable<SokobanState, SokobanConfig> = {
     );
   },
 
-  accessibleFrom(state, draggableKey) {
+  onDrag(state, draggableKey) {
     function isInBounds(pos: Vec2): boolean {
       return inXYWH(pos, [0, 0, state.w - 1, state.h - 1]);
     }

@@ -77,7 +77,7 @@ export const manipulableOrderPreserving: Manipulable<
     return g;
   },
 
-  accessibleFrom(state, draggableKey) {
+  onDrag(state, draggableKey) {
     const { hasseDiagram, curMorphIdx } = state;
     const curMorph = hasseDiagram.nodes[curMorphIdx];
     const adjMorphIdxes = _.range(hasseDiagram.nodes.length).filter(

@@ -62,7 +62,7 @@ export const manipulableFlippy: Manipulable<PermState> = {
     );
   },
 
-  accessibleFrom(state, _draggableKey) {
+  onDrag(state, _draggableKey) {
     // interesting bit: this doesn't depend on which key is being
     // dragged! other interesting bit: one of the reflections keeps
     // the dragged key in place; it will be ignored cuz the identity
