@@ -10,6 +10,7 @@ import {
   flatShapeByDraggableKey,
   lerpDiagrams,
   lerpDiagrams3,
+  transformVec2,
 } from "./shape";
 import { assert, assertNever, hasKey, Many, manyToArray, pipe } from "./utils";
 import { Vec2 } from "./vec2";
@@ -318,7 +319,9 @@ export class ManipulableDrawer<T, Config = unknown> {
         );
         const foundShape = flatShapeByDraggableKey(diagram, state.draggableKey);
         assert(!!foundShape, "Draggable key not found in rendered shape");
-        return draggableDestPt.dist2(foundShape.transform);
+        return draggableDestPt.dist2(
+          transformVec2(Vec2(0), foundShape.transform),
+        );
       };
 
       const r = minimize(objectiveFn, state.curParams);
@@ -447,7 +450,11 @@ export class ManipulableDrawer<T, Config = unknown> {
       );
       const foundFlatShape = flatShapeByDraggableKey(diagram, draggableKey);
       assert(!!foundFlatShape, "Draggable key not found in rendered shape");
-      return { state, diagram, offset: foundFlatShape.transform };
+      return {
+        state,
+        diagram,
+        offset: transformVec2(Vec2(0), foundFlatShape.transform),
+      };
     };
 
     const startingPoint = makeManifoldPoint(state);

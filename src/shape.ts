@@ -2,18 +2,129 @@ import * as d3 from "d3-shape";
 import _ from "lodash";
 import { Layer } from "./layer";
 import { IPointerManager } from "./pointer";
-import { assert, defined, Many, manyToArray } from "./utils";
+import { assert, assertNever, defined, Many, manyToArray } from "./utils";
 import { lerp, Vec2, Vec2able } from "./vec2";
-import { fromCenter, inXYWH, lerpXYWH, mm, translateXYWH, XYWH } from "./xywh";
+import { fromCenter, lerpXYWH, mm, pointInPoly, polyXYWH, XYWH } from "./xywh";
 
 // # what's a diagram?
 
-type Transform = Vec2;
-function addTranslateToTransform(
-  transform: Transform,
-  offset: Vec2,
-): Transform {
-  return transform.add(offset);
+type TransformStep =
+  | {
+      type: "translate";
+      offset: Vec2;
+    }
+  | {
+      type: "rotate";
+      center: Vec2;
+      angle: number;
+    };
+type Transform = TransformStep[];
+function transformLayer(lyr: Layer, transform: Transform) {
+  for (const step of transform.slice().reverse()) {
+    if (step.type === "translate") {
+      lyr.translate(...step.offset.arr());
+    } else if (step.type === "rotate") {
+      lyr.translate(-step.center.x, -step.center.y);
+      lyr.rotate(step.angle);
+      lyr.translate(...step.center.arr());
+    }
+  }
+}
+export function transformVec2(v: Vec2, transform: Transform): Vec2 {
+  let result = v;
+  for (const step of transform) {
+    if (step.type === "translate") {
+      result = result.add(step.offset);
+    } else if (step.type === "rotate") {
+      result = result.sub(step.center).rotate(step.angle).add(step.center);
+    }
+  }
+  return result;
+}
+export function transformPoly(poly: Vec2[], transform: Transform): Vec2[] {
+  return poly.map((p) => transformVec2(p, transform));
+}
+function invertTransform(transform: Transform): Transform {
+  return transform
+    .slice()
+    .reverse()
+    .map((step) => {
+      if (step.type === "translate") {
+        return { type: "translate", offset: step.offset.mul(-1) };
+      } else if (step.type === "rotate") {
+        return { type: "rotate", center: step.center, angle: -step.angle };
+      } else {
+        assertNever(step);
+      }
+    });
+}
+function lerpTransform(a: Transform, b: Transform, t: number): Transform {
+  // first, check if they're the same length & types
+  if (a.length === b.length) {
+    const zipped = _.zip(a, b) as [TransformStep, TransformStep][];
+    if (zipped.every(([as, bs]) => as.type === bs.type)) {
+      return zipped.map(([as, bs]) => {
+        if (as.type === "translate") {
+          return {
+            type: "translate",
+            offset: (as as { type: "translate"; offset: Vec2 }).offset.lerp(
+              (bs as { type: "translate"; offset: Vec2 }).offset,
+              t,
+            ),
+          };
+        } else if (as.type === "rotate") {
+          return {
+            type: "rotate",
+            center: (
+              as as { type: "rotate"; center: Vec2; angle: number }
+            ).center.lerp(
+              (bs as { type: "rotate"; center: Vec2; angle: number }).center,
+              t,
+            ),
+            angle: lerpAngles(
+              (as as { type: "rotate"; center: Vec2; angle: number }).angle,
+              (bs as { type: "rotate"; center: Vec2; angle: number }).angle,
+              t,
+            ),
+          };
+        } else {
+          assertNever(as);
+        }
+      });
+    }
+  }
+
+  // ok maybe they're both translations only?
+  if (
+    a.every((step) => step.type === "translate") &&
+    b.every((step) => step.type === "translate")
+  ) {
+    const aTotal = a.reduce(
+      (acc, step) =>
+        acc.add((step as { type: "translate"; offset: Vec2 }).offset),
+      Vec2(0, 0),
+    );
+    const bTotal = b.reduce(
+      (acc, step) =>
+        acc.add((step as { type: "translate"; offset: Vec2 }).offset),
+      Vec2(0, 0),
+    );
+    return [
+      {
+        type: "translate",
+        offset: aTotal.lerp(bTotal, t),
+      },
+    ];
+  }
+
+  // otherwise, give up
+  throw new Error("Cannot lerp transforms of different structure");
+}
+
+function lerpAngles(a: number, b: number, t: number): number {
+  const delta =
+    ((((b - a) % (2 * Math.PI)) + 3 * Math.PI) % (2 * Math.PI)) - Math.PI;
+  return a + delta * t;
 }
 
 type Path =
@@ -54,7 +165,7 @@ export class Diagram {
     framesIn: DiagramFrame[],
   ) {
     this.id = _.uniqueId("diagram_");
-    this.frames = [...framesIn, { id: this.id, transform: Vec2(0) }];
+    this.frames = [...framesIn, { id: this.id, transform: [] }];
   }
 
   protected mapFlatShapes(
@@ -68,11 +179,36 @@ export class Diagram {
     return this.mapFlatShapes(
       (fs) => ({
         ...fs,
-        transform: addTranslateToTransform(fs.transform, Vec2(offset)),
+        transform: [
+          ...fs.transform,
+          { type: "translate", offset: Vec2(offset) },
+        ],
       }),
       this.frames.map((f) => ({
         ...f,
-        transform: addTranslateToTransform(f.transform, Vec2(offset)),
+        transform: [
+          ...f.transform,
+          { type: "translate", offset: Vec2(offset) },
+        ],
+      })),
+    );
+  }
+
+  rotate(center: Vec2able, angle: number): Diagram {
+    return this.mapFlatShapes(
+      (fs) => ({
+        ...fs,
+        transform: [
+          ...fs.transform,
+          { type: "rotate", center: Vec2(center), angle },
+        ],
+      }),
+      this.frames.map((f) => ({
+        ...f,
+        transform: [
+          ...f.transform,
+          { type: "rotate", center: Vec2(center), angle },
+        ],
       })),
     );
   }
@@ -204,7 +340,7 @@ function shapeFactory<C extends new (attrs: any) => Shape>(ctor: C) {
     new SingletonDiagram({
       shape: new ctor(attributes),
       path: { type: "relative", key: "" },
-      transform: Vec2(0),
+      transform: [],
       zIndex: 0,
     });
 }
@@ -404,18 +540,19 @@ export function drawDiagram(
   for (const flatShape of sortedFlatShapes) {
     let bbox: XYWH | null = null;
     lyr.do(() => {
-      lyr.translate(...flatShape.transform.arr());
+      transformLayer(lyr, flatShape.transform);
       bbox = flatShape.shape.draw({ lyr, interactiveCtx });
     });
 
     if (flatShape.draggableKey && interactiveCtx && bbox) {
-      const bboxAbsolute = translateXYWH(bbox, flatShape.transform);
-      if (inXYWH(interactiveCtx.pointer.hoverPointer, bboxAbsolute)) {
+      const polyAbsolute = transformPoly(polyXYWH(bbox), flatShape.transform);
+      if (pointInPoly(interactiveCtx.pointer.hoverPointer, polyAbsolute)) {
         interactiveCtx.pointer.setCursor("grab");
       }
-      interactiveCtx.pointer.addClickHandler(bboxAbsolute, () => {
-        const pointerLocal = interactiveCtx.pointer.dragPointer!.sub(
-          flatShape.transform,
+      interactiveCtx.pointer.addClickHandler(polyAbsolute, () => {
+        const pointerLocal = transformVec2(
+          interactiveCtx.pointer.dragPointer!,
+          invertTransform(flatShape.transform),
         );
         interactiveCtx.onDragStart(flatShape.draggableKey!, pointerLocal);
       });
@@ -436,7 +573,7 @@ export function lerpDiagrams(a: Diagram, b: Diagram, t: number): Diagram {
         return {
           shape: aFs.shape.lerp(bFs.shape, t),
           path: aFs.path,
-          transform: aFs.transform.lerp(bFs.transform, t),
+          transform: lerpTransform(aFs.transform, bFs.transform, t),
           zIndex: lerp(aFs.zIndex, bFs.zIndex, t),
         };
       }
@@ -487,5 +624,5 @@ export function resolvePointInDiagram(
     (frame) => frame.id === pointInDiagram.diagramId,
   );
   assert(!!fs, "Frame ID must exist in diagram");
-  return pointInDiagram.point.add(fs.transform);
+  return transformVec2(pointInDiagram.point, fs.transform);
 }

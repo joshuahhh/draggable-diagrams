@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { Layer } from "./layer";
 import { Vec2 } from "./vec2";
-import { inXYWH, translateXYWH, XYWH } from "./xywh";
+import { pointInPoly, polyArea } from "./xywh";
 
 // Coordinates statement: In PointerManager, all coordinates are in
 // canvas space. Using withOffset produces a PointerManager where
@@ -12,7 +12,7 @@ export type IPointerManager = {
   hoverPointer: Vec2;
   dragPointer: Vec2 | null;
 
-  addClickHandler(xywh: XYWH, onClick: () => void): void;
+  addClickHandler(poly: Vec2[], onClick: () => void): void;
   addPointerUpHandler(onUp: () => void): void;
   setCursor(cursor: string): void;
 };
@@ -23,7 +23,7 @@ export class PointerManager implements IPointerManager {
   public dragPointer: Vec2 | null = null;
 
   private clickables: {
-    xywh: XYWH;
+    poly: Vec2[];
     onClick: () => void;
   }[] = [];
   private onPointerUps: (() => void)[] = [];
@@ -63,14 +63,14 @@ export class PointerManager implements IPointerManager {
       this.hoverPointer &&
       // get smalleset clickable containing hoverPointer
       _.minBy(
-        this.clickables.filter((c) => inXYWH(this.hoverPointer, c.xywh)),
-        ({ xywh: [_x, _y, w, h] }) => w * h,
+        this.clickables.filter((c) => pointInPoly(this.hoverPointer, c.poly)),
+        ({ poly }) => polyArea(poly),
       )
     );
   }
 
-  addClickHandler(xywh: XYWH, onClick: () => void) {
-    this.clickables.push({ xywh, onClick });
+  addClickHandler(poly: Vec2[], onClick: () => void) {
+    this.clickables.push({ poly, onClick });
   }
 
   addPointerUpHandler(onUp: () => void) {
@@ -88,7 +88,7 @@ export class PointerManager implements IPointerManager {
 
   drawClickablesDebug(lyr: Layer) {
     for (const clickable of this.clickables) {
-      debugRect(lyr, ...clickable.xywh);
+      debugPoly(lyr, clickable.poly);
     }
   }
 }
@@ -117,8 +117,11 @@ export class PointerManagerOffset implements IPointerManager {
     return dp ? dp.sub(this.offset) : null;
   }
 
-  addClickHandler(xywh: XYWH, onClick: () => void): void {
-    this.pointer.addClickHandler(translateXYWH(xywh, this.offset), onClick);
+  addClickHandler(poly: Vec2[], onClick: () => void): void {
+    this.pointer.addClickHandler(
+      poly.map((p) => p.add(this.offset)),
+      onClick,
+    );
   }
   addPointerUpHandler(onUp: () => void): void {
     this.pointer.addPointerUpHandler(onUp);
@@ -126,20 +129,4 @@ export class PointerManagerOffset implements IPointerManager {
   setCursor(cursor: string): void {
     this.pointer.setCursor(cursor);
   }
-}
-
-function debugRect(
-  lyr: Layer,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  color: string = "magenta",
-) {
-  lyr.do(() => {
-    lyr.strokeStyle = color;
-    lyr.beginPath();
-    lyr.rect(x, y, w, h);
-    lyr.stroke();
-  });
 }

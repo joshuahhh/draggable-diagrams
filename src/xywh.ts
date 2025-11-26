@@ -1,3 +1,4 @@
+import { Layer } from "./layer";
 import { lerp, Vec2 } from "./vec2";
 
 export type XYWH = readonly [number, number, number, number];
@@ -67,3 +68,64 @@ export const expand = (xywh: XYWH, dx: number, dy?: number): XYWH => {
   if (dy === undefined) dy = dx;
   return [xywh[0] - dx, xywh[1] - dy, xywh[2] + 2 * dx, xywh[3] + 2 * dy];
 };
+
+export const polyXYWH = (xywh: XYWH): Vec2[] => {
+  return [tl(xywh), tr(xywh), br(xywh), bl(xywh)];
+};
+
+export function pointInPoly(point: Vec2, poly: Vec2[]): boolean {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i].x,
+      yi = poly[i].y;
+    const xj = poly[j].x,
+      yj = poly[j].y;
+    const intersect =
+      yi > point.y !== yj > point.y &&
+      point.x < ((xj - xi) * (point.y - yi)) / (yj - yi + Number.EPSILON) + xi;
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+export function polyArea(poly: Vec2[]): number {
+  let area = 0;
+  const n = poly.length;
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    area += poly[i].x * poly[j].y;
+    area -= poly[j].x * poly[i].y;
+  }
+  return Math.abs(area) / 2;
+}
+
+export function debugRect(
+  lyr: Layer,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: string = "magenta",
+) {
+  lyr.do(() => {
+    lyr.strokeStyle = color;
+    lyr.beginPath();
+    lyr.rect(x, y, w, h);
+    lyr.stroke();
+  });
+}
+
+export function debugPoly(lyr: Layer, poly: Vec2[], color: string = "magenta") {
+  lyr.do(() => {
+    lyr.strokeStyle = color;
+    lyr.beginPath();
+    if (poly.length > 0) {
+      lyr.moveTo(poly[0].x, poly[0].y);
+      for (const p of poly.slice(1)) {
+        lyr.lineTo(p.x, p.y);
+      }
+      lyr.closePath();
+    }
+    lyr.stroke();
+  });
+}

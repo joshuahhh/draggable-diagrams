@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Demo } from "./components/Demo";
 import { ManipulableDrawer } from "./manipulable";
 import { manipulableAngle, stateAngle } from "./manipulable-angle";
+import { manipulableAngleViaTransform } from "./manipulable-angle-via-transform";
 import { manipulableClock, stateClock } from "./manipulable-clock";
 import { manipulableFifteen, stateFifteen } from "./manipulable-fifteen";
 import { manipulableFlippy, stateFlippy1 } from "./manipulable-flippy";
@@ -30,7 +31,8 @@ import {
 import { manipulableRushHour, stateRushHour1 } from "./manipulable-rush-hour";
 import { manipulableSimplest, stateSimplest1 } from "./manipulable-simplest";
 import { manipulableSokoban, stateSokoban1 } from "./manipulable-sokoban";
-import { manipulableSpinny, stateSpinny1 } from "./manipulable-spinny";
+import { manipulableSpinny } from "./manipulable-spinny";
+import { manipulableSpinnyOld, stateSpinny1 } from "./manipulable-spinny-old";
 import { manipulableTiles, stateTilesLonely } from "./manipulable-tiles";
 
 export interface DemoEntry {
@@ -162,6 +164,19 @@ export const demos: DemoEntry[] = [
     ),
   },
   {
+    id: "spinny-old",
+    node: (
+      <Demo
+        id="spinny-old"
+        title="Spinny (Old)"
+        drawer={new ManipulableDrawer(manipulableSpinnyOld, stateSpinny1)}
+        height={200}
+        padding={30}
+        initialRelativePointerMotion={false}
+      />
+    ),
+  },
+  {
     id: "flippy",
     node: (
       <Demo
@@ -265,6 +280,18 @@ export const demos: DemoEntry[] = [
         id="angle"
         title="Angle"
         drawer={new ManipulableDrawer(manipulableAngle, stateAngle)}
+        height={200}
+        padding={20}
+      />
+    ),
+  },
+  {
+    id: "angle-via-transform",
+    node: (
+      <Demo
+        id="angle-via-transform"
+        title="Angle (via transform)"
+        drawer={new ManipulableDrawer(manipulableAngleViaTransform, stateAngle)}
         height={200}
         padding={20}
       />
