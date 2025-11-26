@@ -2,6 +2,7 @@ import { useState } from "react";
 import { HashRouter, Link, Route, Routes, useParams } from "react-router-dom";
 import { DemoProvider } from "./DemoContext";
 import { demos } from "./demos";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 function DemoList() {
   const [debugView, setDebugView] = useState(false);
@@ -16,7 +17,12 @@ function DemoList() {
         </div>
         <div className="flex flex-col gap-5 px-5 pb-5 max-w-3xl mx-auto flex-1">
           {demos.map((demo) => (
-            <div key={demo.id}>{demo.node}</div>
+            <ErrorBoundary
+              key={demo.id}
+              fallback={<div>Error loading demo: {demo.id}</div>}
+            >
+              {demo.node}
+            </ErrorBoundary>
           ))}
         </div>
         <div className="sticky bottom-0 bg-white/95 py-4 px-5 border-t border-gray-200 flex gap-5 items-center justify-center shadow-[0_-2px_4px_rgba(0,0,0,0.1)]">

@@ -21,7 +21,7 @@ export const manipulableSokoban: Manipulable<SokobanState, SokobanConfig> = {
   sourceFile: "manipulable-sokoban.ts",
   render(state, _draggableKey, config) {
     const TILE_SIZE = 50;
-    return group(`tiles`, [
+    return group(
       _.range(state.w).map((x) =>
         _.range(state.h).map((y) =>
           rectangle({
@@ -55,8 +55,8 @@ export const manipulableSokoban: Manipulable<SokobanState, SokobanConfig> = {
                   fillStyle: "orange",
                 },
         )
+          .draggable(id, config.levelEditable)
           .zIndex(object.type === "goal" ? 1 : 0)
-          .keyed(id, config.levelEditable)
           .translate(object.pos.mul(TILE_SIZE)),
       ),
 
@@ -64,10 +64,10 @@ export const manipulableSokoban: Manipulable<SokobanState, SokobanConfig> = {
         xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
         label: "🧍",
       })
+        .draggable(`player`)
         .zIndex(2)
-        .keyed(`player`, true)
         .translate(Vec2(state.player).mul(TILE_SIZE)),
-    ]);
+    );
   },
 
   accessibleFrom(state, draggableKey) {

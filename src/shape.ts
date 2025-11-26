@@ -2,829 +2,494 @@ import * as d3 from "d3-shape";
 import _ from "lodash";
 import { Layer } from "./layer";
 import { IPointerManager } from "./pointer";
-import { assert, assertNever, Many, manyToArray } from "./utils";
+import { assert, Many, manyToArray } from "./utils";
 import { lerp, Vec2, Vec2able } from "./vec2";
-import { fromCenter, inXYWH, mergeMany, mm, translateXYWH, XYWH } from "./xywh";
+import { fromCenter, inXYWH, lerpXYWH, mm, translateXYWH, XYWH } from "./xywh";
 
-// Coordinates statement: Offsets are relative. PointInShape is nice.
-// The only tricky part is that when we drawFlatShapes, we interact
-// with the pointer system, and that's global. That's why you pass
-// `globalOffset` into drawFlatShapes.
+// # what's a diagram?
 
-export type Shape =
-  | {
-      type: "circle";
-      center: Vec2;
-      radius: number;
-      fillStyle?: string;
-      strokeStyle?: string;
-      lineWidth?: number;
-      nodeId?: string;
-    }
-  | {
-      type: "line";
-      from: Vec2;
-      to: Vec2;
-      strokeStyle: string;
-      lineWidth: number;
-    }
-  | {
-      type: "curve";
-      points: Vec2[];
-      strokeStyle: string;
-      lineWidth: number;
-    }
-  | {
-      type: "polygon";
-      points: Vec2[];
-      fillStyle: string;
-    }
-  | {
-      type: "rectangle";
-      xywh: XYWH;
-      fillStyle?: string;
-      strokeStyle?: string;
-      lineWidth?: number;
-      label?: string;
-    }
-  | {
-      type: "group";
-      shapes: Shape[];
-    }
-  | {
-      type: "keyed-group";
-      shapes: Record<string, Shape>;
-    }
-  | {
-      type: "lazy";
-      state:
-        | {
-            hasRun: false;
-            getShape: (resolveHere: (pis: PointInShape) => Vec2) => Shape;
-          }
-        | { hasRun: true; shape: Shape };
-    }
-  | {
-      type: "translate";
-      shape: Shape;
-      offset: Vec2;
-    }
-  | {
-      type: "keyed";
-      shape: Shape;
-      key: string;
-      isDraggable: boolean;
-    }
-  | {
-      type: "z-index";
-      shape: Shape;
-      zIndex: number;
-    };
-
-type ShapeOfType<T extends Shape["type"]> = Extract<Shape, { type: T }>;
-
-// this is just a way of tagging that we've run the shape through
-// origToInterpolatable
-export type InterpolatableShape = Shape & { interpolatable: true };
-
-/** Returns all children of a shape. */
-function shapeChildren(shape: Shape, okIfLazyHasNotRun: boolean): Shape[] {
-  switch (shape.type) {
-    case "group":
-      return shape.shapes;
-    case "keyed-group":
-      return Object.values(shape.shapes);
-    case "translate":
-      return [shape.shape];
-    case "keyed":
-      return [shape.shape];
-    case "z-index":
-      return [shape.shape];
-    case "lazy":
-      if (shape.state.hasRun) {
-        return [shape.state.shape];
-      } else {
-        if (okIfLazyHasNotRun) {
-          return [];
-        } else {
-          throw new Error("Cannot get children of lazy shape that hasn't run");
-        }
-      }
-    case "circle":
-      return [];
-    case "line":
-      return [];
-    case "curve":
-      return [];
-    case "rectangle":
-      return [];
-    case "polygon":
-      return [];
-    default:
-      assertNever(shape);
-  }
+type Transform = Vec2;
+function addTranslateToTransform(
+  transform: Transform,
+  offset: Vec2,
+): Transform {
+  return transform.add(offset);
 }
 
-function makeOffsetMap(shape: Shape, offset: Vec2): Map<Shape, Vec2> {
-  const map = new Map<Shape, Vec2>();
-  function helper(s: Shape, offset: Vec2) {
-    if (s.type === "translate") {
-      offset = offset.add(s.offset);
-    }
-    map.set(s, offset);
-    for (const child of shapeChildren(s, true)) {
-      helper(child, offset);
-    }
-  }
-  helper(shape, offset);
-  return map;
+type Path =
+  | { type: "absolute"; key: string }
+  | { type: "relative"; key: string };
+function prependRelative(path: Path, key: string): Path {
+  return path.type === "absolute"
+    ? path
+    : { type: "relative", key: key + "/" + path.key };
+}
+function prependAbsolute(path: Path, key: string): Path {
+  return path.type === "absolute"
+    ? path
+    : { type: "absolute", key: key + "/" + path.key };
 }
 
-function runLazyShapes(shape: Shape, offsetMap: Map<Shape, Vec2>): Shape {
-  if (shape.type === "lazy" && !shape.state.hasRun) {
-    const newShape = shape.state.getShape((pis) =>
-      resolvePointInShape(pis, shape, offsetMap),
-    );
-    shape.state = { hasRun: true, shape: newShape };
-  }
-  for (const child of shapeChildren(shape, false)) {
-    runLazyShapes(child, offsetMap);
-  }
-  return shape;
-}
-
-function pullOutKeyedShapes(shape: Shape): Shape {
-  const kg = keyedGroup();
-  function helper(s: Shape, offset: Vec2) {
-    const children = shapeChildren(s, true); // get 'em before we mess around with s
-    if (s.type === "keyed") {
-      kg.shapes[s.key] = addMethods(s).translate(offset);
-      // TODO: hack
-      for (const key in s) {
-        delete (s as any)[key];
-      }
-      Object.assign(s, { type: "group", shapes: [] });
-    }
-    if (s.type === "translate") {
-      offset = offset.add(s.offset);
-    }
-    for (const child of children) {
-      helper(child, offset);
-    }
-  }
-  helper(shape, Vec2(0));
-  return group(`pulling out keyed shapes`, [shape, kg]);
-}
-
-export type PointInShape = {
-  __shape: Shape;
-  __point: Vec2;
+type FlatShape = {
+  shape: Shape;
+  path: Path;
+  draggableKey?: string;
+  transform: Transform;
+  zIndex: number;
 };
 
-export function pointInShape(shape: Shape, localPoint: Vec2): PointInShape {
-  return { __shape: shape, __point: localPoint };
+// DiagramFrames help us keep track of points across transformed
+// diagrams.
+type DiagramFrame = {
+  id: string;
+  transform: Transform;
+};
+
+export class Diagram {
+  id: string;
+  frames: DiagramFrame[];
+
+  constructor(
+    readonly flatShapes: FlatShape[],
+    framesIn: DiagramFrame[],
+  ) {
+    this.id = _.uniqueId("diagram_");
+    this.frames = [...framesIn, { id: this.id, transform: Vec2(0) }];
+  }
+
+  protected mapFlatShapes(
+    fn: (fs: FlatShape) => FlatShape,
+    newFrames?: DiagramFrame[],
+  ): Diagram {
+    return new Diagram(this.flatShapes.map(fn), newFrames ?? this.frames);
+  }
+
+  translate(offset: Vec2able): Diagram {
+    return this.mapFlatShapes(
+      (fs) => ({
+        ...fs,
+        transform: addTranslateToTransform(fs.transform, Vec2(offset)),
+      }),
+      this.frames.map((f) => ({
+        ...f,
+        transform: addTranslateToTransform(f.transform, Vec2(offset)),
+      })),
+    );
+  }
+
+  absoluteKey(key: string): Diagram {
+    return this.mapFlatShapes((fs) => ({
+      ...fs,
+      path: prependAbsolute(fs.path, key),
+    }));
+  }
+
+  zIndex(zIndex: number): Diagram {
+    return this.mapFlatShapes((fs) => ({ ...fs, zIndex }));
+  }
 }
 
-function resolvePointInShape(
-  pis: PointInShape,
-  dstShape: Shape,
-  offsetMap: Map<Shape, Vec2>,
-): Vec2 {
-  let { __shape: srcShape, __point: point } = pis;
-  const srcOffset = offsetMap.get(srcShape);
-  assert(!!srcOffset, "Source shape must have offset in offset map");
-  const dstOffset = offsetMap.get(dstShape);
-  assert(!!dstOffset, "Destination shape must have offset in offset map");
-  return point.add(srcOffset!).sub(dstOffset!);
+export class SingletonDiagram extends Diagram {
+  constructor(readonly flatShape: FlatShape) {
+    super([flatShape], []);
+  }
+
+  draggable(draggableKey: string, condition: boolean = true): Diagram {
+    if (!condition) {
+      return this;
+    } else {
+      return this.mapFlatShapes((fs) => ({ ...fs, draggableKey }));
+    }
+  }
 }
 
-type DrawShapeContext = {
+export class GroupBuilderDiagram extends Diagram {
+  nextIdx = 0;
+
+  constructor() {
+    super([], []);
+  }
+
+  push(diagram: Diagram): void {
+    this.flatShapes.push(
+      ...diagram.flatShapes.map((fs) => ({
+        ...fs,
+        path: prependRelative(fs.path, `${this.nextIdx}`),
+      })),
+    );
+    this.frames.push(...diagram.frames);
+    this.nextIdx++;
+  }
+}
+
+export function groupBuilder() {
+  return new GroupBuilderDiagram();
+}
+
+export function group(...manyDiagrams: Many<Diagram>[]): Diagram {
+  const diagrams = manyToArray(manyDiagrams);
+  const builder = groupBuilder();
+  for (const diagram of diagrams) {
+    builder.push(diagram);
+  }
+  return builder;
+}
+
+export interface ShapeDrawProps {
+  lyr: Layer;
+  interactiveCtx?: InteractiveContext;
+}
+
+export interface InteractiveContext {
   pointer: IPointerManager;
   onDragStart: (draggableKey: string, pointerOffset: Vec2) => void;
-};
+}
 
-type FlatShape =
-  | (Extract<
-      Shape,
-      { type: "circle" | "line" | "curve" | "rectangle" | "polygon" }
-    > & {
-      zIndex: number;
-    })
-  | { type: "draggable-target"; key: string; bbox: XYWH; origin: Vec2 };
+export interface Shape {
+  draw(props: ShapeDrawProps): XYWH | null;
+  lerp(other: Shape, t: number): Shape;
+}
 
-function flattenShape(
-  shape: Shape,
-  offset: Vec2,
-  zIndex: number,
-): { flatShapes: FlatShape[]; bbox: XYWH | null } {
-  // console.group("flattenShape", shape, offset, zIndex);
-  try {
-    switch (shape.type) {
-      case "circle":
-        return {
-          flatShapes: [
-            {
-              type: "circle",
-              center: shape.center.add(offset),
-              radius: shape.radius,
-              fillStyle: shape.fillStyle,
-              strokeStyle: shape.strokeStyle,
-              lineWidth: shape.lineWidth,
-              nodeId: shape.nodeId,
-              zIndex,
-            },
-          ],
-          bbox: fromCenter(
-            shape.center.add(offset),
-            shape.radius * 2,
-            shape.radius * 2,
-          ),
-        };
-      case "line":
-        return {
-          flatShapes: [
-            {
-              type: "line",
-              from: shape.from.add(offset),
-              to: shape.to.add(offset),
-              strokeStyle: shape.strokeStyle,
-              lineWidth: shape.lineWidth,
-              zIndex,
-            },
-          ],
-          bbox: null, // TODO: i'm too lazy to compute line bbox
-        };
-      case "curve":
-        return {
-          flatShapes: [
-            {
-              type: "curve",
-              points: shape.points.map((p) => p.add(offset)),
-              strokeStyle: shape.strokeStyle,
-              lineWidth: shape.lineWidth,
-              zIndex,
-            },
-          ],
-          bbox: null, // TODO: i'm too lazy to compute curve bbox
-        };
-      case "rectangle":
-        return {
-          flatShapes: [
-            {
-              ...shape,
-              xywh: translateXYWH(shape.xywh, offset),
-              zIndex,
-            },
-          ],
-          bbox: translateXYWH(shape.xywh, offset),
-        };
-      case "polygon":
-        const minX = _.min(shape.points.map((p) => p.x))!;
-        const minY = _.min(shape.points.map((p) => p.y))!;
-        const maxX = _.max(shape.points.map((p) => p.x))!;
-        const maxY = _.max(shape.points.map((p) => p.y))!;
-        return {
-          flatShapes: [
-            {
-              type: "polygon",
-              points: shape.points.map((p) => p.add(offset)),
-              fillStyle: shape.fillStyle,
-              zIndex,
-            },
-          ],
-          bbox: translateXYWH([minX, minY, maxX - minX, maxY - minY], offset),
-        };
-      case "group": {
-        const results = shape.shapes.map((s) =>
-          flattenShape(s, offset, zIndex),
-        );
-        return {
-          flatShapes: results.flatMap((r) => r.flatShapes),
-          bbox: mergeMany(results.map((r) => r.bbox)),
-        };
-      }
-      case "keyed-group": {
-        const results = Object.values(shape.shapes).map((s) =>
-          flattenShape(s, offset, zIndex),
-        );
-        return {
-          flatShapes: results.flatMap((r) => r.flatShapes),
-          bbox: mergeMany(results.map((r) => r.bbox)),
-        };
-      }
-      case "translate":
-        return flattenShape(shape.shape, offset.add(shape.offset), zIndex);
-      case "keyed":
-        const result = flattenShape(shape.shape, offset, zIndex);
-        return {
-          flatShapes: [
-            ...result.flatShapes,
-            ...(shape.isDraggable
-              ? [
-                  {
-                    type: "draggable-target" as const,
-                    key: shape.key,
-                    bbox: result.bbox!,
-                    origin: offset,
-                  },
-                ]
-              : []),
-          ],
-          bbox: result.bbox,
-        };
-      case "z-index":
-        return flattenShape(shape.shape, offset, shape.zIndex);
-      case "lazy":
-        assert(shape.state.hasRun);
-        return flattenShape(shape.state.shape, offset, zIndex);
-      default:
-        return assertNever(shape);
-    }
-  } finally {
-    // console.groupEnd();
+export type Optional<T> = T | Record<never, never>;
+
+export interface FillAttributes {
+  fillStyle: string;
+}
+
+export interface StrokeAttributes {
+  strokeStyle: string;
+  lineWidth?: number;
+}
+
+function drawFill(attrs: Optional<FillAttributes>, lyr: Layer) {
+  if ("fillStyle" in attrs) {
+    lyr.fillStyle = attrs.fillStyle;
+    lyr.fill();
   }
 }
 
-/** Returns a bounding box in global coordinates */
-function drawFlatShapes(
-  /** Layer to draw on. We assume drawShape is called without
-   * transformations applied to lyr. */
-  lyr: Layer,
-  flatShapes: FlatShape[],
-  ctx?: DrawShapeContext,
-): void {
-  // first sort by z-index
-  const [draggableTargets, drawableShapes] = _.partition(
-    flatShapes,
-    (s) => s.type === "draggable-target",
-  );
-  const sortedDrawableShapes = _.sortBy(drawableShapes, (s) => s.zIndex);
+function drawStroke(attrs: Optional<StrokeAttributes>, lyr: Layer) {
+  if ("strokeStyle" in attrs) {
+    lyr.strokeStyle = attrs.strokeStyle;
+    lyr.lineWidth = attrs.lineWidth ?? 1;
+    lyr.stroke();
+  }
+}
 
-  for (const shape of sortedDrawableShapes) {
-    switch (shape.type) {
-      case "circle": {
-        lyr.do(() => {
-          lyr.beginPath();
-          lyr.arc(...shape.center.arr(), shape.radius, 0, Math.PI * 2);
-          if (shape.fillStyle) {
-            lyr.fillStyle = shape.fillStyle;
-            lyr.fill();
-          }
-          if (shape.strokeStyle) {
-            lyr.strokeStyle = shape.strokeStyle;
-            lyr.lineWidth = shape.lineWidth || 1;
-            lyr.stroke();
-          }
-        });
-        break;
-      }
-      case "line": {
-        lyr.do(() => {
-          lyr.strokeStyle = shape.strokeStyle;
-          lyr.lineWidth = shape.lineWidth;
-          lyr.beginPath();
-          lyr.moveTo(...shape.from.arr());
-          lyr.lineTo(...shape.to.arr());
-          lyr.stroke();
-        });
-        break;
-      }
-      case "curve": {
-        lyr.do(() => {
-          lyr.strokeStyle = shape.strokeStyle;
-          lyr.lineWidth = shape.lineWidth;
-          const curve = d3.curveCardinal(lyr);
-          lyr.beginPath();
-          curve.lineStart();
-          for (const pt of shape.points) {
-            curve.point(...pt.arr());
-          }
-          curve.lineEnd();
-          lyr.stroke();
-        });
-        break;
-      }
-      case "rectangle": {
-        lyr.do(() => {
-          if (shape.fillStyle) {
-            lyr.fillStyle = shape.fillStyle;
-            lyr.fillRect(...shape.xywh);
-          }
-          if (shape.strokeStyle) {
-            lyr.strokeStyle = shape.strokeStyle;
-            lyr.lineWidth = shape.lineWidth || 1;
-            lyr.strokeRect(...shape.xywh);
-          }
-          if (shape.label) {
-            lyr.fillStyle = "black";
-            lyr.font = "20px sans-serif";
-            lyr.textAlign = "center";
-            lyr.textBaseline = "middle";
-            lyr.fillText(shape.label, ...mm(shape.xywh).arr());
-          }
-        });
-        break;
-      }
-      case "polygon": {
-        lyr.do(() => {
-          lyr.fillStyle = shape.fillStyle;
-          lyr.beginPath();
-          lyr.moveTo(...shape.points[0].arr());
-          for (let i = 1; i < shape.points.length; i++) {
-            lyr.lineTo(...shape.points[i].arr());
-          }
-          lyr.closePath();
-          lyr.fill();
-        });
-        break;
-      }
-      default:
-        assertNever(shape);
-    }
+function assertSameFill(
+  attrsA: Optional<FillAttributes>,
+  attrsB: Optional<FillAttributes>,
+) {
+  if ("fillStyle" in attrsA || "fillStyle" in attrsB) {
+    assert("fillStyle" in attrsA && "fillStyle" in attrsB);
+    assert(attrsA.fillStyle === attrsB.fillStyle);
+  }
+}
+
+function assertSameStroke(
+  attrsA: Optional<StrokeAttributes>,
+  attrsB: Optional<StrokeAttributes>,
+) {
+  if ("strokeStyle" in attrsA || "strokeStyle" in attrsB) {
+    assert("strokeStyle" in attrsA && "strokeStyle" in attrsB);
+    assert(attrsA.strokeStyle === attrsB.strokeStyle);
+    assert(attrsA.lineWidth === attrsB.lineWidth);
+  }
+}
+
+// # actual shapes!
+
+function shapeFactory<C extends new (attrs: any) => Shape>(ctor: C) {
+  return (attributes: ConstructorParameters<C>[0]) =>
+    new SingletonDiagram({
+      shape: new ctor(attributes),
+      path: { type: "relative", key: "" },
+      transform: Vec2(0),
+      zIndex: 0,
+    });
+}
+
+class Circle implements Shape {
+  constructor(
+    private attrs: {
+      center: Vec2;
+      radius: number;
+    } & Optional<FillAttributes> &
+      Optional<StrokeAttributes>,
+  ) {}
+
+  draw({ lyr }: ShapeDrawProps) {
+    lyr.do(() => {
+      lyr.beginPath();
+      lyr.arc(...this.attrs.center.arr(), this.attrs.radius, 0, Math.PI * 2);
+      drawFill(this.attrs, lyr);
+      drawStroke(this.attrs, lyr);
+    });
+    return fromCenter(
+      this.attrs.center,
+      this.attrs.radius * 2,
+      this.attrs.radius * 2,
+    );
   }
 
-  // now handle draggable targets
-  if (ctx) {
-    for (const shape of draggableTargets) {
-      if (inXYWH(ctx.pointer.hoverPointer, shape.bbox)) {
-        ctx.pointer.setCursor("grab");
+  lerp(other: Shape, t: number): Shape {
+    assert(other instanceof Circle);
+    assertSameFill(this.attrs, other.attrs);
+    assertSameStroke(this.attrs, other.attrs);
+    return new Circle({
+      ...this.attrs,
+      center: this.attrs.center.lerp(other.attrs.center, t),
+      radius: lerp(this.attrs.radius, other.attrs.radius, t),
+    });
+  }
+}
+export const circle = shapeFactory(Circle);
+
+export class Rectangle implements Shape {
+  constructor(
+    private attrs: {
+      xywh: XYWH;
+      label?: string;
+    } & Optional<FillAttributes> &
+      Optional<StrokeAttributes>,
+  ) {}
+
+  draw({ lyr }: ShapeDrawProps) {
+    lyr.do(() => {
+      lyr.beginPath();
+      lyr.rect(...this.attrs.xywh);
+      drawFill(this.attrs, lyr);
+      drawStroke(this.attrs, lyr);
+    });
+
+    const label = this.attrs.label;
+    if (label) {
+      lyr.do(() => {
+        lyr.fillStyle = "black";
+        lyr.font = "20px sans-serif";
+        lyr.textAlign = "center";
+        lyr.textBaseline = "middle";
+        lyr.fillText(label, ...mm(this.attrs.xywh).arr());
+      });
+    }
+
+    return this.attrs.xywh;
+  }
+
+  lerp(other: Shape, t: number): Shape {
+    assert(other instanceof Rectangle);
+    assertSameFill(this.attrs, other.attrs);
+    assertSameStroke(this.attrs, other.attrs);
+    assert(this.attrs.label === other.attrs.label);
+    return new Rectangle({
+      ...this.attrs,
+      xywh: lerpXYWH(this.attrs.xywh, other.attrs.xywh, t),
+    });
+  }
+}
+export const rectangle = shapeFactory(Rectangle);
+
+export class Line implements Shape {
+  constructor(
+    private attrs: {
+      from: Vec2;
+      to: Vec2;
+    } & StrokeAttributes,
+  ) {}
+
+  draw({ lyr }: ShapeDrawProps) {
+    lyr.do(() => {
+      lyr.beginPath();
+      lyr.moveTo(...this.attrs.from.arr());
+      lyr.lineTo(...this.attrs.to.arr());
+      drawStroke(this.attrs, lyr);
+    });
+    return null;
+  }
+
+  lerp(other: Shape, t: number): Shape {
+    assert(other instanceof Line);
+    assertSameStroke(this.attrs, other.attrs);
+    return new Line({
+      from: this.attrs.from.lerp(other.attrs.from, t),
+      to: this.attrs.to.lerp(other.attrs.to, t),
+      strokeStyle: this.attrs.strokeStyle,
+      lineWidth: this.attrs.lineWidth,
+    });
+  }
+}
+export const line = shapeFactory(Line);
+
+export class Polygon implements Shape {
+  constructor(
+    private attrs: {
+      points: Vec2[];
+    } & Optional<FillAttributes> &
+      Optional<StrokeAttributes>,
+  ) {}
+
+  draw({ lyr }: ShapeDrawProps) {
+    lyr.do(() => {
+      lyr.beginPath();
+      lyr.moveTo(...this.attrs.points[0].arr());
+      for (let i = 1; i < this.attrs.points.length; i++) {
+        lyr.lineTo(...this.attrs.points[i].arr());
       }
-      // console.log("adding click handler for draggable", bbox);
-      ctx.pointer.addClickHandler(shape.bbox, () => {
-        // this is the pointer position in the group's inner coordinates
-        const pointerLocal = ctx.pointer.dragPointer!.sub(shape.origin);
-        ctx.onDragStart(shape.key, pointerLocal);
+      lyr.closePath();
+      drawFill(this.attrs, lyr);
+      drawStroke(this.attrs, lyr);
+    });
+    const minX = _.min(this.attrs.points.map((p) => p.x))!;
+    const minY = _.min(this.attrs.points.map((p) => p.y))!;
+    const maxX = _.max(this.attrs.points.map((p) => p.x))!;
+    const maxY = _.max(this.attrs.points.map((p) => p.y))!;
+    return XYWH(minX, minY, maxX - minX, maxY - minY);
+  }
+
+  lerp(other: Shape, t: number): Shape {
+    assert(other instanceof Polygon);
+    assertSameFill(this.attrs, other.attrs);
+    assertSameStroke(this.attrs, other.attrs);
+    assert(this.attrs.points.length === other.attrs.points.length);
+    return new Polygon({
+      ...this.attrs,
+      points: this.attrs.points.map((p, i) => p.lerp(other.attrs.points[i], t)),
+    });
+  }
+}
+export const polygon = shapeFactory(Polygon);
+
+export class Curve implements Shape {
+  constructor(
+    private attrs: {
+      points: Vec2[];
+    } & StrokeAttributes,
+  ) {}
+
+  draw({ lyr }: ShapeDrawProps) {
+    lyr.do(() => {
+      const curve = d3.curveCardinal(lyr);
+      lyr.beginPath();
+      curve.lineStart();
+      for (const pt of this.attrs.points) {
+        curve.point(...pt.arr());
+      }
+      curve.lineEnd();
+      drawStroke(this.attrs, lyr);
+    });
+    return null;
+  }
+
+  lerp(other: Shape, t: number): Shape {
+    assert(other instanceof Curve);
+    assertSameStroke(this.attrs, other.attrs);
+    assert(this.attrs.points.length === other.attrs.points.length);
+    return new Curve({
+      ...this.attrs,
+      points: this.attrs.points.map((p, i) => p.lerp(other.attrs.points[i], t)),
+    });
+  }
+}
+export const curve = shapeFactory(Curve);
+
+// # doing stuff with diagrams!
+
+export function drawDiagram(
+  diagram: Diagram,
+  lyr: Layer,
+  interactiveCtx?: InteractiveContext,
+): void {
+  const sortedFlatShapes = _.sortBy(diagram.flatShapes, (s) => s.zIndex);
+
+  for (const flatShape of sortedFlatShapes) {
+    let bbox: XYWH | null = null;
+    lyr.do(() => {
+      lyr.translate(...flatShape.transform.arr());
+      bbox = flatShape.shape.draw({ lyr, interactiveCtx });
+    });
+
+    if (flatShape.draggableKey && interactiveCtx && bbox) {
+      const bboxAbsolute = translateXYWH(bbox, flatShape.transform);
+      if (inXYWH(interactiveCtx.pointer.hoverPointer, bboxAbsolute)) {
+        interactiveCtx.pointer.setCursor("grab");
+      }
+      interactiveCtx.pointer.addClickHandler(bboxAbsolute, () => {
+        const pointerLocal = interactiveCtx.pointer.dragPointer!.sub(
+          flatShape.transform,
+        );
+        interactiveCtx.onDragStart(flatShape.draggableKey!, pointerLocal);
       });
     }
   }
 }
 
-// HACK: I don't really know how to do this well
-function pruneEmptyGroups(shape: Shape): Shape | null {
-  switch (shape.type) {
-    case "circle":
-      return shape;
-    case "line":
-      return shape;
-    case "curve":
-      return shape;
-    case "rectangle":
-      return shape;
-    case "polygon":
-      return shape;
-    case "group": {
-      const prunedShapes = shape.shapes
-        .map(pruneEmptyGroups)
-        .filter((s) => s !== null);
-      if (prunedShapes.length === 0) {
-        return null;
-      }
+export function lerpDiagrams(a: Diagram, b: Diagram, t: number): Diagram {
+  const aKeyed = _.keyBy(a.flatShapes, (fs) => fs.path.key);
+  const bKeyed = _.keyBy(b.flatShapes, (fs) => fs.path.key);
+
+  const allKeys = _.union(Object.keys(aKeyed), Object.keys(bKeyed));
+  const lerpedFlatShapes: FlatShape[] = allKeys.map((key) => {
+    const aFs = aKeyed[key];
+    const bFs = bKeyed[key];
+    if (aFs && bFs) {
       return {
-        ...shape,
-        shapes: prunedShapes,
+        shape: aFs.shape.lerp(bFs.shape, t),
+        path: aFs.path,
+        transform: aFs.transform.lerp(bFs.transform, t),
+        zIndex: lerp(aFs.zIndex, bFs.zIndex, t),
       };
+    } else {
+      return aFs ?? bFs!;
     }
-    case "keyed-group": {
-      const prunedShapes = _(shape.shapes)
-        .mapValues(pruneEmptyGroups)
-        .pickBy((s) => s !== null)
-        .value();
-      return {
-        ...shape,
-        shapes: prunedShapes,
-      };
-    }
-    case "translate": {
-      const prunedShape = pruneEmptyGroups(shape.shape);
-      if (!prunedShape) {
-        return null;
-      }
-      return {
-        ...shape,
-        shape: prunedShape,
-      };
-    }
-    case "keyed": {
-      const prunedShape = pruneEmptyGroups(shape.shape);
-      if (!prunedShape) {
-        return null;
-      }
-      return {
-        ...shape,
-        shape: prunedShape,
-      };
-    }
-    case "z-index": {
-      const prunedShape = pruneEmptyGroups(shape.shape);
-      if (!prunedShape) {
-        return null;
-      }
-      return {
-        ...shape,
-        shape: prunedShape,
-      };
-    }
-    case "lazy":
-      assert(shape.state.hasRun);
-      const prunedShape = pruneEmptyGroups(shape.state.shape);
-      if (!prunedShape) {
-        return null;
-      }
-      return {
-        ...shape,
-        state: {
-          hasRun: true,
-          shape: prunedShape,
-        },
-      };
-    default:
-      assertNever(shape);
-  }
+  });
+
+  // TODO: we don't lerp frames cuz they're only used at construction
+  // time?
+  return new Diagram(lerpedFlatShapes, []);
 }
 
-export function origToInterpolatable(shape: Shape): InterpolatableShape {
-  const offsetMap = makeOffsetMap(shape, Vec2(0));
-  // console.log("r.shape", r.shape);
-  // console.log("parentMap", parentMap);
-  const shape2 = runLazyShapes(shape, offsetMap);
-  const shape3 = pullOutKeyedShapes(shape2);
-  const shape4 = pruneEmptyGroups(shape3) ?? group();
-  // TODO: should we be scared of losing identity here?
-  return { ...shape4, interpolatable: true };
-}
-
-export function drawInterpolatable(
-  lyr: Layer,
-  shape: InterpolatableShape,
-  ctx?: DrawShapeContext,
-): void {
-  const flatShapes = flattenShape(shape, Vec2(0), 0).flatShapes;
-  // console.log("flatShapes", flatShapes);
-  drawFlatShapes(lyr, flatShapes, ctx);
-}
-
-export function lerpShapes(
-  a: InterpolatableShape,
-  b: InterpolatableShape,
-  t: number,
-): InterpolatableShape {
-  return { ...lerpShapesImpl(a, b, t), interpolatable: true };
-}
-
-export function lerpShapes3(
-  a: InterpolatableShape,
-  b: InterpolatableShape,
-  c: InterpolatableShape,
+export function lerpDiagrams3(
+  a: Diagram,
+  b: Diagram,
+  c: Diagram,
   { l0, l1, l2 }: { l0: number; l1: number; l2: number },
 ) {
   if (l0 + l1 < 1e-6) {
     return c;
   }
-  const ab = lerpShapes(a, b, l1 / (l0 + l1));
-  return lerpShapes(ab, c, l2);
+  const ab = lerpDiagrams(a, b, l1 / (l0 + l1));
+  return lerpDiagrams(ab, c, l2);
 }
 
-function lerpShapesImpl(a: Shape, b: Shape, t: number): Shape {
-  function assertSameType<T extends Shape>(a: T, b: Shape): asserts b is T {
-    assert(a.type === b.type);
+export function flatShapeByDraggableKey(
+  diagram: Diagram,
+  draggableKey: string,
+): FlatShape {
+  const fs = diagram.flatShapes.find((fs) => fs.draggableKey === draggableKey);
+  if (!fs) {
+    throw new Error(`No shape with key ${draggableKey}`);
   }
-
-  switch (a.type) {
-    case "circle":
-      assertSameType(a, b);
-      assert(a.fillStyle === b.fillStyle);
-      assert(a.strokeStyle === b.strokeStyle);
-      return {
-        type: "circle",
-        center: a.center.lerp(b.center, t),
-        radius: lerp(a.radius, b.radius, t),
-        fillStyle: a.fillStyle,
-        strokeStyle: a.strokeStyle,
-        lineWidth:
-          a.lineWidth === undefined || b.lineWidth === undefined
-            ? undefined
-            : lerp(a.lineWidth, b.lineWidth, t),
-        nodeId: a.nodeId,
-      };
-    case "line":
-      assertSameType(a, b);
-      assert(a.strokeStyle === b.strokeStyle);
-      return {
-        type: "line",
-        from: a.from.lerp(b.from, t),
-        to: a.to.lerp(b.to, t),
-        strokeStyle: a.strokeStyle,
-        lineWidth: lerp(a.lineWidth, b.lineWidth, t),
-      };
-    case "curve":
-      assertSameType(a, b);
-      assert(a.strokeStyle === b.strokeStyle);
-      assert(a.points.length === b.points.length);
-      return {
-        type: "curve",
-        points: a.points.map((ap, i) => ap.lerp(b.points[i], t)),
-        strokeStyle: a.strokeStyle,
-        lineWidth: lerp(a.lineWidth, b.lineWidth, t),
-      };
-    case "rectangle":
-      assertSameType(a, b);
-      assert(a.fillStyle === b.fillStyle);
-      assert(a.strokeStyle === b.strokeStyle);
-      assert(a.label === b.label);
-      return {
-        type: "rectangle",
-        xywh: [
-          lerp(a.xywh[0], b.xywh[0], t),
-          lerp(a.xywh[1], b.xywh[1], t),
-          lerp(a.xywh[2], b.xywh[2], t),
-          lerp(a.xywh[3], b.xywh[3], t),
-        ],
-        fillStyle: a.fillStyle,
-        strokeStyle: a.strokeStyle,
-        lineWidth:
-          a.lineWidth === undefined || b.lineWidth === undefined
-            ? undefined
-            : lerp(a.lineWidth, b.lineWidth, t),
-        label: a.label,
-      };
-    case "polygon":
-      assertSameType(a, b);
-      assert(a.fillStyle === b.fillStyle);
-      assert(a.points.length === b.points.length);
-      return {
-        type: "polygon",
-        points: a.points.map((ap, i) => ap.lerp(b.points[i], t)),
-        fillStyle: a.fillStyle,
-      };
-    case "group":
-      assertSameType(a, b);
-      assert(a.shapes.length === b.shapes.length);
-      return {
-        type: "group",
-        shapes: a.shapes.map((as, i) => lerpShapesImpl(as, b.shapes[i], t)),
-      };
-    case "keyed-group":
-      assertSameType(a, b);
-      // TODO: creating / removing objects requires changing number of keys
-      // assert(
-      //   Object.keys(a.shapes).length === Object.keys(b.shapes).length &&
-      //     Object.keys(a.shapes).every((k) => k in b.shapes),
-      // );
-      const allKeys = _.union(Object.keys(a.shapes), Object.keys(b.shapes));
-      return {
-        type: "keyed-group",
-        shapes: Object.fromEntries(
-          allKeys.map((k) => {
-            const as = a.shapes[k];
-            const bs = b.shapes[k];
-            if (as && bs) {
-              return [k, lerpShapesImpl(as, bs, t)];
-            } else {
-              return [k, as || bs];
-            }
-          }),
-        ),
-        // shapes: _.mapValues(a.shapes, (as, k) =>
-        //   lerpShapes(as, b.shapes[k], t),
-        // ),
-      };
-    case "translate":
-      assertSameType(a, b);
-      return {
-        type: "translate",
-        shape: lerpShapesImpl(a.shape, b.shape, t),
-        offset: a.offset.lerp(b.offset, t),
-      };
-    case "z-index":
-      assertSameType(a, b);
-      return {
-        type: "z-index",
-        shape: lerpShapesImpl(a.shape, b.shape, t),
-        zIndex: lerp(a.zIndex, b.zIndex, t),
-      };
-    case "lazy":
-      assertSameType(a, b);
-      assert(a.state.hasRun);
-      assert(b.state.hasRun);
-      return {
-        type: "lazy",
-        state: {
-          hasRun: true,
-          shape: lerpShapesImpl(a.state.shape, b.state.shape, t),
-        },
-      };
-    case "keyed":
-      assertSameType(a, b);
-      assert(a.key === b.key);
-      assert(a.isDraggable === b.isDraggable);
-      return {
-        type: "keyed",
-        key: a.key,
-        isDraggable: a.isDraggable,
-        shape: lerpShapesImpl(a.shape, b.shape, t),
-      };
-    default:
-      return assertNever(a);
-  }
+  return fs;
 }
 
-export function shapeByKey(shape: Shape, key: string) {
-  return shapeByKeyHelper(shape, key, Vec2(0));
-}
-function shapeByKeyHelper(
-  shape: Shape,
-  key: string,
-  offset: Vec2,
-): { shape: Shape; offset: Vec2 } | null {
-  if (shape.type === "keyed" && shape.key === key) {
-    return { shape, offset };
-  }
-  if (shape.type === "translate") {
-    offset = offset.add(shape.offset);
-  }
-  for (const child of shapeChildren(shape, true)) {
-    const result = shapeByKeyHelper(child, key, offset);
-    if (result) {
-      return result;
-    }
-  }
-  return null;
-}
+// # the return of the point in the diagram
 
-// # cute chaining DSL for shapes
-
-const shapeMethods = {
-  translate(this: Shape, offset: Vec2able) {
-    return addMethods({ type: "translate", offset: Vec2(offset), shape: this });
-  },
-
-  keyed(this: Shape, key: string, isDraggable: boolean) {
-    return addMethods({ type: "keyed", key, isDraggable, shape: this });
-  },
-
-  zIndex(this: Shape, z: number) {
-    return addMethods({ type: "z-index", zIndex: z, shape: this });
-  },
+export type PointInDiagram = {
+  diagramId: string;
+  point: Vec2;
 };
 
-export type ShapeWithMethods = Shape & typeof shapeMethods;
-
-// let's not export this, to encourage using the constructors below
-function addMethods<T extends Shape>(s: T): T & typeof shapeMethods {
-  const result = Object.create(shapeMethods);
-  Object.assign(result, s);
-  return result;
+export function pointInDiagram(diagram: Diagram, point: Vec2): PointInDiagram {
+  return { diagramId: diagram.id, point };
 }
 
-function makeConstructorForShapeType<T extends Shape["type"]>(type: T) {
-  return (
-    params: Omit<Extract<Shape, { type: T }>, "type">,
-  ): ShapeWithMethods => {
-    return addMethods({ type, ...params } as Extract<Shape, { type: T }>);
-  };
-}
-
-export const circle = makeConstructorForShapeType("circle");
-export const line = makeConstructorForShapeType("line");
-export const curve = makeConstructorForShapeType("curve");
-export const polygon = makeConstructorForShapeType("polygon");
-export const rectangle = makeConstructorForShapeType("rectangle");
-
-export function group(
-  debugName?: string,
-  ...manyShapes: Many<Shape>[]
-): ShapeOfType<"group"> & ShapeWithMethods;
-export function group(
-  ...manyShapes: Many<Shape>[]
-): ShapeOfType<"group"> & ShapeWithMethods;
-export function group(
-  debugNameOrManyShapes?: string | Many<Shape>,
-  ...manyShapes: Many<Shape>[]
-): ShapeOfType<"group"> & ShapeWithMethods {
-  const debugName =
-    typeof debugNameOrManyShapes === "string"
-      ? debugNameOrManyShapes
-      : undefined;
-  const shapes = manyToArray(
-    typeof debugNameOrManyShapes === "string"
-      ? manyShapes
-      : [debugNameOrManyShapes, ...manyShapes],
+export function resolvePointInDiagram(
+  pointInDiagram: PointInDiagram,
+  diagram: Diagram,
+): Vec2 {
+  const fs = diagram.frames.find(
+    (frame) => frame.id === pointInDiagram.diagramId,
   );
-  return addMethods({
-    ...(debugName && { debugName }),
-    type: "group",
-    shapes,
-  });
-}
-
-export function keyedGroup(
-  shapes: Record<string, Shape> = {},
-): ShapeOfType<"keyed-group"> & ShapeWithMethods {
-  return addMethods({ type: "keyed-group", shapes });
-}
-
-export function lazy(
-  getShape: (ShapeOfType<"lazy">["state"] & { hasRun: false })["getShape"],
-): ShapeOfType<"lazy"> & ShapeWithMethods {
-  return addMethods({ type: "lazy", state: { hasRun: false, getShape } });
+  assert(!!fs, "Frame ID must exist in diagram");
+  return pointInDiagram.point.add(fs.transform);
 }

@@ -5,13 +5,11 @@ import { projectOntoConvexHull } from "./delaunay";
 import { layer, Layer } from "./layer";
 import { IPointerManager } from "./pointer";
 import {
-  drawInterpolatable,
-  InterpolatableShape,
-  lerpShapes,
-  lerpShapes3,
-  origToInterpolatable,
-  Shape,
-  shapeByKey,
+  Diagram,
+  drawDiagram,
+  flatShapeByDraggableKey,
+  lerpDiagrams,
+  lerpDiagrams3,
 } from "./shape";
 import { assert, assertNever, pipe } from "./utils";
 import { Vec2 } from "./vec2";
@@ -38,7 +36,7 @@ export type ManipulableBase<T, ManipulableConfig> = {
     state: T,
     draggableKey: string | null,
     config: ManipulableConfig,
-  ): Shape;
+  ): Diagram;
   accessibleFrom(
     state: T,
     draggableKey: string,
@@ -93,7 +91,7 @@ export type Path = (string | number)[];
 
 export type ManifoldPoint<T> = {
   state: T;
-  shape: InterpolatableShape;
+  diagram: Diagram;
   offset: Vec2;
 };
 
@@ -131,7 +129,7 @@ export class ManipulableDrawer<T, Config = unknown> {
       }
     | {
         type: "animating";
-        startShape: InterpolatableShape;
+        startDiagram: Diagram;
         targetState: T;
         startTime: number;
         duration: number;
@@ -162,7 +160,7 @@ export class ManipulableDrawer<T, Config = unknown> {
     if (state.type === "dragging") {
       pointer.setCursor("grabbing");
 
-      const { shapeToDraw, newState } = pipe(null, () => {
+      const { diagramToDraw, newState } = pipe(null, () => {
         const draggableDestPt = pointer.dragPointer!.sub(state.pointerOffset);
 
         const manifoldProjections = state.manifolds.map((manifold) => {
@@ -232,21 +230,27 @@ export class ManipulableDrawer<T, Config = unknown> {
             state.pointerOffset,
             manipulableConfig,
           );
-          return { shapeToDraw: closestManifoldPt!.shape, newState };
+          return { diagramToDraw: closestManifoldPt!.diagram, newState };
         }
 
         if (bestManifoldProjection.type === "vertex") {
           const { ptIdx } = bestManifoldProjection;
           return {
-            shapeToDraw: bestManifoldProjection.manifold.points[ptIdx].shape,
+            diagramToDraw:
+              bestManifoldProjection.manifold.points[ptIdx].diagram,
             newState,
           };
         } else if (bestManifoldProjection.type === "edge") {
           const { ptIdx0, ptIdx1, t } = bestManifoldProjection;
+          // console.log(
+          //   "case: edge",
+          //   bestManifoldProjection.manifold.points[ptIdx0].diagram,
+          //   bestManifoldProjection.manifold.points[ptIdx1].diagram,
+          // );
           return {
-            shapeToDraw: lerpShapes(
-              bestManifoldProjection.manifold.points[ptIdx0].shape,
-              bestManifoldProjection.manifold.points[ptIdx1].shape,
+            diagramToDraw: lerpDiagrams(
+              bestManifoldProjection.manifold.points[ptIdx0].diagram,
+              bestManifoldProjection.manifold.points[ptIdx1].diagram,
               t,
             ),
             newState,
@@ -255,22 +259,22 @@ export class ManipulableDrawer<T, Config = unknown> {
           const { ptIdx0, ptIdx1, ptIdx2, barycentric } =
             bestManifoldProjection;
           return {
-            shapeToDraw: lerpShapes3(
-              bestManifoldProjection.manifold.points[ptIdx0].shape,
-              bestManifoldProjection.manifold.points[ptIdx1].shape,
-              bestManifoldProjection.manifold.points[ptIdx2].shape,
+            diagramToDraw: lerpDiagrams3(
+              bestManifoldProjection.manifold.points[ptIdx0].diagram,
+              bestManifoldProjection.manifold.points[ptIdx1].diagram,
+              bestManifoldProjection.manifold.points[ptIdx2].diagram,
               barycentric,
             ),
             newState,
           };
         }
       });
-      if (shapeToDraw) drawInterpolatable(lyr, shapeToDraw);
+      if (diagramToDraw) drawDiagram(diagramToDraw, lyr);
       pointer.addPointerUpHandler(() => {
-        if (shapeToDraw) {
+        if (diagramToDraw) {
           this.state = {
             type: "animating",
-            startShape: shapeToDraw,
+            startDiagram: diagramToDraw,
             targetState: newState,
             startTime: Date.now(),
             duration: drawerConfig.animationDuration,
@@ -287,30 +291,26 @@ export class ManipulableDrawer<T, Config = unknown> {
       // draggableDestPt
       const objectiveFn = (params: number[]) => {
         const candidateState = state.stateFromParams(...params);
-        const shape = origToInterpolatable(
-          this.manipulable.render(
-            candidateState,
-            state.draggableKey,
-            manipulableConfig,
-          ),
+        const diagram = this.manipulable.render(
+          candidateState,
+          state.draggableKey,
+          manipulableConfig,
         );
-        const foundShape = shapeByKey(shape, state.draggableKey);
+        const foundShape = flatShapeByDraggableKey(diagram, state.draggableKey);
         assert(!!foundShape, "Draggable key not found in rendered shape");
-        return draggableDestPt.dist2(foundShape.offset);
+        return draggableDestPt.dist2(foundShape.transform);
       };
 
       const r = minimize(objectiveFn, state.curParams);
       state.curParams = r.solution;
 
       const newState = state.stateFromParams(...state.curParams);
-      const shape = origToInterpolatable(
-        this.manipulable.render(
-          newState,
-          state.draggableKey,
-          manipulableConfig,
-        ),
+      const diagram = this.manipulable.render(
+        newState,
+        state.draggableKey,
+        manipulableConfig,
       );
-      drawInterpolatable(lyr, shape);
+      drawDiagram(diagram, lyr);
 
       pointer.addPointerUpHandler(() => {
         this.state = { type: "idle", state: newState };
@@ -323,16 +323,18 @@ export class ManipulableDrawer<T, Config = unknown> {
       const progress = Math.min(elapsed / state.duration, 1);
       const easedProgress = easeElastic(progress);
 
-      const targetShape = origToInterpolatable(
-        this.manipulable.render(state.targetState, null, manipulableConfig),
+      const targetDiagram = this.manipulable.render(
+        state.targetState,
+        null,
+        manipulableConfig,
       );
-      const interpolatedShape = lerpShapes(
-        state.startShape,
-        targetShape,
+      const interpolatedDiagram = lerpDiagrams(
+        state.startDiagram,
+        targetDiagram,
         easedProgress,
       );
 
-      drawInterpolatable(lyr, interpolatedShape);
+      drawDiagram(interpolatedDiagram, lyr);
 
       if (progress >= 1) {
         this.state = { type: "idle", state: state.targetState };
@@ -340,13 +342,12 @@ export class ManipulableDrawer<T, Config = unknown> {
     } else if (state.type === "idle") {
       pointer.setCursor("default");
 
-      const orig = this.manipulable.render(
+      const diagram = this.manipulable.render(
         state.state,
         null,
         manipulableConfig,
       );
-      const interpolatable = origToInterpolatable(orig);
-      drawInterpolatable(lyr, interpolatable, {
+      drawDiagram(diagram, lyr, {
         pointer: pointer,
         onDragStart: (key, pointerOffset) => {
           this.enterDraggingMode(
@@ -411,12 +412,14 @@ export class ManipulableDrawer<T, Config = unknown> {
         : [[]];
 
     const makeManifoldPoint = (state: T): ManifoldPoint<T> => {
-      const shape = origToInterpolatable(
-        this.manipulable.render(state, draggableKey, manipulableConfig),
+      const diagram = this.manipulable.render(
+        state,
+        draggableKey,
+        manipulableConfig,
       );
-      const foundShape = shapeByKey(shape, draggableKey);
-      assert(!!foundShape, "Draggable key not found in rendered shape");
-      return { state, shape, offset: foundShape.offset };
+      const foundFlatShape = flatShapeByDraggableKey(diagram, draggableKey);
+      assert(!!foundFlatShape, "Draggable key not found in rendered shape");
+      return { state, diagram, offset: foundFlatShape.transform };
     };
 
     const startingPoint = makeManifoldPoint(state);

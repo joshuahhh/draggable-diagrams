@@ -25,7 +25,7 @@ export const manipulableRushHour: Manipulable<RushHourState> = {
     const TILE_SIZE = 50;
     const BORDER_WIDTH = 10;
     const redCarY = Object.values(state.cars).find((t) => t.color === "red")?.y;
-    return group(`tiles`, [
+    return group(
       _.range(state.w).map((x) =>
         _.range(state.h).map((y) =>
           rectangle({
@@ -42,7 +42,7 @@ export const manipulableRushHour: Manipulable<RushHourState> = {
           strokeStyle: "black",
           lineWidth: 2,
         })
-          .keyed(`${key}`, true)
+          .draggable(`${key}`)
           .translate(Vec2(tile.x * TILE_SIZE, tile.y * TILE_SIZE)),
       ),
       rectangle({
@@ -68,7 +68,7 @@ export const manipulableRushHour: Manipulable<RushHourState> = {
           strokeStyle: "white",
           lineWidth: BORDER_WIDTH,
         }),
-    ]);
+    );
   },
 
   accessibleFrom(state, draggableKey) {

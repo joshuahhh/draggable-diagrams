@@ -13,14 +13,14 @@ export const manipulableGraph: Manipulable<GraphState> = {
 
   render(state) {
     const NODE_R = 20;
-    return group(`nodes-and-edges`, [
+    return group(
       Object.entries(state.nodes).map(([key, node]) =>
         circle({
           center: Vec2(0),
           radius: NODE_R,
           fillStyle: "black",
         })
-          .keyed(`node-${key}`, true)
+          .draggable(`node-${key}`)
           .translate(Vec2(node.x, node.y)),
       ),
       Object.entries(state.edges).map(([key, edge]) => {
@@ -61,7 +61,7 @@ export const manipulableGraph: Manipulable<GraphState> = {
             ],
             fillStyle: "black",
           })
-            .keyed(`head-${key}`, true)
+            .draggable(`head-${key}`)
             .translate(toArrow),
           // TODO: hover effect
           circle({
@@ -69,11 +69,11 @@ export const manipulableGraph: Manipulable<GraphState> = {
             radius: 5,
             fillStyle: "black",
           })
-            .keyed(`tail-${key}`, true)
+            .draggable(`tail-${key}`)
             .translate(fromArrow.towards(toArrow, 5)),
         ).translate(offset);
       }),
-    ]);
+    );
   },
 
   accessibleFrom(state, draggableKey) {

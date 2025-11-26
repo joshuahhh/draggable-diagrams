@@ -2,7 +2,7 @@ import _ from "lodash";
 import React from "react";
 import { ConfigCheckbox } from "./config-controls";
 import { Manipulable } from "./manipulable";
-import { group, keyedGroup, rectangle, ShapeWithMethods } from "./shape";
+import { Diagram, group, rectangle } from "./shape";
 import { insertImm, removeImm, setImm } from "./utils";
 
 type NoolTree = {
@@ -31,7 +31,7 @@ export const manipulableNoolTree: Manipulable<NoolTree, NoolTreeConfig> = {
   sourceFile: "manipulable-nool-tree.tsx",
 
   render(state) {
-    return renderNoolTree(state).shape;
+    return renderNoolTree(state).diagram;
   },
 
   accessibleFrom(state, draggableKey, configParam) {
@@ -388,7 +388,7 @@ export const stateNoolTree2: NoolTree = {
 };
 
 function renderNoolTree(tree: NoolTree): {
-  shape: ShapeWithMethods;
+  diagram: Diagram;
   w: number;
   h: number;
   id: string;
@@ -398,13 +398,10 @@ function renderNoolTree(tree: NoolTree): {
   const LABEL_WIDTH = 20;
   const LABEL_MIN_HEIGHT = 20;
   const renderedChildren = tree.children.map(renderNoolTree);
-  const renderedChildrenShape = keyedGroup();
+  const renderedChildrenDiagrams: Diagram[] = [];
   let childY = 0;
   for (const childR of renderedChildren) {
-    renderedChildrenShape.shapes[childR.id] = childR.shape.translate([
-      0,
-      childY,
-    ]);
+    renderedChildrenDiagrams.push(childR.diagram.translate([0, childY]));
     childY += childR.h + GAP;
   }
   const innerW =
@@ -418,7 +415,7 @@ function renderNoolTree(tree: NoolTree): {
         GAP * (renderedChildren.length - 1)
       : LABEL_MIN_HEIGHT;
   return {
-    shape: group("node", [
+    diagram: group(
       rectangle({
         // background
         xywh: [0, 0, innerW + PADDING * 2, innerH + PADDING * 2],
@@ -429,16 +426,16 @@ function renderNoolTree(tree: NoolTree): {
         // label
         xywh: [PADDING, PADDING, LABEL_WIDTH, innerH],
         label: tree.label,
-      }),
+      }).draggable(tree.id),
       ...(renderedChildren.length > 0
         ? [
-            renderedChildrenShape.translate([
+            group(renderedChildrenDiagrams).translate([
               PADDING + LABEL_WIDTH + GAP,
               PADDING,
             ]),
           ]
         : []),
-    ]).keyed(tree.id, true),
+    ).absoluteKey(tree.id),
     w: innerW + PADDING * 2,
     h: innerH + PADDING * 2,
     id: tree.id,

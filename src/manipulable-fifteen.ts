@@ -16,7 +16,7 @@ export const manipulableFifteen: Manipulable<FifteenState> = {
 
   render(state) {
     const TILE_SIZE = 50;
-    return group(`tiles`, [
+    return group(
       _.range(state.w).map((x) =>
         _.range(state.h).map((y) =>
           rectangle({
@@ -34,10 +34,10 @@ export const manipulableFifteen: Manipulable<FifteenState> = {
           lineWidth: 2,
           label: key,
         })
-          .keyed(key, true)
+          .draggable(key)
           .translate(Vec2(tile.x * TILE_SIZE, tile.y * TILE_SIZE)),
       ),
-    ]);
+    );
   },
 
   accessibleFrom(state, draggableKey) {

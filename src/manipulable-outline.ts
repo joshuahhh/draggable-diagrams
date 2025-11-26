@@ -1,5 +1,5 @@
 import { Manipulable } from "./manipulable";
-import { group, rectangle, Shape, ShapeWithMethods } from "./shape";
+import { Diagram, group, rectangle } from "./shape";
 
 type Outline = {
   id: string;
@@ -8,29 +8,31 @@ type Outline = {
 };
 
 function renderOutline(tree: Outline): {
-  shape: ShapeWithMethods;
+  diagram: Diagram;
   h: number;
 } {
   const HEIGHT = 25;
   const WIDTH = 50;
   const INDENT = 20;
-  const shapes: Shape[] = [];
-  shapes.push(
+  const diagrams: Diagram[] = [];
+  diagrams.push(
     rectangle({
       xywh: [0, 0, WIDTH, HEIGHT],
       strokeStyle: "gray",
       lineWidth: 1,
       label: tree.label,
-    }).keyed(tree.id, true),
+    })
+      .draggable(tree.id)
+      .absoluteKey(tree.id),
   );
   let y = HEIGHT;
   tree.children.forEach((child) => {
     const childRender = renderOutline(child);
-    shapes.push(childRender.shape.translate([INDENT, y]));
+    diagrams.push(childRender.diagram.translate([INDENT, y]));
     y += childRender.h;
   });
   return {
-    shape: group(shapes),
+    diagram: group(diagrams),
     h: y,
   };
 }
@@ -81,7 +83,7 @@ export const manipulableOutline: Manipulable<Outline> = {
   sourceFile: "manipulable-outline.tsx",
 
   render(state) {
-    return renderOutline(state).shape;
+    return renderOutline(state).diagram;
   },
 
   accessibleFrom(state, draggableKey) {

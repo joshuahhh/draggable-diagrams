@@ -20,7 +20,7 @@ export const manipulableAngle: Manipulable<AngleState> = {
         radius: 20,
         fillStyle: "black",
       })
-        .keyed("knob", true)
+        .draggable("knob")
         .translate(knobPos),
       line({
         from: center,

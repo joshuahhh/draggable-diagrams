@@ -19,7 +19,7 @@ export const manipulableGridPoly: Manipulable<GridPolyState> = {
   render(state) {
     // draw grid as rectangles
     const TILE_SIZE = 50;
-    return group(`grid-poly`, [
+    return group(
       _.range(state.w).map((x) =>
         _.range(state.h).map((y) =>
           circle({
@@ -35,7 +35,7 @@ export const manipulableGridPoly: Manipulable<GridPolyState> = {
           radius: 10,
           fillStyle: "black",
         })
-          .keyed(`${idx}`, true)
+          .draggable(`${idx}`)
           .translate(Vec2(pt.x * TILE_SIZE, pt.y * TILE_SIZE)),
       ),
       state.points.map((pt, idx) => {
@@ -45,9 +45,9 @@ export const manipulableGridPoly: Manipulable<GridPolyState> = {
           to: Vec2(nextPt.x * TILE_SIZE, nextPt.y * TILE_SIZE),
           strokeStyle: "black",
           lineWidth: 2,
-        }).keyed(`line-${idx}`, false);
+        });
       }),
-    ]);
+    );
   },
 
   accessibleFrom(state, draggableKey) {

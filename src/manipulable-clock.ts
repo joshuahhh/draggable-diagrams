@@ -1,5 +1,5 @@
 import { Manipulable } from "./manipulable";
-import { circle, group, line, ShapeWithMethods } from "./shape";
+import { circle, Diagram, group, line } from "./shape";
 import { Vec2 } from "./vec2";
 
 type ClockState = {
@@ -17,7 +17,7 @@ export const manipulableClock: Manipulable<ClockState> = {
       angle: number,
       length: number,
       lineWidth_: number,
-    ): ShapeWithMethods {
+    ): Diagram {
       const handEnd = Vec2(length, 0).rotate(angle).add(center);
       return group(
         circle({
@@ -25,7 +25,7 @@ export const manipulableClock: Manipulable<ClockState> = {
           radius: 10,
           fillStyle: "black",
         })
-          .keyed(name, true)
+          .draggable(name)
           .translate(handEnd),
         line({
           from: center,

@@ -16,9 +16,8 @@ export const manipulablePermDouble: Manipulable<PermDoubleState> = {
     const TILE_SIZE = 50;
     const ROW_PADDING = 5;
     return group(
-      `grid-poly`,
       state.rows.map((row, rowIdx) =>
-        group(`row-${rowIdx}`, [
+        group(
           row.map((p, idx) =>
             rectangle({
               xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
@@ -27,6 +26,7 @@ export const manipulablePermDouble: Manipulable<PermDoubleState> = {
               fillStyle: "white",
               label: p,
             })
+              .draggable(p)
               .zIndex(
                 p === draggableKey
                   ? 2
@@ -34,10 +34,10 @@ export const manipulablePermDouble: Manipulable<PermDoubleState> = {
                     ? 1
                     : 0,
               )
-              .keyed(p, true)
-              .translate(Vec2(idx * TILE_SIZE + ROW_PADDING, ROW_PADDING)),
+              .translate(Vec2(idx * TILE_SIZE + ROW_PADDING, ROW_PADDING))
+              .absoluteKey(`node-${p}`),
           ),
-        ]).translate(Vec2(0, rowIdx * (TILE_SIZE + ROW_PADDING * 2))),
+        ).translate(Vec2(0, rowIdx * (TILE_SIZE + ROW_PADDING * 2))),
       ),
     );
   },

@@ -31,7 +31,7 @@ export const manipulableFlippy: Manipulable<PermState> = {
             fillStyle: "white",
             strokeStyle: "black",
             lineWidth: 2,
-          }),
+          }).draggable(p),
           rectangle({
             xywh: XYWH(-TILE_SIZE / 2, -TILE_SIZE / 2, TILE_SIZE, TILE_SIZE),
             lineWidth: 2,
@@ -39,8 +39,8 @@ export const manipulableFlippy: Manipulable<PermState> = {
           }),
         )
           .zIndex(p === draggableKey ? 1 : 0)
-          .keyed(p, true)
-          .translate(positions[p]),
+          .translate(positions[p])
+          .absoluteKey(`node-${p}`),
       ),
       state.perm.map((p, idx) => {
         // there's a bit of complexity to draw the edges in such a
@@ -57,7 +57,7 @@ export const manipulableFlippy: Manipulable<PermState> = {
           lineWidth: 1,
         })
           .zIndex(-1)
-          .keyed(`edge-${p1}-${p2}`, false);
+          .absoluteKey(`edge-${p1}-${p2}`);
       }),
     );
   },

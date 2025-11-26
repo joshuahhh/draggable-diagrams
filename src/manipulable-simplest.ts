@@ -9,7 +9,7 @@ export const manipulableSimplest: Manipulable<boolean> = {
       xywh: XYWH(0, 0, 100, 100),
       fillStyle: "black",
     })
-      .keyed("switch", true)
+      .draggable("switch")
       .translate([state ? 100 : 0, 0]);
   },
 

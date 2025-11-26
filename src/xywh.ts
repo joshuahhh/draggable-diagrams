@@ -1,4 +1,4 @@
-import { Vec2 } from "./vec2";
+import { lerp, Vec2 } from "./vec2";
 
 export type XYWH = readonly [number, number, number, number];
 
@@ -24,6 +24,15 @@ export const fromCenter = (center: Vec2, w: number, h: number): XYWH => {
 
 export const translateXYWH = (xywh: XYWH, v: Vec2): XYWH => {
   return XYWH(xywh[0] + v.x, xywh[1] + v.y, xywh[2], xywh[3]);
+};
+
+export const lerpXYWH = (a: XYWH, b: XYWH, t: number): XYWH => {
+  return XYWH(
+    lerp(a[0], b[0], t),
+    lerp(a[1], b[1], t),
+    lerp(a[2], b[2], t),
+    lerp(a[3], b[3], t),
+  );
 };
 
 export const merge = (a: XYWH | null, b: XYWH | null): XYWH | null => {

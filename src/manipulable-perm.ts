@@ -16,18 +16,18 @@ export const manipulablePerm: Manipulable<PermState> = {
     // draw grid as rectangles
     const TILE_SIZE = 50;
     return group(
-      `grid-poly`,
       state.perm.map((p, idx) =>
         rectangle({
           xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
           strokeStyle: "black",
           lineWidth: 2,
           fillStyle: "white",
-          label: `${p}`,
+          label: p,
         })
+          .draggable(p)
           .zIndex(p === draggableKey ? 1 : 0)
-          .keyed(`${p}`, true)
-          .translate(Vec2(idx * TILE_SIZE, p === draggableKey ? -10 : 0)),
+          .translate(Vec2(idx * TILE_SIZE, p === draggableKey ? -10 : 0))
+          .absoluteKey(p),
       ),
     );
   },

@@ -16,7 +16,7 @@ export const manipulableInsertAndRemove: Manipulable<PermState> = {
   render(state, draggableKey) {
     // draw grid as rectangles
     const TILE_SIZE = 50;
-    return group(`grid-poly`, [
+    return group(
       rectangle({
         xywh: XYWH(0, 0, 60, TILE_SIZE),
         label: "Store:",
@@ -29,8 +29,9 @@ export const manipulableInsertAndRemove: Manipulable<PermState> = {
           fillStyle: "white",
           label,
         })
+          .draggable(key)
+          .absoluteKey(key)
           .zIndex(key === draggableKey ? 1 : 0)
-          .keyed(key, true)
           .translate(Vec2(80 + idx * TILE_SIZE, 0)),
       ),
       state.items.map(({ key, label }, idx) =>
@@ -41,11 +42,12 @@ export const manipulableInsertAndRemove: Manipulable<PermState> = {
           fillStyle: "white",
           label,
         })
+          .draggable(key)
+          .absoluteKey(key)
           .zIndex(key === draggableKey ? 1 : 0)
-          .keyed(key, true)
           .translate(Vec2(idx * TILE_SIZE, TILE_SIZE * 1.5)),
       ),
-    ]);
+    );
   },
 
   accessibleFrom(state, draggableKey) {
