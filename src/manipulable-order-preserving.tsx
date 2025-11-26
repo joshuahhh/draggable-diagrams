@@ -107,7 +107,7 @@ export const manipulableOrderPreserving: Manipulable<
   renderConfig(config, setConfig) {
     return (
       <ConfigCheckbox
-        label="Show Traditional Representation"
+        label="Show traditional representation"
         value={config.showTradRep}
         onChange={(newValue) => setConfig({ ...config, showTradRep: newValue })}
       />

@@ -7,7 +7,11 @@ import { XYWH } from "./xywh";
 
 type Tile = { key: string; label: string };
 
-type PermState = { store: Tile[]; items: Tile[]; deleted?: Tile };
+type PermState = {
+  items: Tile[];
+  store: Tile[];
+  deleted?: Tile;
+};
 
 export const manipulableInsertAndRemove: Manipulable<PermState> = {
   sourceFile: "manipulable-insert-and-remove.ts",
@@ -29,6 +33,12 @@ export const manipulableInsertAndRemove: Manipulable<PermState> = {
         .zIndex(key === draggableKey ? 1 : 0);
 
     return group(
+      // Items
+      state.items.map((tile, idx) =>
+        drawTile(tile).translate(Vec2(idx * TILE_SIZE, TILE_SIZE * 1.5)),
+      ),
+
+      // Store
       rectangle({
         xywh: XYWH(0, 0, 60, TILE_SIZE),
         label: "Store:",
@@ -36,6 +46,8 @@ export const manipulableInsertAndRemove: Manipulable<PermState> = {
       state.store.map((tile, idx) =>
         drawTile(tile).translate(Vec2(80 + idx * TILE_SIZE, 0)),
       ),
+
+      // Deleted
       group(
         rectangle({
           xywh: XYWH(0, 0, TILE_SIZE, TILE_SIZE),
@@ -43,10 +55,6 @@ export const manipulableInsertAndRemove: Manipulable<PermState> = {
         }),
         state.deleted && drawTile(state.deleted),
       ).translate(Vec2(300, 0)),
-
-      state.items.map((tile, idx) =>
-        drawTile(tile).translate(Vec2(idx * TILE_SIZE, TILE_SIZE * 1.5)),
-      ),
     );
   },
 

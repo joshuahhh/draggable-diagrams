@@ -13,6 +13,7 @@ type TilesState = {
 
 export const manipulableTiles: Manipulable<TilesState> = {
   sourceFile: "manipulable-tiles.ts",
+
   render(state) {
     const TILE_SIZE = 50;
     return group(
@@ -67,5 +68,6 @@ export const stateTilesLonely: TilesState = {
   h: 5,
   tiles: {
     A: { x: 2, y: 2 },
+    B: { x: 4, y: 4 },
   },
 };

@@ -128,7 +128,7 @@ export function Demo({
           className={`${hasConfig(drawer.manipulable) ? "w-64 md:w-52" : "w-48 md:w-32"} bg-gray-50 rounded p-3 flex flex-col gap-2`}
         >
           <label className="flex flex-col gap-1 text-xs">
-            <span className="font-medium text-gray-700">Snap Radius</span>
+            <span className="font-medium text-gray-700">Snap radius</span>
             <input
               type="range"
               min="0"
@@ -142,12 +142,12 @@ export function Demo({
             </span>
           </label>
           <ConfigCheckbox
-            label="Transition While Dragging"
+            label="Chain drags automatically"
             value={transitionWhileDragging}
             onChange={setTransitionWhileDragging}
           />
           <ConfigCheckbox
-            label="Relative Pointer Motion"
+            label="Relative pointer motion"
             value={relativePointerMotion}
             onChange={setRelativePointerMotion}
           />

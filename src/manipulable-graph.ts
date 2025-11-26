@@ -77,11 +77,11 @@ export const manipulableGraph: Manipulable<GraphState> = {
   },
 
   onDrag(state, draggableKey) {
-    const newStates = [];
     if (draggableKey.startsWith("head-")) {
       const edgeKey = draggableKey.slice("head-".length);
       const edge = state.edges[edgeKey];
       // construct all new graphs where the "edgeKey" edge has a different node as "to" (but not the "from" node)
+      const newStates = [];
       for (const newToNodeKey of Object.keys(state.nodes)) {
         if (newToNodeKey === edge.from || newToNodeKey === edge.to) continue;
         if (
@@ -99,10 +99,12 @@ export const manipulableGraph: Manipulable<GraphState> = {
           },
         });
       }
+      return span(newStates);
     } else if (draggableKey.startsWith("tail-")) {
       const edgeKey = draggableKey.slice("tail-".length);
       const edge = state.edges[edgeKey];
       // construct all new graphs where the "edgeKey" edge has a different node as "from" (but not the "to" node)
+      const newStates = [];
       for (const newFromNodeKey of Object.keys(state.nodes)) {
         if (newFromNodeKey === edge.to || newFromNodeKey === edge.from)
           continue;
@@ -121,6 +123,7 @@ export const manipulableGraph: Manipulable<GraphState> = {
           },
         });
       }
+      return span(newStates);
     } else if (draggableKey.startsWith("node-")) {
       const nodeKey = draggableKey.slice("node-".length);
       return numsAtPaths([
@@ -128,7 +131,6 @@ export const manipulableGraph: Manipulable<GraphState> = {
         ["nodes", nodeKey, "y"],
       ]);
     }
-    return span(newStates);
   },
 };
 

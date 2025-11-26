@@ -157,7 +157,7 @@ export const manipulableSokoban: Manipulable<SokobanState, SokobanConfig> = {
 
   renderConfig: (config, setConfig) => (
     <ConfigCheckbox
-      label="Level Editable"
+      label="Make level editable"
       value={config.levelEditable}
       onChange={(newValue) => setConfig({ levelEditable: newValue })}
     />
