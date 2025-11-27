@@ -9,6 +9,7 @@ type Tile = { key: string; label: string };
 
 type PermState = {
   items: Tile[];
+  // these are the weird ones:
   store: Tile[];
   deleted?: Tile;
 };

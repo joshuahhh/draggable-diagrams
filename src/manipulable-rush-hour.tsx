@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { ConfigCheckbox } from "./config-controls";
 import { Manipulable, span } from "./manipulable";
 import { group, line, rectangle } from "./shape";
 import { Vec2 } from "./vec2";
@@ -19,8 +20,13 @@ type RushHourState = {
   };
 };
 
-export const manipulableRushHour: Manipulable<RushHourState> = {
-  sourceFile: "manipulable-rush-hour.ts",
+type RushHourConfig = {
+  oneSquareAtATime: boolean;
+};
+
+export const manipulableRushHour: Manipulable<RushHourState, RushHourConfig> = {
+  sourceFile: "manipulable-rush-hour.tsx",
+
   render(state) {
     const TILE_SIZE = 50;
     const BORDER_WIDTH = 10;
@@ -71,7 +77,7 @@ export const manipulableRushHour: Manipulable<RushHourState> = {
     );
   },
 
-  onDrag(state, draggableKey) {
+  onDrag(state, draggableKey, config) {
     const curLoc = state.cars[draggableKey];
     const nextStates: RushHourState[] = [state];
     function tryMove(dx: number, dy: number) {
@@ -108,6 +114,7 @@ export const manipulableRushHour: Manipulable<RushHourState> = {
         });
         x += dx;
         y += dy;
+        if (config.oneSquareAtATime) break;
       }
     }
     if (curLoc.dir === "h") {
@@ -119,6 +126,20 @@ export const manipulableRushHour: Manipulable<RushHourState> = {
       tryMove(0, 1);
     }
     return span(nextStates);
+  },
+
+  defaultConfig: {
+    oneSquareAtATime: false,
+  },
+
+  renderConfig(config, setConfig) {
+    return (
+      <ConfigCheckbox
+        label="Move one square at a time"
+        value={config.oneSquareAtATime}
+        onChange={(newValue) => setConfig({ oneSquareAtATime: newValue })}
+      />
+    );
   },
 };
 
