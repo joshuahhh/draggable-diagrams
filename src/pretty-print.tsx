@@ -14,6 +14,8 @@ const COLORS = [
   { name: "null", ansi: "\x1b[90m", hex: "#6b7280" }, // gray
   { name: "key", ansi: "\x1b[36m", hex: "#06b6d4" }, // cyan
   { name: "keyword", ansi: "\x1b[34m", hex: "#3b82f6" }, // blue
+  { name: "type", ansi: "\x1b[95m", hex: "#ec4899" }, // bright magenta
+  { name: "id", ansi: "\x1b[90m", hex: "#9ca3af" }, // faded gray
 ] as const;
 
 type ColorType = (typeof COLORS)[number]["name"];
@@ -316,12 +318,15 @@ export function prettyPrint(value: unknown, useColor: boolean = true): Doc {
       return "{}";
     }
 
-    // Check if object has a "type" field
+    // Check if object has "type" and/or "id" fields
     const typeEntry = entries.find(([key]) => key === "type");
     const typeValue = typeEntry?.[1];
-    const remainingEntries = typeEntry
-      ? entries.filter(([key]) => key !== "type")
-      : entries;
+    const idEntry = entries.find(([key]) => key === "id");
+    const idValue = idEntry?.[1];
+
+    const remainingEntries = entries.filter(
+      ([key]) => key !== "type" && key !== "id"
+    );
 
     const props = remainingEntries.map(([key, val]) => {
       const keyStr = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)
@@ -340,15 +345,20 @@ export function prettyPrint(value: unknown, useColor: boolean = true): Doc {
       }
     }
 
-    // Build the object with optional type prefix
-    const prefix =
-      typeValue && typeof typeValue === "string"
-        ? [useColor ? colorize(typeValue, "keyword") : typeValue, " "]
-        : [];
+    // Build the prefix: "type#id" or "type" or "#id"
+    const prefix: Doc[] = [];
+    if (typeValue && typeof typeValue === "string") {
+      prefix.push(useColor ? colorize(typeValue, "type") : typeValue);
+    }
+    if (idValue !== undefined) {
+      const idStr = "#" + String(idValue);
+      prefix.push(useColor ? colorize(idStr, "id") : idStr);
+    }
 
     return group([
       "{",
-      ...prefix,
+      prefix.length > 0 ? prefix : "",
+      prefix.length > 0 ? " " : "",
       remainingEntries.length > 0 ? indent([softline, ...withSeparators]) : "",
       remainingEntries.length > 0 ? softline : "",
       "}",
