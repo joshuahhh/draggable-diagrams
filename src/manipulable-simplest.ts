@@ -2,7 +2,11 @@ import { Manipulable, span } from "./manipulable";
 import { rectangle } from "./shape";
 import { XYWH } from "./xywh";
 
-export const manipulableSimplest: Manipulable<boolean> = {
+type State = {
+  value: boolean;
+};
+
+export const manipulableSimplest: Manipulable<State> = {
   sourceFile: "manipulable-simplest.ts",
   render(state) {
     return rectangle({
@@ -10,12 +14,13 @@ export const manipulableSimplest: Manipulable<boolean> = {
       fillStyle: "black",
     })
       .draggable("switch")
-      .translate([state ? 100 : 0, 0]);
+      .absoluteKey("switch")
+      .translate([state.value ? 100 : 0, 0]);
   },
 
   onDrag(_state, _draggableKey) {
-    return span([false, true]);
+    return span([{ value: true }, { value: false }]);
   },
 };
 
-export const stateSimplest1 = true;
+export const stateSimplest1: State = { value: true };
