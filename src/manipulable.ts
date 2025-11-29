@@ -105,8 +105,6 @@ export function numAtPath<T>(paramPath: PathIn<T, number>): DragSpecParams<T> {
   return { type: "param-paths", paramPaths: [paramPath] };
 }
 
-export type Path = (string | number)[];
-
 export type ManifoldPoint<T> = {
   state: T;
   diagram: Diagram;
