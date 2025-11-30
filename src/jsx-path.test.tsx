@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assignPaths } from "./jsx-path";
+import { assignPaths, findByPath, getPath } from "./jsx-path";
 
 describe("assignPaths", () => {
   it("assigns numerical paths to nested elements", () => {
@@ -157,5 +157,100 @@ describe("assignPaths", () => {
         />
       </g>
     `);
+  });
+});
+
+describe("findByPath", () => {
+  it("finds root element by path", () => {
+    const tree = assignPaths(
+      <g>
+        <rect />
+        <circle />
+      </g>,
+    );
+
+    const found = findByPath("/", tree);
+    expect.assert(found);
+    expect(found.type).toBe("g");
+    expect(getPath(found)).toBe("/");
+  });
+
+  it("finds child element by numerical path", () => {
+    const tree = assignPaths(
+      <g>
+        <rect />
+        <circle />
+      </g>,
+    );
+
+    const found = findByPath("/1/", tree);
+    expect.assert(found);
+    expect(found.type).toBe("circle");
+  });
+
+  it("finds deeply nested element", () => {
+    const tree = assignPaths(
+      <g>
+        <g>
+          <rect />
+          <circle />
+        </g>
+      </g>,
+    );
+
+    const found = findByPath("/0/1/", tree);
+    expect.assert(found);
+    expect(found.type).toBe("circle");
+  });
+
+  it("finds element by id-based path", () => {
+    const tree = assignPaths(
+      <g>
+        <rect id="my-rect" />
+        <circle />
+      </g>,
+    );
+
+    const found = findByPath("my-rect/", tree);
+    expect.assert(found);
+    expect(found.type).toBe("rect");
+    expect((found.props as any).id).toBe("my-rect");
+  });
+
+  it("finds nested child under id-based path", () => {
+    const tree = assignPaths(
+      <g>
+        <g id="container">
+          <rect />
+          <circle />
+        </g>
+      </g>,
+    );
+
+    const found = findByPath("container/1/", tree);
+    expect.assert(found);
+    expect(found.type).toBe("circle");
+  });
+
+  it("returns null when path does not exist", () => {
+    const tree = assignPaths(
+      <g>
+        <rect />
+      </g>,
+    );
+
+    const found = findByPath("/99/", tree);
+    expect(found).toBe(null);
+  });
+
+  it("returns null for non-existent id path", () => {
+    const tree = assignPaths(
+      <g>
+        <rect id="real" />
+      </g>,
+    );
+
+    const found = findByPath("fake/", tree);
+    expect(found).toBe(null);
   });
 });

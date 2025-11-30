@@ -76,8 +76,17 @@ export function prettyPrintForBrowser(
  * Pretty-print a value to the browser console with colors.
  * This is the easiest way to use the pretty-printer in browser code.
  */
-export function prettyLog(value: unknown, printWidth: number = 120): void {
-  console.log(...prettyPrintForBrowser(value, printWidth));
+export function prettyLog(
+  value: unknown,
+  { label, width = 120 }: { label?: string; width?: number } = {},
+): void {
+  if (label) {
+    console.group(label);
+  }
+  console.log(...prettyPrintForBrowser(value, width));
+  if (label) {
+    console.groupEnd();
+  }
 }
 
 /**

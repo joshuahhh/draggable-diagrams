@@ -1,6 +1,8 @@
 import { PathIn } from "./paths";
 import { Many, manyToArray } from "./utils";
 
+// DragSpec is the value that specifies how dragging works. It can,
+// in some cases, be a bunch of nested arrays or nulls or whatever.
 // TODO: more sophisticated combos
 export type DragSpec<T> = Many<DragSpecManifold<T>> | DragSpecParams<T>;
 
