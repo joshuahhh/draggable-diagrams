@@ -167,7 +167,9 @@ export function PrettyPrint({
         {/* 100 characters for measurement */}
         {"0123456789".repeat(10)}
       </span>
-      <pre style={{ margin: 0, fontFamily: "monospace" }}>{elements}</pre>
+      <pre style={{ margin: 0, fontFamily: "monospace", maxWidth: "100%" }}>
+        {elements}
+      </pre>
     </div>
   );
 }
@@ -181,6 +183,72 @@ function prettyPrintToDoc(
   useColor: boolean = true,
   visited: Set<unknown> = new Set(),
 ): Doc {
+  // Handle JSX elements
+  if (true) {
+    // Change to false to disable JSX printing
+    if (React.isValidElement(value)) {
+      const element = value as React.ReactElement;
+      const type =
+        typeof element.type === "string"
+          ? element.type
+          : element.type.name || "Component";
+      const props = element.props as any;
+      const { children, ...otherProps } = props;
+
+      const openTag = useColor ? colorize(`<${type}`, "keyword") : `<${type}`;
+      const closeTag = useColor
+        ? colorize(`</${type}>`, "keyword")
+        : `</${type}>`;
+      const selfCloseTag = useColor ? colorize("/>", "keyword") : "/>";
+
+      // Format props
+      const propEntries = Object.entries(otherProps);
+      const propDocs: Doc[] = [];
+      for (let i = 0; i < propEntries.length; i++) {
+        const [key, val] = propEntries[i];
+        const keyStr = useColor ? colorize(key, "key") : key;
+        const valDoc =
+          typeof val === "string"
+            ? useColor
+              ? colorize(JSON.stringify(val), "string")
+              : JSON.stringify(val)
+            : ["{", prettyPrintToDoc(val, useColor, visited), "}"];
+        propDocs.push(ifBreak(line, " "), keyStr, "=", valDoc);
+      }
+
+      const childrenArray = React.Children.toArray(children);
+      const hasChildren = childrenArray.length > 0;
+
+      if (!hasChildren && propEntries.length === 0) {
+        return [openTag, " ", selfCloseTag];
+      }
+
+      if (!hasChildren) {
+        return group([
+          openTag,
+          indent(propDocs),
+          ifBreak(line, " "),
+          selfCloseTag,
+        ]);
+      }
+
+      const childDocs = childrenArray.map((child) =>
+        typeof child === "string" || typeof child === "number"
+          ? String(child)
+          : prettyPrintToDoc(child, useColor, visited),
+      );
+
+      return group([
+        openTag,
+        indent(propDocs),
+        useColor ? colorize(">", "keyword") : ">",
+        indent([softline, ...childDocs]),
+        softline,
+        closeTag,
+      ]);
+    }
+  }
+
   // Handle primitives
   if (value === null) return useColor ? colorize("null", "null") : "null";
   if (value === undefined)

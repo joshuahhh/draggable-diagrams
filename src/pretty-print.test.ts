@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import React from "react";
 import { prettyPrintToString } from "./pretty-print";
 
 describe("prettyPrintToString", () => {
@@ -114,5 +115,50 @@ describe("prettyPrintToString", () => {
     const result = prettyPrintToString(obj, 80, false);
 
     expect(result).toBe("{first: {value: 42}, second: {value: 42}}");
+  });
+
+  it("should print JSX elements", () => {
+    const element = React.createElement("div", { className: "foo" }, "hello");
+    const result = prettyPrintToString(element, 80, false);
+
+    expect(result).toBe('<div className="foo">hello</div>');
+  });
+
+  it("should print JSX elements with no children", () => {
+    const element = React.createElement("br", {});
+    const result = prettyPrintToString(element, 80, false);
+
+    expect(result).toBe("<br />");
+  });
+
+  it("should print JSX elements with props and no children", () => {
+    const element = React.createElement("img", { src: "test.png", alt: "test" });
+    const result = prettyPrintToString(element, 80, false);
+
+    expect(result).toBe('<img src="test.png" alt="test" />');
+  });
+
+  it("should print nested JSX elements", () => {
+    const element = React.createElement(
+      "div",
+      {},
+      React.createElement("span", {}, "hello"),
+      React.createElement("span", {}, "world")
+    );
+    const result = prettyPrintToString(element, 80, false);
+
+    expect(result).toBe("<div><span>hello</span><span>world</span></div>");
+  });
+
+  it("should break props onto new lines when narrow", () => {
+    const element = React.createElement("img", {
+      src: "test.png",
+      alt: "description",
+      width: 100,
+      height: 200,
+    });
+    const result = prettyPrintToString(element, 30, false);
+
+    expect(result).toContain("\n");
   });
 });
