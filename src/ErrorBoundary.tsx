@@ -14,6 +14,7 @@ export class ErrorBoundary extends Component<
   {
     fallback?: (error: Error, errorInfo: ErrorInfo) => ReactNode;
     children: ReactNode;
+    resetOnChange?: any;
   },
   { hasError: boolean; error: Error | null; errorInfo: ErrorInfo | null }
 > {
@@ -34,6 +35,20 @@ export class ErrorBoundary extends Component<
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error(error, errorInfo);
     this.setState({ error, errorInfo });
+  }
+
+  componentDidUpdate(prevProps: { resetOnChange?: any }) {
+    // If resetOnChange prop changes while in error state, reset the error
+    if (
+      this.state.hasError &&
+      this.props.resetOnChange !== prevProps.resetOnChange
+    ) {
+      this.setState({
+        hasError: false,
+        error: null,
+        errorInfo: null,
+      });
+    }
   }
 
   render() {
