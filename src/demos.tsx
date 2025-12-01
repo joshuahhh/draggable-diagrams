@@ -10,6 +10,7 @@ import { Fifteen } from "./manipulable-fifteen";
 import { Graph } from "./manipulable-graph";
 import { GridPoly } from "./manipulable-grid-poly";
 import { InsertAndRemove } from "./manipulable-insert-and-remove";
+import { Kanban } from "./manipulable-kanban";
 import { NoolTree } from "./manipulable-nool-tree";
 import { OrderPreserving } from "./manipulable-order-preserving";
 import { Outline } from "./manipulable-outline";
@@ -25,6 +26,15 @@ import { Tiles } from "./manipulable-tiles";
 import { Todo } from "./manipulable-todo";
 
 export const demos: ReactElement[] = [
+  <Demo
+    id="kanban"
+    title="Kanban"
+    manipulable={Kanban.manipulable}
+    initialState={Kanban.state1}
+    height={100}
+    padding={20}
+    sourceFile="manipulable-kanban.tsx"
+  />,
   <Demo
     id="simplest"
     title="Simplest"
