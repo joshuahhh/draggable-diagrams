@@ -38,7 +38,7 @@ export function DemoCanvas<T extends object, Config>({
   initialChainDrags = true,
   initialRelativePointerMotion = false,
 }: DemoCanvasProps<T, Config>) {
-  const { debugView, onDragStateChange } = useDemoContext();
+  const { debugMode, onDragStateChange } = useDemoContext();
   const drawer = useMemo(
     () =>
       new ManipulableCanvasDrawer(manipulable, initialState, onDragStateChange),
@@ -81,7 +81,7 @@ export function DemoCanvas<T extends object, Config>({
         lyrOffset,
         pointerManagerWithOffset(pointer, paddingVec),
         {
-          debugView,
+          debugMode,
           snapRadius,
           chainDrags,
           relativePointerMotion,
@@ -95,7 +95,7 @@ export function DemoCanvas<T extends object, Config>({
     [
       drawer,
       padding,
-      debugView,
+      debugMode,
       snapRadius,
       chainDrags,
       relativePointerMotion,

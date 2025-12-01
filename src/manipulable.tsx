@@ -775,7 +775,7 @@ export function ManipulableDrawer<T extends object, Config>({
 }: ManipulableProps<T, Config>) {
   // console.log("ManipulableDrawer render");
 
-  const { onDragStateChange, debugView } = useDemoContext();
+  const { onDragStateChange, debugMode } = useDemoContext();
 
   const [dragState, setDragStateRaw] = useState<DragState<T>>({
     type: "idle",
@@ -995,7 +995,7 @@ export function ManipulableDrawer<T extends object, Config>({
       {sortedEntries.map(([key, element]) => (
         <Fragment key={key}>{stripDraggables(element)}</Fragment>
       ))}
-      {debugView && debugRender}
+      {debugMode && debugRender}
     </svg>
   );
 }

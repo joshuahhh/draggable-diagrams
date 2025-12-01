@@ -142,7 +142,7 @@ export class ManipulableCanvasDrawer<T extends object, Config = unknown> {
     pointer: IPointerManager,
     drawerConfig: {
       snapRadius: number;
-      debugView: boolean;
+      debugMode: boolean;
       chainDrags: boolean;
       relativePointerMotion: boolean;
       animationDuration: number;
@@ -167,7 +167,7 @@ export class ManipulableCanvasDrawer<T extends object, Config = unknown> {
           };
         });
         manifoldProjections.forEach((proj) => {
-          if (drawerConfig.debugView) {
+          if (drawerConfig.debugMode) {
             drawManifoldDebug(
               lyrDebug,
               proj.manifold,

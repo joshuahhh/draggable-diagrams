@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
 
 interface DemoContextValue {
-  debugView: boolean;
+  debugMode: boolean;
   onDragStateChange?: (dragState: any) => void;
 }
 

@@ -137,7 +137,7 @@ export function LiveEditor({
                 </div>
               ) : result ? (
                 <ErrorBoundary key={code}>
-                  <DemoContext.Provider value={{ debugView: debugMode }}>
+                  <DemoContext.Provider value={{ debugMode }}>
                     <ManipulableDrawer
                       manipulable={result.manipulable as Manipulable<any>}
                       initialState={result.initialState}

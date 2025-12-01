@@ -5,7 +5,7 @@ import { ErrorBoundary } from "./ErrorBoundary";
 import { PrettyPrint } from "./pretty-print";
 
 export function DemoListPage({ demos }: { demos: ReactElement[] }) {
-  const [debugView, setDebugView] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -18,7 +18,7 @@ export function DemoListPage({ demos }: { demos: ReactElement[] }) {
         {demos.map((demo) => {
           const id = (demo.props as any).id;
           return (
-            <DemoContext.Provider key={id} value={{ debugView }}>
+            <DemoContext.Provider key={id} value={{ debugMode }}>
               <ErrorBoundary>{demo}</ErrorBoundary>
             </DemoContext.Provider>
           );
@@ -28,8 +28,8 @@ export function DemoListPage({ demos }: { demos: ReactElement[] }) {
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
-            checked={debugView}
-            onChange={(e) => setDebugView(e.target.checked)}
+            checked={debugMode}
+            onChange={(e) => setDebugMode(e.target.checked)}
           />
           Debug View
         </label>
@@ -45,7 +45,7 @@ export function SingleDemoPage({
   demos: ReactElement[];
   id: string;
 }) {
-  const [debugView, setDebugView] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
 
   const demo = demos.find((d) => (d.props as any).id === id);
 
@@ -88,12 +88,12 @@ export function SingleDemoPage({
       </div>
       <div className="flex flex-col gap-5 px-5 pb-5 max-w-3xl mx-auto min-w-1/2">
         <DemoContext.Provider
-          value={{ debugView, onDragStateChange: setDragState }}
+          value={{ debugMode, onDragStateChange: setDragState }}
         >
           <ErrorBoundary>{demo}</ErrorBoundary>
         </DemoContext.Provider>
       </div>
-      {false && debugView ? (
+      {false && debugMode ? (
         <div className="px-5 max-w-3xl mx-auto w-full flex-1 overflow-y-auto overflow-x-hidden min-h-0">
           {<PrettyPrint value={lastExcitingDragStateRef.current} />}
         </div>
@@ -104,8 +104,8 @@ export function SingleDemoPage({
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
-            checked={debugView}
-            onChange={(e) => setDebugView(e.target.checked)}
+            checked={debugMode}
+            onChange={(e) => setDebugMode(e.target.checked)}
           />
           Debug View
         </label>
