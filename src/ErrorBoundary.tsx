@@ -47,7 +47,7 @@ export class ErrorBoundary extends Component<
       const isErrorWithJSX = error instanceof ErrorWithJSX;
 
       return (
-        <div className="border border-red-300 bg-red-50 rounded p-4 my-2 select-text">
+        <div className="border border-red-300 bg-red-50 rounded p-4 m-4 select-text self-start">
           <div className="font-semibold text-red-800 mb-2 text-lg">
             Error: {error.message}
           </div>

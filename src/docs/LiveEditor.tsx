@@ -102,12 +102,12 @@ export function LiveEditor({
       }}
     >
       <div
-        className="border border-gray-300 rounded-lg overflow-hidden shadow-lg mx-auto"
+        className="border border-gray-300 rounded-lg shadow-lg mx-auto"
         style={{
           maxWidth: "min(1200px, calc(100vw - 3rem))",
         }}
       >
-        <div className="flex flex-col md:grid md:grid-cols-2">
+        <div className="flex flex-col md:grid md:grid-cols-2 rounded-lg">
           {/* Preview (top on mobile, right on desktop) */}
           <div className="bg-white flex flex-col md:order-2 md:border-l border-gray-300">
             <div className="bg-blue-600 text-white text-xs font-semibold px-3 py-2">
@@ -118,17 +118,17 @@ export function LiveEditor({
                 minHeight: `${minHeight}px`,
                 height: height ? `${height}px` : undefined,
               }}
-              className="flex select-text flex-1"
+              className="flex select-text items-start bg-white md:sticky md:top-0"
             >
               {error ? (
-                <div className="p-4 text-red-700 text-sm">
+                <div className="p-4 m-4 text-red-700 text-sm border border-red-300 bg-red-50 rounded">
                   <div className="font-semibold mb-1">Error:</div>
                   <pre className="whitespace-pre-wrap font-mono text-xs">
                     {error}
                   </pre>
                 </div>
               ) : result ? (
-                <ErrorBoundary>
+                <ErrorBoundary key={code}>
                   <DemoContext.Provider value={{ debugView: false }}>
                     <ManipulableDrawer
                       manipulable={result.manipulable as Manipulable<any>}
