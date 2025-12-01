@@ -36,6 +36,15 @@ export function IndexPage() {
           >
             Pretty Print Demo
           </Link>
+
+          <a
+            href="https://github.com/joshuahhh/draggable-diagrams"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-8 text-lg text-gray-700 hover:text-gray-900 no-underline font-semibold"
+          >
+            ⭐ Fork me on GitHub! ⭐
+          </a>
         </div>
       </div>
     </div>
