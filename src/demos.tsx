@@ -28,9 +28,11 @@ import {
   stateNoolTree2,
 } from "./manipulable-nool-tree";
 import {
+  ConfigPanelNoolTree,
+  defaultConfigNool,
   manipulableNoolTreeSvg,
-  stateNoolTree1 as stateNoolTree1Svg,
-  stateNoolTree2 as stateNoolTree2Svg,
+  stateNoolTreeSvg1,
+  stateNoolTreeSvg2,
 } from "./manipulable-nool-tree-svg";
 import {
   manipulableOrderPreserving,
@@ -307,21 +309,25 @@ export const demos: ReactElement[] = [
     id="nool-tree-svg"
     title="Nool tree (SVG)"
     manipulableSvg={manipulableNoolTreeSvg}
-    initialState={stateNoolTree1Svg}
+    initialState={stateNoolTreeSvg1}
     height={350}
     padding={20}
     initialSnapRadius={1}
     initialRelativePointerMotion={true}
+    defaultConfig={defaultConfigNool}
+    ConfigPanel={ConfigPanelNoolTree}
   />,
   <DemoSvg
     id="nool-tree-simpler-svg"
     title="Nool tree, simpler (SVG)"
     manipulableSvg={manipulableNoolTreeSvg}
-    initialState={stateNoolTree2Svg}
+    initialState={stateNoolTreeSvg2}
     height={200}
     padding={20}
     initialSnapRadius={1}
     initialRelativePointerMotion={true}
+    defaultConfig={defaultConfigNool}
+    ConfigPanel={ConfigPanelNoolTree}
   />,
   <Demo
     id="outline"

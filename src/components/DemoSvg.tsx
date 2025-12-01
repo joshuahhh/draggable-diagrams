@@ -1,38 +1,76 @@
-import { ReactNode, useState } from "react";
+import { ReactElement, ReactNode, useState } from "react";
 import { Link } from "react-router-dom";
 import { ConfigCheckbox } from "../config-controls";
 import { ErrorBoundary } from "../ErrorBoundary";
 import { ManipulableSvg, ManipulableSvgDrawer } from "../manipulable-svg";
+import { hasKey } from "../utils";
 
-interface DemoSvgProps<T extends object> {
+type DemoSvgPropsBase<T extends object, Config> = {
   id: string;
   title: string;
   notes?: ReactNode;
-  manipulableSvg: ManipulableSvg<T>;
+  manipulableSvg: ManipulableSvg<T, Config>;
   initialState: T;
   height: number;
   padding?: number;
   initialSnapRadius?: number;
   initialChainDrags?: boolean;
   initialRelativePointerMotion?: boolean;
+};
+
+type DemoSvgPropsWithConfig<T extends object, Config> = DemoSvgPropsBase<
+  T,
+  Config
+> & {
+  defaultConfig: Config;
+  ConfigPanel: React.ComponentType<ConfigPanelProps<Config>>;
+};
+
+type DemoSvgProps<T extends object, Config> =
+  | DemoSvgPropsBase<T, Config>
+  | DemoSvgPropsWithConfig<T, Config>;
+
+export function hasConfig<T extends object, Config>(
+  props: DemoSvgProps<T, Config>,
+): props is DemoSvgPropsWithConfig<T, Config> {
+  return hasKey(props, "defaultConfig");
 }
 
-export function DemoSvg<T extends object>({
-  id,
-  title,
-  notes,
-  manipulableSvg,
-  initialState,
-  height,
-  padding = 0,
-  initialSnapRadius = 10,
-  initialChainDrags = true,
-  initialRelativePointerMotion = false,
-}: DemoSvgProps<T>) {
+export interface ConfigPanelProps<Config> {
+  config: Config;
+  setConfig: (newConfig: Config) => void;
+}
+
+export function DemoSvg<T extends object>(
+  props: DemoSvgPropsBase<T, undefined>,
+): ReactElement;
+export function DemoSvg<T extends object, Config>(
+  props: DemoSvgPropsWithConfig<T, Config>,
+): ReactElement;
+export function DemoSvg<T extends object, Config>(
+  props: DemoSvgProps<T, Config>,
+) {
+  const {
+    id,
+    title,
+    notes,
+    manipulableSvg,
+    initialState,
+    height,
+    padding = 0,
+    initialSnapRadius = 10,
+    initialChainDrags = true,
+    initialRelativePointerMotion = false,
+  } = props;
+
   const [snapRadius, setSnapRadius] = useState(initialSnapRadius);
   const [chainDrags, setChainDrags] = useState(initialChainDrags);
   const [relativePointerMotion, setRelativePointerMotion] = useState(
     initialRelativePointerMotion,
+  );
+
+  const [diagramConfig, setDiagramConfig] = useState<Config>(
+    hasConfig(props) ? props.defaultConfig : (undefined as Config),
   );
 
   return (
@@ -54,18 +92,19 @@ export function DemoSvg<T extends object>({
             <ManipulableSvgDrawer
               manipulableSvg={manipulableSvg}
               initialState={initialState}
-              config={{
+              drawerConfig={{
                 snapRadius,
                 chainDrags,
                 relativePointerMotion,
                 animationDuration: 300,
               }}
               height={height}
+              diagramConfig={diagramConfig}
             />
           </ErrorBoundary>
         </div>
         <div
-          className={`${false ? "w-64 md:w-52" : "w-48 md:w-32"} bg-gray-50 rounded p-3 flex flex-col gap-2`}
+          className={`${hasConfig(props) ? "w-64 md:w-52" : "w-48 md:w-32"} bg-gray-50 rounded p-3 flex flex-col gap-2`}
         >
           <label className="flex flex-col gap-1 text-xs">
             <span className="font-medium text-gray-700">Snap radius</span>
@@ -91,15 +130,15 @@ export function DemoSvg<T extends object>({
             value={relativePointerMotion}
             onChange={setRelativePointerMotion}
           />
-          {/* {hasConfig(drawer.manipulable) && (
+          {hasConfig(props) && (
             <>
               <div className="border-t border-gray-300 my-1" />
-              {drawer.manipulable.renderConfig(
-                manipulableConfig,
-                setManipulableConfig,
-              )}
+              <props.ConfigPanel
+                config={diagramConfig}
+                setConfig={setDiagramConfig}
+              />
             </>
-          )} */}
+          )}
         </div>
       </div>
     </div>

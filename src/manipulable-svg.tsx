@@ -76,12 +76,13 @@ export type SetState<T> = (
 /**
  * A ManipulableSvg is a function that takes state and draggable helper, returns SVG JSX.
  */
-export type ManipulableSvg<T extends object> = (props: {
+export type ManipulableSvg<T extends object, Config = undefined> = (props: {
   state: T;
   draggable: Draggable<T>;
   drag: typeof drag<T>;
   draggedId: string | null;
   setState: SetState<T>;
+  config: Config;
 }) => SvgElem;
 
 function noOp(): void {}
@@ -317,13 +318,14 @@ function postProcessForDrawing(element: SvgElem): FlattenedSvg {
   return pipe(element, assignPaths, accumulateTransforms, flattenSvg);
 }
 
-function computeEnterDraggingMode<T extends object>(
+function computeEnterDraggingMode<T extends object, Config>(
   state: T,
   draggedPath: string,
   draggedId: string | null,
   dragSpec: DragSpec<T>,
   pointerLocal: Vec2,
-  manipulableSvg: ManipulableSvg<T>,
+  manipulableSvg: ManipulableSvg<T, Config>,
+  diagramConfig: Config,
 ): DragState<T> {
   console.log("enterDraggingMode", state, draggedPath);
 
@@ -375,6 +377,7 @@ function computeEnterDraggingMode<T extends object>(
       drag,
       draggedId,
       setState: noOp,
+      config: diagramConfig,
     });
     const flattened = postProcessForDrawing(content);
     // prettyLog(flattened, { label: "flattened in makeManifoldPoint" });
@@ -423,7 +426,7 @@ function computeEnterDraggingMode<T extends object>(
   };
 }
 
-function computeRenderState<T extends object>(
+function computeRenderState<T extends object, Config>(
   dragState: DragState<T>,
   pointer: { x: number; y: number } | null,
   drawerConfig: {
@@ -432,9 +435,10 @@ function computeRenderState<T extends object>(
     relativePointerMotion: boolean;
     animationDuration: number;
   },
-  manipulableSvg: ManipulableSvg<T>,
+  manipulableSvg: ManipulableSvg<T, Config>,
   postProcessForInteraction: (element: SvgElem, state: T) => FlattenedSvg,
   setDragState: (newDragState: DragState<T>) => void,
+  diagramConfig: Config,
 ): {
   flattenedToRender: FlattenedSvg;
   currentFlattened: FlattenedSvg;
@@ -482,6 +486,7 @@ function computeRenderState<T extends object>(
           drag,
           draggedId: null,
           setState: noOp,
+          config: diagramConfig,
         });
         setDragState({
           type: "animating",
@@ -493,6 +498,7 @@ function computeRenderState<T extends object>(
           duration: seconds * 1000,
         });
       },
+      config: diagramConfig,
     });
     // console.log("content from idle state:", content);
     flattenedToRender = postProcessForInteraction(content, dragState.state);
@@ -628,6 +634,7 @@ function computeRenderState<T extends object>(
             dragSpecCallback(),
             dragState.pointerLocal,
             manipulableSvg,
+            diagramConfig,
           );
         }
       }
@@ -669,6 +676,7 @@ function computeRenderState<T extends object>(
           drag,
           draggedId: dragState.draggedId,
           setState: noOp,
+          config: diagramConfig,
         }),
         assignPaths,
         accumulateTransforms,
@@ -692,6 +700,7 @@ function computeRenderState<T extends object>(
       drag,
       draggedId: dragState.draggedId,
       setState: noOp,
+      config: diagramConfig,
     });
     flattenedToRender = postProcessForDrawing(content);
 
@@ -741,26 +750,28 @@ function computeRenderState<T extends object>(
   };
 }
 
-interface ManipulableSvgProps<T extends object> {
-  manipulableSvg: ManipulableSvg<T>;
+interface ManipulableSvgProps<T extends object, Config> {
+  manipulableSvg: ManipulableSvg<T, Config>;
   initialState: T;
   width?: number;
   height?: number;
-  config?: {
+  drawerConfig?: {
     snapRadius?: number;
     chainDrags?: boolean;
     relativePointerMotion?: boolean;
     animationDuration?: number;
   };
+  diagramConfig: Config;
 }
 
-export function ManipulableSvgDrawer<T extends object>({
+export function ManipulableSvgDrawer<T extends object, Config>({
   manipulableSvg,
   initialState,
   width,
   height,
-  config = {},
-}: ManipulableSvgProps<T>) {
+  drawerConfig = {},
+  diagramConfig,
+}: ManipulableSvgProps<T, Config>) {
   // console.log("ManipulableSvgDrawer render");
 
   const { onDragStateChange, debugView } = useDemoContext();
@@ -772,11 +783,11 @@ export function ManipulableSvgDrawer<T extends object>({
   const [pointer, setPointer] = useState<{ x: number; y: number } | null>(null);
   const pendingStateTransition = useRef<DragState<T> | null>(null);
 
-  const drawerConfig = {
-    snapRadius: config.snapRadius ?? 10,
-    chainDrags: config.chainDrags ?? true,
-    relativePointerMotion: config.relativePointerMotion ?? false,
-    animationDuration: config.animationDuration ?? 300,
+  const drawerConfigWithDefaults = {
+    snapRadius: drawerConfig.snapRadius ?? 10,
+    chainDrags: drawerConfig.chainDrags ?? true,
+    relativePointerMotion: drawerConfig.relativePointerMotion ?? false,
+    animationDuration: drawerConfig.animationDuration ?? 300,
   };
 
   const setDragState = useCallback(
@@ -863,6 +874,7 @@ export function ManipulableSvgDrawer<T extends object>({
                   dragSpecCallback(),
                   pointerLocal,
                   manipulableSvg,
+                  diagramConfig,
                 ),
               );
             },
@@ -875,10 +887,11 @@ export function ManipulableSvgDrawer<T extends object>({
   const renderState = computeRenderState(
     dragState,
     pointer,
-    drawerConfig,
+    drawerConfigWithDefaults,
     manipulableSvg,
     postProcessForInteraction,
     setDragState,
+    diagramConfig,
   );
   const { flattenedToRender, newState, pendingTransition, debugRender } =
     renderState;
@@ -917,6 +930,7 @@ export function ManipulableSvgDrawer<T extends object>({
           drag,
           draggedId: null,
           setState: noOp,
+          config: diagramConfig,
         });
         setDragState({
           type: "animating",
@@ -925,7 +939,7 @@ export function ManipulableSvgDrawer<T extends object>({
           targetState: newState,
           startTime: Date.now(),
           easing: d3Ease.easeElastic,
-          duration: drawerConfig.animationDuration,
+          duration: drawerConfigWithDefaults.animationDuration,
         });
       } else if (dragState.type === "dragging-params" && newState) {
         setDragState({ type: "idle", state: newState });
@@ -946,6 +960,8 @@ export function ManipulableSvgDrawer<T extends object>({
       document.removeEventListener("pointercancel", handlePointerCancel);
     };
   }, [
+    drawerConfig,
+    diagramConfig,
     dragState.type,
     drawerConfig.animationDuration,
     flattenedToRender,
@@ -953,6 +969,7 @@ export function ManipulableSvgDrawer<T extends object>({
     newState,
     setDragState,
     svgElem,
+    drawerConfigWithDefaults.animationDuration,
   ]);
 
   // Sort by data-z-index for rendering order

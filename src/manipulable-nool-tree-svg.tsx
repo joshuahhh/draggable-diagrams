@@ -1,8 +1,12 @@
 import _ from "lodash";
+import { ConfigPanelProps } from "./components/DemoSvg";
+import { ConfigCheckbox } from "./config-controls";
 import { DragSpec, straightTo } from "./DragSpec";
 import { SvgElem } from "./jsx-flatten";
 import { Drag, ManipulableSvg, translate } from "./manipulable-svg";
 import { insertImm, removeImm, setImm } from "./utils";
+
+// # trees
 
 type NoolTree = {
   id: string;
@@ -18,7 +22,11 @@ function isBinaryOp(node: NoolTree): boolean {
   return isOp(node) && node.children.length === 2;
 }
 
-type NoolTreeConfig = {
+// # state etc
+
+type State = NoolTree;
+
+type Config = {
   commutativity: boolean;
   pullUpOp: boolean;
   pullDownOp: boolean;
@@ -26,7 +34,7 @@ type NoolTreeConfig = {
   pullDownTail: boolean;
 };
 
-const defaultConfig: NoolTreeConfig = {
+export const defaultConfigNool: Config = {
   commutativity: true,
   pullUpOp: false,
   pullDownOp: false,
@@ -34,18 +42,19 @@ const defaultConfig: NoolTreeConfig = {
   pullDownTail: true,
 };
 
-export const manipulableNoolTreeSvg: ManipulableSvg<NoolTree> = ({
+export const manipulableNoolTreeSvg: ManipulableSvg<State, Config> = ({
   state,
   drag,
+  config,
 }) => {
-  return renderNoolTree(state, state, drag, defaultConfig).element;
+  return renderNoolTree(state, state, drag, config).element;
 };
 
 function renderNoolTree(
-  rootState: NoolTree,
+  state: State,
   tree: NoolTree,
-  drag: Drag<NoolTree>,
-  config: NoolTreeConfig,
+  drag: Drag<State>,
+  config: Config,
 ): {
   element: SvgElem;
   w: number;
@@ -58,7 +67,7 @@ function renderNoolTree(
   const LABEL_MIN_HEIGHT = 20;
 
   const renderedChildren = tree.children.map((child) =>
-    renderNoolTree(rootState, child, drag, config),
+    renderNoolTree(state, child, drag, config),
   );
 
   const renderedChildrenElements: SvgElem[] = [];
@@ -101,7 +110,7 @@ function renderNoolTree(
         textAnchor="middle"
         fontSize={20}
         fill="black"
-        data-on-drag={drag(() => dragTargets(rootState, tree.id, config))}
+        data-on-drag={drag(() => dragTargets(state, tree.id, config))}
       >
         {tree.label}
       </text>
@@ -123,10 +132,10 @@ function renderNoolTree(
 }
 
 function dragTargets(
-  rootState: NoolTree,
+  state: State,
   draggedKey: string,
-  config: NoolTreeConfig,
-): DragSpec<NoolTree> {
+  config: Config,
+): DragSpec<State> {
   function walk(
     currentTree: NoolTree,
     replaceNode: (newNode: NoolTree) => void,
@@ -305,14 +314,14 @@ function dragTargets(
     );
   }
 
-  const spec: DragSpec<NoolTree> = [];
-  walk(rootState, (newTree) => {
+  const spec: DragSpec<State> = [];
+  walk(state, (newTree) => {
     spec.push(straightTo(newTree));
   });
   return spec;
 }
 
-export const stateNoolTree1: NoolTree = {
+export const stateNoolTreeSvg1: State = {
   id: "root",
   label: "+",
   children: [
@@ -360,7 +369,7 @@ export const stateNoolTree1: NoolTree = {
   ],
 };
 
-export const stateNoolTree2: NoolTree = {
+export const stateNoolTreeSvg2: State = {
   id: "+1",
   label: "+",
   children: [
@@ -382,3 +391,76 @@ export const stateNoolTree2: NoolTree = {
     },
   ],
 };
+
+export function ConfigPanelNoolTree({
+  config,
+  setConfig,
+}: ConfigPanelProps<Config>) {
+  const plus1 = <span className="text-red-600 font-bold">+</span>;
+  const plus2 = <span className="text-green-600 font-bold">+</span>;
+  const D = ({ children }: { children: React.ReactNode }) => (
+    <span className="bg-amber-200 rounded-sm p-0.5">{children}</span>
+  );
+
+  return (
+    <>
+      <ConfigCheckbox
+        value={config.commutativity}
+        onChange={(v) => setConfig({ ...config, commutativity: v })}
+      >
+        <b>Commutativity</b>
+        <br />
+        <D>A</D> {plus1} B → B {plus1} <D>A</D>
+      </ConfigCheckbox>
+
+      <ConfigCheckbox
+        value={config.pullUpOp}
+        onChange={(v) => setConfig({ ...config, pullUpOp: v })}
+      >
+        <b>Associativity</b>
+        <br />
+        Pull up op
+        <br />
+        <D>(A {plus1} B)</D> {plus2} C →{" "}
+        <D>
+          A {plus1} (B {plus2} C)
+        </D>
+      </ConfigCheckbox>
+
+      <ConfigCheckbox
+        value={config.pullDownOp}
+        onChange={(v) => setConfig({ ...config, pullDownOp: v })}
+      >
+        <b>Associativity</b>
+        <br />
+        Pull down op
+        <br />
+        <D>
+          A {plus1} (B {plus2} C)
+        </D>{" "}
+        → <D>(A {plus1} B)</D> {plus2} C
+      </ConfigCheckbox>
+
+      <ConfigCheckbox
+        value={config.pullUpTail}
+        onChange={(v) => setConfig({ ...config, pullUpTail: v })}
+      >
+        <b>Associativity</b>
+        <br />
+        Pull up operand
+        <br />(<D>A</D> {plus1} B) {plus2} C → <D>A</D> {plus1} (B {plus2} C)
+      </ConfigCheckbox>
+
+      <ConfigCheckbox
+        value={config.pullDownTail}
+        onChange={(v) => setConfig({ ...config, pullDownTail: v })}
+      >
+        <b>Associativity</b>
+        <br />
+        Pull down operand
+        <br />
+        <D>A</D> {plus1} (B {plus2} C) → (<D>A</D> {plus1} B) {plus2} C
+      </ConfigCheckbox>
+    </>
+  );
+}
