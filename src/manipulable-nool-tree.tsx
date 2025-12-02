@@ -55,7 +55,7 @@ export namespace NoolTree {
     state: State,
     tree: Tree,
     drag: Drag<State>,
-    config: Config,
+    config: Config
   ): {
     element: SvgElem;
     w: number;
@@ -68,14 +68,14 @@ export namespace NoolTree {
     const LABEL_MIN_HEIGHT = 20;
 
     const renderedChildren = tree.children.map((child) =>
-      renderTree(state, child, drag, config),
+      renderTree(state, child, drag, config)
     );
 
     const renderedChildrenElements: SvgElem[] = [];
     let childY = 0;
     for (const childR of renderedChildren) {
       renderedChildrenElements.push(
-        <g transform={translate(0, childY)}>{childR.element}</g>,
+        <g transform={translate(0, childY)}>{childR.element}</g>
       );
       childY += childR.h + GAP;
     }
@@ -135,19 +135,19 @@ export namespace NoolTree {
   function dragTargets(
     state: State,
     draggedKey: string,
-    config: Config,
+    config: Config
   ): DragSpec<State> {
     function walk(currentTree: Tree, replaceNode: (newNode: Tree) => void) {
       // commutativity
       if (config.commutativity && isOp(currentTree)) {
         const childIdx = currentTree.children.findIndex(
-          (c) => c.id === draggedKey,
+          (c) => c.id === draggedKey
         );
         if (childIdx !== -1) {
           const dragged = currentTree.children[childIdx];
           const childrenWithoutDragged = removeImm(
             currentTree.children,
-            childIdx,
+            childIdx
           );
           _.range(0, childrenWithoutDragged.length + 1).forEach((insertIdx) => {
             if (insertIdx === childIdx) return;
@@ -162,7 +162,7 @@ export namespace NoolTree {
       // pull up op to associate
       if (config.pullUpOp && isBinaryOp(currentTree)) {
         const childIdx = currentTree.children.findIndex(
-          (c) => c.id === draggedKey,
+          (c) => c.id === draggedKey
         );
         if (childIdx !== -1) {
           const dragged = currentTree.children[childIdx];
@@ -307,8 +307,8 @@ export namespace NoolTree {
           replaceNode({
             ...currentTree,
             children: setImm(currentTree.children, childIdx, newChild),
-          }),
-        ),
+          })
+        )
       );
     }
 
