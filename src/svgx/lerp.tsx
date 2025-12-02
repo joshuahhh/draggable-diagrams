@@ -132,6 +132,20 @@ function lerpValue(key: string, valA: any, valB: any, t: number): any {
     // Interpolate colors using HCL color space
     const colorInterp = interpolateHcl(valA, valB);
     return colorInterp(t);
+  } else if (typeof valA === "string" && typeof valB === "string") {
+    // Try to parse both as numbers
+    const numA = parseFloat(valA);
+    const numB = parseFloat(valB);
+
+    if (!isNaN(numA) && !isNaN(numB)) {
+      // Both are numeric strings - interpolate and return as string
+      return String(lerp(numA, numB, t));
+    }
+
+    // Non-numeric strings - can't interpolate
+    throw new Error(
+      `Cannot lerp prop "${key}": different non-numeric values (${valA} vs ${valB})`
+    );
   } else {
     // Different non-numeric values
     throw new Error(

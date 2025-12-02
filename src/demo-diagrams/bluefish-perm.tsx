@@ -1,12 +1,4 @@
-import {
-  Align,
-  createName,
-  Distribute,
-  Group,
-  Rect,
-  Ref,
-  Text,
-} from "bluefish-js";
+import { Align, createName, Group, Rect, Ref, StackH, Text } from "bluefish-js";
 import { produce } from "immer";
 import { SVGAttributes } from "react";
 import { bluefish } from "../bluefish";
@@ -32,7 +24,7 @@ export namespace BluefishPerm {
     const attribsById: Record<string, SVGAttributes<SVGElement>> = {};
 
     return bluefish(
-      Distribute({ direction: "horizontal", spacing: 0 }, [
+      StackH({ spacing: 0 }, [
         ...state.perm.map((p) => {
           attribsById[p] = {
             "data-on-drag": drag(() => {
@@ -49,10 +41,21 @@ export namespace BluefishPerm {
             ["data-z-index" as any]: p === draggedId ? 1 : 0,
           };
 
+          const backgroundName = createName("background");
           const boxName = createName("box");
           const labelName = createName("label");
 
+          // TODO: alternative to "background" – make new "Offset"
+          // component... copy-paste "Group" and then offset paint
+          // part as needed
+
           return Group({ id: p }, [
+            Rect({
+              name: backgroundName,
+              width: TILE_SIZE,
+              height: TILE_SIZE + 5,
+              fill: "none",
+            }),
             Rect({
               name: boxName,
               width: TILE_SIZE,
@@ -69,6 +72,10 @@ export namespace BluefishPerm {
               Ref({ select: labelName }),
               Ref({ select: boxName }),
             ]),
+            Align(
+              { alignment: draggedId === p ? "topCenter" : "bottomCenter" },
+              [Ref({ select: labelName }), Ref({ select: backgroundName })]
+            ),
           ]);
         }),
       ]),
