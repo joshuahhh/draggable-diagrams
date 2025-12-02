@@ -64,18 +64,22 @@ export type TreeNodeWithoutParents = {
 export type TreeNode = {
   id: string;
   parentId: string | null;
+  parent: TreeNode | null;
   children: TreeNode[];
 };
 
 export function addParents(
   node: TreeNodeWithoutParents,
-  parentId: string | null = null
+  parentId: string | null = null,
+  parent: TreeNode | null = null
 ): TreeNode {
-  return {
+  const n: TreeNode = {
     id: node.id,
     parentId: parentId,
-    children: node.children.map((child) => addParents(child, node.id)),
-  };
+    parent,
+  } as TreeNode;
+  n.children = node.children.map((child) => addParents(child, node.id, n));
+  return n;
 }
 
 export type TreeMorph = Record<string, string>;

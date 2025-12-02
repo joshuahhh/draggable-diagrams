@@ -22,11 +22,52 @@ import {
 import { assert } from "./utils";
 import { Vec2 } from "./vec2";
 
+// HELPERS
+const least = (arr: Array<any>, scorer: Function) => {
+  if (arr.length === 0) {
+    return undefined; // Or handle as appropriate for an empty array
+  }
+
+  return arr.reduce(
+    ([bestScore, bestEl], currentElement) => {
+      const score = scorer(currentElement);
+      if (score < bestScore) {
+        return [score, currentElement];
+      } else {
+        return [bestScore, bestEl];
+      }
+    },
+    [Infinity, undefined]
+  )[1];
+};
+// returns the path from `node` to another node `n` such that `pred(n)==true`.
+const traverseUntilPred = (
+  node: any,
+  next: (n: any) => any[],
+  pred: (n: any) => boolean
+) => {
+  const visited = new Set([node]);
+  const todo: [any, any][] = [[node, []]];
+  while (todo.length > 0) {
+    const [cur, path] = todo.pop()!;
+    if (pred(cur)) return path;
+
+    for (const nxt of next(cur)) {
+      if (!visited.has(nxt)) {
+        todo.push([nxt, [...path, nxt]]);
+        visited.add(nxt);
+      }
+    }
+  }
+};
+const sum = (ns: number[]) => ns.reduce((acc, cur) => acc + cur, 0);
+
 export namespace OrderPreserving {
   export type State = {
     domainTree: TreeNode;
     codomainTree: TreeNode;
     hasseDiagram: HasseDiagram;
+    // all we are doing is changing the current morphism
     curMorphIdx: number;
     yForTradRep: number;
   };
@@ -499,6 +540,13 @@ export namespace OrderPreserving {
 
     const nodeCenter = Vec2(nodeX, FG_NODE_SIZE / 2);
 
+    const dist = (a: any, b: any) =>
+      traverseUntilPred(
+        a,
+        (n) => (n ? [...n.children, n.parent] : []),
+        (n) => n === b
+      ).length;
+
     return {
       element: (
         <g>
@@ -510,20 +558,58 @@ export namespace OrderPreserving {
             r={FG_NODE_SIZE / 2}
             fill="black"
             data-on-drag={drag(() => {
-              const { hasseDiagram, curMorphIdx } = state;
-              const curMorph = hasseDiagram.nodes[curMorphIdx];
-              const adjMorphIdxes = _.range(hasseDiagram.nodes.length).filter(
-                (nodeIdx) => {
-                  const morph = hasseDiagram.nodes[nodeIdx];
-                  return Object.entries(morph).every(
-                    ([domainElem, codomainElem]) =>
-                      domainElem === fgNode.id ||
-                      curMorph[domainElem] === codomainElem
-                  );
-                }
+              const { hasseDiagram, curMorphIdx, codomainTree } = state;
+              const allMorphisms = hasseDiagram.nodes;
+              const curMorph = allMorphisms[curMorphIdx];
+
+              const byId = new Map<any, any>();
+              traverseUntilPred(
+                codomainTree,
+                (n) => {
+                  byId.set(n.id, n);
+                  return n.children;
+                },
+                (n) => false
               );
+
+              const distCache = new Map();
+              const cachedDist = (aid: any, bid: any) => {
+                const a = byId.get(aid);
+                const b = byId.get(bid);
+                if (distCache.has(a)) {
+                  const aCache = distCache.get(a);
+                  if (aCache.has(b)) return aCache.get(b);
+                  else {
+                    const d = dist(a, b);
+                    aCache.set(b, d);
+                    return d;
+                  }
+                } else {
+                  const d = dist(a, b);
+                  distCache.set(a, new Map([[b, d]]));
+                  return d;
+                }
+              };
+
+              // 1. group morphisms by where they send fgNode.id
+              const a = _.groupBy(
+                allMorphisms,
+                (targetMorph) => targetMorph[fgNode.id]
+              );
+              // 2. sort groups by how many nodes they change, and pick first
+              const curMorphMap = Object.entries(curMorph);
+              const b = Object.values(a).map((morphs) =>
+                least(morphs, (morph: any) =>
+                  sum(curMorphMap.map(([k, v]) => cachedDist(morph[k], v)))
+                )
+              );
+              // 3. to indices
+              const c = b.map((morph: any) =>
+                allMorphisms.findIndex((a) => a === morph)
+              );
+
               return span(
-                adjMorphIdxes.map((idx) => ({
+                c.map((idx) => ({
                   ...state,
                   curMorphIdx: idx,
                 }))
