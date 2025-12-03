@@ -328,7 +328,7 @@ export namespace OrderPreserving {
             y2={to.y}
             stroke="lightgray"
             strokeWidth={12}
-            data-z-index={-1}
+            data-z-index={-2}
           />
         );
       });
