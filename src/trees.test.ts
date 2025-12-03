@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   addParents,
-  allMorphs,
   buildHasseDiagram,
   codomainTree,
   covers,
   domainTree,
+  getAllMorphs,
   layoutHasse,
   testMorphs,
 } from "./trees";
 
-describe("allMorphs", () => {
+describe("getAllMorphs", () => {
   it("works on Elliot's example", () => {
     const tree = addParents({
       id: "root",
@@ -19,13 +19,13 @@ describe("allMorphs", () => {
         { id: "b", children: [] },
       ],
     });
-    const morphs = allMorphs(tree, tree);
+    const morphs = getAllMorphs(tree, tree);
     expect(morphs).toHaveLength(11);
   });
 
   it("single node to single node has exactly one morphism", () => {
     const singleNode = addParents({ id: "x", children: [] });
-    const morphs = allMorphs(singleNode, singleNode);
+    const morphs = getAllMorphs(singleNode, singleNode);
     expect(morphs).toHaveLength(1);
     expect(morphs[0]).toEqual({ x: "x" });
   });
@@ -39,7 +39,7 @@ describe("allMorphs", () => {
         { id: "b", children: [] },
       ],
     });
-    const morphs = allMorphs(singleNode, threeNodeTree);
+    const morphs = getAllMorphs(singleNode, threeNodeTree);
     expect(morphs).toHaveLength(3); // Can map to root, a, or b
     expect(morphs).toContainEqual({ x: "root" });
     expect(morphs).toContainEqual({ x: "a" });
@@ -51,7 +51,7 @@ describe("allMorphs", () => {
       id: "p",
       children: [{ id: "c", children: [] }],
     });
-    const morphs = allMorphs(chain, chain);
+    const morphs = getAllMorphs(chain, chain);
     // Valid morphisms: both to p, both to c, or p->p and c->c
     expect(morphs).toHaveLength(3);
     expect(morphs).toContainEqual({ p: "p", c: "p" }); // All to root
@@ -60,7 +60,7 @@ describe("allMorphs", () => {
   });
 
   it("verifies testMorphs are all valid", () => {
-    const allValidMorphs = allMorphs(domainTree, codomainTree);
+    const allValidMorphs = getAllMorphs(domainTree, codomainTree);
 
     for (const testMorph of testMorphs) {
       const isValid = allValidMorphs.some(
@@ -84,7 +84,7 @@ describe("allMorphs", () => {
       id: "x",
       children: [{ id: "y", children: [] }],
     });
-    const morphs = allMorphs(largeChain, smallerTree);
+    const morphs = getAllMorphs(largeChain, smallerTree);
     // Possible mappings: all to x, all to y, a->x with b,c->y, or a,b->x with c->y
     expect(morphs).toHaveLength(4);
     expect(morphs).toContainEqual({ a: "x", b: "x", c: "x" });
@@ -105,7 +105,7 @@ describe("allMorphs", () => {
     const singleLeaf = addParents({ id: "x", children: [] });
 
     // There ARE morphisms - both siblings can map to the single node
-    const morphs = allMorphs(siblings, singleLeaf);
+    const morphs = getAllMorphs(siblings, singleLeaf);
     expect(morphs).toHaveLength(1);
     expect(morphs[0]).toEqual({ root: "x", a: "x", b: "x" });
   });
@@ -131,7 +131,7 @@ describe("allMorphs", () => {
         },
       ],
     });
-    const morphs = allMorphs(symmetricTree, symmetricTree);
+    const morphs = getAllMorphs(symmetricTree, symmetricTree);
     // Should have identity plus many other valid morphisms
     expect(morphs.length).toBeGreaterThan(1);
 

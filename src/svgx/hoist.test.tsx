@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { accumulateTransforms, flattenSvg } from "./jsx-flatten";
+import { accumulateTransforms, hoistSvg } from "./hoist";
 
-describe("flattenSvg", () => {
+describe("hoistSvg", () => {
   it("pulls nodes with IDs to the top level", () => {
     const tree = (
       <g>
@@ -10,7 +10,7 @@ describe("flattenSvg", () => {
       </g>
     );
 
-    expect(flattenSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
+    expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       Map {
         "r1" => <rect
           id="r1"
@@ -30,7 +30,7 @@ describe("flattenSvg", () => {
       </g>
     );
 
-    expect(flattenSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
+    expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       Map {
         "r1" => <rect
           data-accumulated-transform="translate(10, 20)"
@@ -54,7 +54,7 @@ describe("flattenSvg", () => {
       </g>
     );
 
-    expect(flattenSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
+    expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       Map {
         "r1" => <rect
           data-accumulated-transform="translate(10, 20) rotate(45) scale(2)"
@@ -84,7 +84,7 @@ describe("flattenSvg", () => {
       </g>
     );
 
-    expect(flattenSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
+    expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       Map {
         "r1" => <rect
           data-accumulated-transform="translate(100, 0) rotate(90)"
@@ -116,7 +116,7 @@ describe("flattenSvg", () => {
       </g>
     );
 
-    expect(flattenSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
+    expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       Map {
         "r1" => <rect
           data-accumulated-transform="translate(10, 20)"
@@ -143,7 +143,7 @@ describe("flattenSvg", () => {
       </g>
     );
 
-    expect(flattenSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
+    expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       Map {
         "c1" => <circle
           id="c1"
@@ -166,7 +166,7 @@ describe("flattenSvg", () => {
       </>
     );
 
-    expect(flattenSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
+    expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       Map {
         "r1" => <rect
           data-accumulated-transform="translate(0, 0)"
@@ -196,7 +196,7 @@ describe("flattenSvg", () => {
       </g>
     );
 
-    expect(flattenSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
+    expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       Map {
         "group1" => <g
           data-accumulated-transform="translate(50, 50)"
@@ -225,7 +225,7 @@ describe("flattenSvg", () => {
       </>
     );
 
-    expect(flattenSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
+    expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       Map {
         "inner" => <g
           data-accumulated-transform="translate(10, 10) rotate(45)"
@@ -256,7 +256,7 @@ describe("flattenSvg", () => {
       </g>
     );
 
-    expect(flattenSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
+    expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       Map {
         "r1" => <rect
           data-accumulated-transform="translate(100, 100)"
@@ -290,7 +290,7 @@ describe("flattenSvg", () => {
       </g>
     );
 
-    expect(flattenSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
+    expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       Map {
         "inner" => <rect
           data-accumulated-transform="translate(10, 10) rotate(45)"
@@ -381,7 +381,7 @@ describe("flattenSvg", () => {
       </g>
     );
 
-    expect(flattenSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
+    expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       Map {
         "label1" => <text
           data-accumulated-transform="translate(50, 100)"
@@ -412,7 +412,7 @@ describe("flattenSvg", () => {
       </g>
     );
 
-    expect(() => flattenSvg(accumulateTransforms(tree))).toThrow(
+    expect(() => hoistSvg(accumulateTransforms(tree))).toThrow(
       /data-z-index can only be set on elements with an id attribute/
     );
   });
@@ -424,7 +424,7 @@ describe("flattenSvg", () => {
       </g>
     );
 
-    expect(() => flattenSvg(accumulateTransforms(tree))).not.toThrow();
+    expect(() => hoistSvg(accumulateTransforms(tree))).not.toThrow();
   });
 
   it("throws error if duplicate IDs are found at same level", () => {
@@ -435,7 +435,7 @@ describe("flattenSvg", () => {
       </g>
     );
 
-    expect(() => flattenSvg(accumulateTransforms(tree))).toThrow(
+    expect(() => hoistSvg(accumulateTransforms(tree))).toThrow(
       /Duplicate id "duplicate" found in SVG tree/
     );
   });
@@ -450,7 +450,7 @@ describe("flattenSvg", () => {
       </g>
     );
 
-    expect(() => flattenSvg(accumulateTransforms(tree))).toThrow(
+    expect(() => hoistSvg(accumulateTransforms(tree))).toThrow(
       /Duplicate id "duplicate" found in SVG tree/
     );
   });
@@ -467,7 +467,7 @@ describe("flattenSvg", () => {
       </g>
     );
 
-    expect(() => flattenSvg(accumulateTransforms(tree))).toThrow(
+    expect(() => hoistSvg(accumulateTransforms(tree))).toThrow(
       /Duplicate id "inner" found in SVG tree/
     );
   });

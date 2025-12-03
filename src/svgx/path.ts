@@ -1,6 +1,7 @@
 import React, { Children, cloneElement, isValidElement } from "react";
-import { shouldRecurseIntoChildren, SvgElem } from "./jsx-flatten";
-import { emptyToUndefined } from "./utils";
+import { Svgx } from ".";
+import { emptyToUndefined } from "../utils";
+import { shouldRecurseIntoChildren } from "./hoist";
 
 const pathPropName = "data-path";
 
@@ -16,11 +17,11 @@ export function getPath(element: React.ReactElement): string | undefined {
  * - If id is present, uses that as the absolute path
  * - Paths are stored as strings in data-path
  */
-export function assignPaths(element: SvgElem): SvgElem {
+export function assignPaths(element: Svgx): Svgx {
   return assignPathsRecursive(element, "/");
 }
 
-function assignPathsRecursive(element: SvgElem, currentPath: string): SvgElem {
+function assignPathsRecursive(element: Svgx, currentPath: string): Svgx {
   // Check if this element has an id
   const props = element.props as any;
   const id = props.id;
@@ -42,7 +43,7 @@ function assignPathsRecursive(element: SvgElem, currentPath: string): SvgElem {
   }
 
   // Process children (skip foreignObject children)
-  const children = React.Children.toArray(props.children) as SvgElem[];
+  const children = React.Children.toArray(props.children) as Svgx[];
   const newChildren = shouldRecurseIntoChildren(element)
     ? children.map((child, index) =>
         React.isValidElement(child)
@@ -58,7 +59,7 @@ function assignPathsRecursive(element: SvgElem, currentPath: string): SvgElem {
 }
 
 // TODO: actually follow paths rather than searching the whole tree
-export function findByPath(path: string, node: SvgElem): SvgElem | null {
+export function findByPath(path: string, node: Svgx): Svgx | null {
   const props = node.props as any;
   if (props[pathPropName] === path) {
     return node;
@@ -69,7 +70,7 @@ export function findByPath(path: string, node: SvgElem): SvgElem | null {
     return null;
   }
 
-  for (const child of Children.toArray(props.children) as SvgElem[]) {
+  for (const child of Children.toArray(props.children) as Svgx[]) {
     if (isValidElement(child)) {
       const found = findByPath(path, child);
       if (found) return found;

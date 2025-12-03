@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { lerpSvgNode } from "./jsx-lerp";
+import { lerpSvgNode } from "./lerp";
 
 describe("lerpSvgNode", () => {
   it("lerps numeric props", () => {

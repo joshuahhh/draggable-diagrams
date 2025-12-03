@@ -2,8 +2,8 @@ import _ from "lodash";
 import { ConfigCheckbox } from "./config-controls";
 import { ConfigPanelProps } from "./Demo";
 import { DragSpec, straightTo } from "./DragSpec";
-import { SvgElem } from "./jsx-flatten";
 import { Drag, Manipulable, translate } from "./manipulable";
+import { Svgx } from "./svgx";
 import { insertImm, removeImm, setImm } from "./utils";
 
 export namespace NoolTree {
@@ -57,7 +57,7 @@ export namespace NoolTree {
     drag: Drag<State>,
     config: Config
   ): {
-    element: SvgElem;
+    element: Svgx;
     w: number;
     h: number;
     id: string;
@@ -71,7 +71,7 @@ export namespace NoolTree {
       renderTree(state, child, drag, config)
     );
 
-    const renderedChildrenElements: SvgElem[] = [];
+    const renderedChildrenElements: Svgx[] = [];
     let childY = 0;
     for (const childR of renderedChildren) {
       renderedChildrenElements.push(

@@ -4,10 +4,10 @@ import { arrowhead } from "./arrows";
 import { ConfigCheckbox } from "./config-controls";
 import { ConfigPanelProps } from "./Demo";
 import { span } from "./DragSpec";
-import { SvgElem } from "./jsx-flatten";
 import { overlapIntervals } from "./layout";
 import { Drag, Manipulable, translate } from "./manipulable";
-import { Finalizers, pointRef, PointRef } from "./svg-finalizers";
+import { Svgx } from "./svgx";
+import { Finalizers, pointRef, PointRef } from "./svgx/finalizers";
 import {
   getAllMorphs,
   getNodeById,
@@ -89,7 +89,7 @@ export namespace OrderPreserving {
     config,
   }) => {
     const { morph } = state;
-    const elements: SvgElem[] = [];
+    const elements: Svgx[] = [];
     const finalizers = new Finalizers();
 
     const r = drawBgTree(
@@ -197,7 +197,7 @@ export namespace OrderPreserving {
     state: State,
     drag: Drag<State>,
     config: Config
-  ): { element: SvgElem; w: number; h: number } {
+  ): { element: Svgx; w: number; h: number } {
     const result = drawBgSubtree(
       bgNode,
       [fgNode],
@@ -223,12 +223,12 @@ export namespace OrderPreserving {
     drag: Drag<State>,
     config: Config
   ): {
-    element: SvgElem;
+    element: Svgx;
     w: number;
     h: number;
     rootCenter: PointRef;
   } {
-    const elements: SvgElem[] = [];
+    const elements: Svgx[] = [];
 
     const [fgNodesHere, fgNodesBelow] = _.partition(
       fgNodes,
@@ -334,13 +334,13 @@ export namespace OrderPreserving {
     drag: Drag<State>,
     config: Config
   ): {
-    element: SvgElem;
+    element: Svgx;
     w: number;
     h: number;
     fgNodesBelow: TreeNode[];
     rootCenter: PointRef;
   } {
-    const elementsInRect: SvgElem[] = [];
+    const elementsInRect: Svgx[] = [];
 
     let x = BG_NODE_PADDING;
     let y = BG_NODE_PADDING;
@@ -414,12 +414,12 @@ export namespace OrderPreserving {
     drag: Drag<State>,
     config: Config
   ): {
-    element: SvgElem;
+    element: Svgx;
     fgNodesBelow: TreeNode[];
     w: number;
     h: number;
   } {
-    const childrenElements: SvgElem[] = [];
+    const childrenElements: Svgx[] = [];
     const childrenId = `fg-children-${fgNode.id}`;
     const fgNodesBelow: TreeNode[] = [];
     let childrenX = 0;
@@ -553,8 +553,8 @@ export namespace OrderPreserving {
     finalizers: Finalizers,
     drag: Drag<State>,
     config: Config
-  ): SvgElem[] {
-    const elements: SvgElem[] = [];
+  ): Svgx[] {
+    const elements: Svgx[] = [];
 
     const domR = drawTree(state.domainTree, "domain", "fg", finalizers);
     elements.push(
@@ -608,7 +608,7 @@ export namespace OrderPreserving {
     style: "fg" | "bg",
     finalizers: Finalizers
   ): {
-    element: SvgElem;
+    element: Svgx;
     w: number;
     h: number;
   } {
@@ -626,11 +626,11 @@ export namespace OrderPreserving {
     style: "fg" | "bg",
     finalizers: Finalizers
   ): {
-    element: SvgElem;
+    element: Svgx;
     w: number;
     h: number;
   } {
-    const childrenElements: SvgElem[] = [];
+    const childrenElements: Svgx[] = [];
     let childrenX = 0;
     let childrenMaxH = 0;
 

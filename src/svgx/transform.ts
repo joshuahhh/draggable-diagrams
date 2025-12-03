@@ -1,9 +1,9 @@
+import { assert } from "vitest";
+import { Vec2, Vec2able } from "../vec2";
+
 /**
  * Parses and interpolates SVG transform strings.
  */
-
-import { assert } from "vitest";
-import { Vec2, Vec2able } from "./vec2";
 
 export type Transform =
   | { type: "translate"; x: number; y: number }

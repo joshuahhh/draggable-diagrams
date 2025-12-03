@@ -2,11 +2,12 @@ import { rgb } from "d3-color";
 import { interpolateHcl } from "d3-interpolate";
 import { interpolatePath } from "d3-interpolate-path";
 import React from "react";
-import { ErrorWithJSX } from "./ErrorBoundary";
-import { shouldRecurseIntoChildren, SvgElem } from "./jsx-flatten";
-import { prettyLog, PrettyPrint } from "./pretty-print";
-import { lerpTransformString } from "./svg-transform";
-import { emptyToUndefined } from "./utils";
+import { Svgx } from ".";
+import { ErrorWithJSX } from "../ErrorBoundary";
+import { prettyLog, PrettyPrint } from "../pretty-print";
+import { emptyToUndefined } from "../utils";
+import { shouldRecurseIntoChildren } from "./hoist";
+import { lerpTransformString } from "./transform";
 
 // SVG properties that should be interpolated as colors
 const COLOR_PROPS = new Set([
@@ -143,7 +144,7 @@ function lerpValue(key: string, valA: any, valB: any, t: number): any {
  * Lerps between two SVG JSX nodes.
  * Interpolates transforms and recursively lerps children.
  */
-export function lerpSvgNode(a: SvgElem, b: SvgElem, t: number): SvgElem {
+export function lerpSvgNode(a: Svgx, b: Svgx, t: number): Svgx {
   // console.log("Lerping SVG nodes:", a, b, t);
 
   // Elements should be the same type
@@ -226,10 +227,10 @@ export function lerpSvgNode(a: SvgElem, b: SvgElem, t: number): SvgElem {
   }
 
   // Lerp children recursively (skip foreignObject children)
-  const childrenA = React.Children.toArray(propsA.children) as SvgElem[];
-  const childrenB = React.Children.toArray(propsB.children) as SvgElem[];
+  const childrenA = React.Children.toArray(propsA.children) as Svgx[];
+  const childrenB = React.Children.toArray(propsB.children) as Svgx[];
 
-  let lerpedChildren: SvgElem[] = [];
+  let lerpedChildren: Svgx[] = [];
 
   if (!shouldRecurseIntoChildren(a)) {
     // For foreignObject, just use children from A

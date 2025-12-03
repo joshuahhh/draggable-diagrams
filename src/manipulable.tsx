@@ -19,19 +19,19 @@ import { projectOntoConvexHull } from "./delaunay";
 import { useDemoContext } from "./DemoContext";
 import { DragSpec, span, TargetStateLike, toTargetState } from "./DragSpec";
 import { ErrorWithJSX } from "./ErrorBoundary";
-import {
-  accumulateTransforms,
-  FlattenedSvg,
-  flattenSvg,
-  getAccumulatedTransform,
-  SvgElem,
-} from "./jsx-flatten";
-import { lerpSvgNode } from "./jsx-lerp";
-import { assignPaths, findByPath, getPath } from "./jsx-path";
 import { minimize } from "./minimize";
 import { getAtPath, setAtPath } from "./paths";
 import { prettyLog, PrettyPrint } from "./pretty-print";
-import { globalToLocal, localToGlobal, parseTransform } from "./svg-transform";
+import { Svgx } from "./svgx";
+import {
+  accumulateTransforms,
+  getAccumulatedTransform,
+  HoistedSvgx,
+  hoistSvg,
+} from "./svgx/hoist";
+import { lerpSvgNode } from "./svgx/lerp";
+import { assignPaths, findByPath, getPath } from "./svgx/path";
+import { globalToLocal, localToGlobal, parseTransform } from "./svgx/transform";
 import { useRenderError } from "./useRenderError";
 import {
   assert,
@@ -85,7 +85,7 @@ export type Manipulable<T extends object, Config = undefined> = (props: {
   draggedId: string | null;
   setState: SetState<T>;
   config: Config;
-}) => SvgElem;
+}) => Svgx;
 
 function noOp(): void {}
 
@@ -94,7 +94,7 @@ function noOp(): void {}
 //  * Only supports translate transforms - throws if other transform types are present.
 //  * Returns Vec2(0, 0) if no transform.
 //  */
-// function extractPosition(element: SvgElem): Vec2 {
+// function extractPosition(element: Svgx): Vec2 {
 //   // prettyLog(element, { label: "extractPosition element" });
 
 //   const transformStr = getAccumulatedTransform(element);
@@ -126,12 +126,8 @@ function noOp(): void {}
 //   return Vec2(x, y);
 // }
 
-function lerpFlattened(
-  a: FlattenedSvg,
-  b: FlattenedSvg,
-  t: number
-): FlattenedSvg {
-  const result: FlattenedSvg = new Map();
+function lerpHoisted(a: HoistedSvgx, b: HoistedSvgx, t: number): HoistedSvgx {
+  const result: HoistedSvgx = new Map();
   const allKeys = new Set([...a.keys(), ...b.keys()]);
 
   for (const key of allKeys) {
@@ -139,7 +135,7 @@ function lerpFlattened(
     const bVal = b.get(key);
 
     if (aVal && bVal) {
-      // console.log("lerpFlattened is lerping key:", key);
+      // console.log("lerpHoisted is lerping key:", key);
       result.set(key, lerpSvgNode(aVal, bVal, t));
     } else if (aVal) {
       result.set(key, aVal);
@@ -151,20 +147,20 @@ function lerpFlattened(
   return result;
 }
 
-function lerpFlattened3(
-  a: FlattenedSvg,
-  b: FlattenedSvg,
-  c: FlattenedSvg,
+function lerpHoisted3(
+  a: HoistedSvgx,
+  b: HoistedSvgx,
+  c: HoistedSvgx,
   { l0, l1, l2 }: { l0: number; l1: number; l2: number }
-): FlattenedSvg {
+): HoistedSvgx {
   if (l0 + l1 < 1e-6) return c;
-  const ab = lerpFlattened(a, b, l1 / (l0 + l1));
-  return lerpFlattened(ab, c, l2);
+  const ab = lerpHoisted(a, b, l1 / (l0 + l1));
+  return lerpHoisted(ab, c, l2);
 }
 
 type ManifoldPoint<T> = {
   state: T;
-  flattened: FlattenedSvg;
+  hoisted: HoistedSvgx;
   dragSpecCallbackAtNewState: (() => DragSpec<T>) | undefined;
   position: Vec2;
   andThen: T | undefined;
@@ -195,19 +191,16 @@ type DragState<T> =
     }
   | {
       type: "animating";
-      startFlattened: FlattenedSvg;
-      targetFlattened: FlattenedSvg;
+      startHoisted: HoistedSvgx;
+      targetHoisted: HoistedSvgx;
       targetState: T;
       easing: (t: number) => number;
       startTime: number;
       duration: number;
     };
 
-function findByPathInFlattened(
-  path: string,
-  flattened: FlattenedSvg
-): SvgElem | null {
-  for (const element of flattened.values()) {
+function findByPathInHoisted(path: string, hoisted: HoistedSvgx): Svgx | null {
+  for (const element of hoisted.values()) {
     const found = findByPath(path, element);
     if (found) return found;
   }
@@ -239,9 +232,9 @@ function drag<T>(
 export type Drag<T> = typeof drag<T>;
 
 function draggable<T>(
-  element: SvgElem,
+  element: Svgx,
   dragSpec: (() => DragSpec<T>) | DragSpec<T>
-): SvgElem {
+): Svgx {
   return cloneElement(element, {
     [onDragPropName as any]: drag(
       typeof dragSpec === "function" ? dragSpec : () => dragSpec
@@ -292,15 +285,15 @@ function getDragSpecCallbackOnElement<T>(
 
 // Recurse through the SVG tree, applying a desired function to all draggable elements
 function mapDraggables<T>(
-  node: SvgElem,
-  fn: (el: SvgElem, dragSpecCallback: () => DragSpec<T>) => SvgElem
-): SvgElem {
+  node: Svgx,
+  fn: (el: Svgx, dragSpecCallback: () => DragSpec<T>) => Svgx
+): Svgx {
   const props = node.props as any;
 
   const newElement = cloneElement(node, {
     children: emptyToUndefined(
       Children.toArray(props.children).map((child) =>
-        isValidElement(child) ? mapDraggables(child as SvgElem, fn) : child
+        isValidElement(child) ? mapDraggables(child as Svgx, fn) : child
       )
     ),
   });
@@ -309,7 +302,7 @@ function mapDraggables<T>(
   return dragSpecCallback ? fn(newElement, dragSpecCallback) : newElement;
 }
 
-function stripDraggables<T>(node: SvgElem): SvgElem {
+function stripDraggables<T>(node: Svgx): Svgx {
   return mapDraggables<T>(node, (el) =>
     cloneElement(el, {
       [onDragPropName as any]: undefined,
@@ -317,8 +310,8 @@ function stripDraggables<T>(node: SvgElem): SvgElem {
   );
 }
 
-function postProcessForDrawing(element: SvgElem): FlattenedSvg {
-  return pipe(element, assignPaths, accumulateTransforms, flattenSvg);
+function postProcessForDrawing(element: Svgx): HoistedSvgx {
+  return pipe(element, assignPaths, accumulateTransforms, hoistSvg);
 }
 
 function computeEnterDraggingMode<T extends object, Config>(
@@ -383,21 +376,21 @@ function computeEnterDraggingMode<T extends object, Config>(
       setState: noOp,
       config: diagramConfig,
     });
-    const flattened = postProcessForDrawing(content);
-    // prettyLog(flattened, { label: "flattened in makeManifoldPoint" });
-    console.log("gonna find", draggedPath, "in flattened:");
-    // prettyLog(flattened);
-    const element = findByPathInFlattened(draggedPath, flattened);
+    const hoisted = postProcessForDrawing(content);
+    // prettyLog(hoisted, { label: "hoisted in makeManifoldPoint" });
+    console.log("gonna find", draggedPath, "in hoisted:");
+    // prettyLog(hoisted);
+    const element = findByPathInHoisted(draggedPath, hoisted);
     assertWithJSX(
       !!element,
-      "makeManifoldPoint: can't find draggable element in flattened SVG",
+      "makeManifoldPoint: can't find draggable element in hoisted SVG",
       () => (
         <>
           <p className="mb-2">
             We're looking for an element with path{" "}
             <span className="font-mono">{draggedPath}</span> inside:
           </p>
-          <PrettyPrint value={flattened} />
+          <PrettyPrint value={hoisted} />
           <p className="mb-2">
             This came up when figuring out how to go from state:
           </p>
@@ -416,7 +409,7 @@ function computeEnterDraggingMode<T extends object, Config>(
 
     return {
       state: targetState.targetState,
-      flattened,
+      hoisted,
       position: localToGlobal(transforms, pointerLocal),
       dragSpecCallbackAtNewState: getDragSpecCallbackOnElement<T>(element),
       andThen: targetState.andThen,
@@ -456,18 +449,18 @@ function computeRenderState<T extends object, Config>(
     animationDuration: number;
   },
   manipulable: Manipulable<T, Config>,
-  postProcessForInteraction: (element: SvgElem, state: T) => FlattenedSvg,
+  postProcessForInteraction: (element: Svgx, state: T) => HoistedSvgx,
   setDragState: (newDragState: DragState<T>) => void,
   diagramConfig: Config
 ): {
-  flattenedToRender: FlattenedSvg;
-  currentFlattened: FlattenedSvg;
+  hoistedToRender: HoistedSvgx;
+  currentHoisted: HoistedSvgx;
   newState: T | null;
   pendingTransition: DragState<T> | null;
   debugRender: React.ReactNode;
 } {
-  let flattenedToRender: FlattenedSvg;
-  let currentFlattened: FlattenedSvg = new Map();
+  let hoistedToRender: HoistedSvgx;
+  let currentHoisted: HoistedSvgx = new Map();
   let newState: T | null = null;
   let pendingTransition: DragState<T> | null = null;
   let debugRender: React.ReactElement[] = [];
@@ -510,8 +503,8 @@ function computeRenderState<T extends object, Config>(
         });
         setDragState({
           type: "animating",
-          startFlattened: postProcessForDrawing(content),
-          targetFlattened: postProcessForDrawing(endContent),
+          startHoisted: postProcessForDrawing(content),
+          targetHoisted: postProcessForDrawing(endContent),
           targetState: newState,
           startTime: Date.now(),
           easing,
@@ -522,17 +515,17 @@ function computeRenderState<T extends object, Config>(
     });
     // console.log("content from idle state:", content);
     // prettyLog(content, { label: "content from idle state" });
-    flattenedToRender = postProcessForInteraction(content, dragState.state);
-    currentFlattened = flattenedToRender;
+    hoistedToRender = postProcessForInteraction(content, dragState.state);
+    currentHoisted = hoistedToRender;
   } else if (dragState.type === "animating") {
     const now = Date.now();
     const elapsed = now - dragState.startTime;
     const progress = Math.min(elapsed / dragState.duration, 1);
     const easedProgress = dragState.easing(progress);
 
-    flattenedToRender = lerpFlattened(
-      dragState.startFlattened,
-      dragState.targetFlattened,
+    hoistedToRender = lerpHoisted(
+      dragState.startHoisted,
+      dragState.targetHoisted,
       easedProgress
     );
   } else if (dragState.type === "dragging") {
@@ -661,26 +654,25 @@ function computeRenderState<T extends object, Config>(
           );
         }
       }
-      flattenedToRender = closestManifoldPt.flattened;
+      hoistedToRender = closestManifoldPt.hoisted;
     } else {
       // Interpolate based on projection type
       if (bestManifoldProjection.type === "vertex") {
         const { ptIdx } = bestManifoldProjection;
-        flattenedToRender =
-          bestManifoldProjection.manifold.points[ptIdx].flattened;
+        hoistedToRender = bestManifoldProjection.manifold.points[ptIdx].hoisted;
       } else if (bestManifoldProjection.type === "edge") {
         const { ptIdx0, ptIdx1, t } = bestManifoldProjection;
-        flattenedToRender = lerpFlattened(
-          bestManifoldProjection.manifold.points[ptIdx0].flattened,
-          bestManifoldProjection.manifold.points[ptIdx1].flattened,
+        hoistedToRender = lerpHoisted(
+          bestManifoldProjection.manifold.points[ptIdx0].hoisted,
+          bestManifoldProjection.manifold.points[ptIdx1].hoisted,
           t
         );
       } else {
         const { ptIdx0, ptIdx1, ptIdx2, barycentric } = bestManifoldProjection;
-        flattenedToRender = lerpFlattened3(
-          bestManifoldProjection.manifold.points[ptIdx0].flattened,
-          bestManifoldProjection.manifold.points[ptIdx1].flattened,
-          bestManifoldProjection.manifold.points[ptIdx2].flattened,
+        hoistedToRender = lerpHoisted3(
+          bestManifoldProjection.manifold.points[ptIdx0].hoisted,
+          bestManifoldProjection.manifold.points[ptIdx1].hoisted,
+          bestManifoldProjection.manifold.points[ptIdx2].hoisted,
           barycentric
         );
       }
@@ -725,7 +717,7 @@ function computeRenderState<T extends object, Config>(
       setState: noOp,
       config: diagramConfig,
     });
-    flattenedToRender = postProcessForDrawing(content);
+    hoistedToRender = postProcessForDrawing(content);
 
     // Debug rendering for dragging-params
     const processedContent = pipe(content, assignPaths, accumulateTransforms);
@@ -765,8 +757,8 @@ function computeRenderState<T extends object, Config>(
   }
 
   return {
-    flattenedToRender,
-    currentFlattened,
+    hoistedToRender,
+    currentHoisted,
     newState,
     pendingTransition,
     debugRender,
@@ -872,9 +864,9 @@ export function ManipulableDrawer<T extends object, Config>({
     };
   }, []);
 
-  const [svgElem, setSvgElem] = useState<SVGSVGElement | null>(null);
+  const [Svgx, setSvgx] = useState<SVGSVGElement | null>(null);
 
-  function postProcessForInteraction(element: SvgElem, state: T): FlattenedSvg {
+  function postProcessForInteraction(element: Svgx, state: T): HoistedSvgx {
     return pipe(
       element,
       (el) => {
@@ -895,8 +887,8 @@ export function ManipulableDrawer<T extends object, Config>({
               try {
                 // console.log("onPointerDown");
                 e.stopPropagation();
-                assert(!!svgElem, "SVG element must be set");
-                const rect = svgElem.getBoundingClientRect();
+                assert(!!Svgx, "SVG element must be set");
+                const rect = Svgx.getBoundingClientRect();
                 const pointerPos = Vec2(
                   e.clientX - rect.left,
                   e.clientY - rect.top
@@ -924,7 +916,7 @@ export function ManipulableDrawer<T extends object, Config>({
             },
           });
         }),
-      flattenSvg
+      hoistSvg
     );
   }
 
@@ -937,7 +929,7 @@ export function ManipulableDrawer<T extends object, Config>({
     setDragState,
     diagramConfig
   );
-  const { flattenedToRender, newState, pendingTransition, debugRender } =
+  const { hoistedToRender, newState, pendingTransition, debugRender } =
     renderState;
 
   if (pendingTransition) {
@@ -954,7 +946,7 @@ export function ManipulableDrawer<T extends object, Config>({
 
   // Attach document-level event listeners during drag
   useEffect(() => {
-    if (!svgElem) return;
+    if (!Svgx) return;
 
     if (dragState.type !== "dragging" && dragState.type !== "dragging-params") {
       return;
@@ -962,7 +954,7 @@ export function ManipulableDrawer<T extends object, Config>({
 
     const handlePointerMove = (e: globalThis.PointerEvent) => {
       if (paused) return;
-      const rect = svgElem.getBoundingClientRect();
+      const rect = Svgx.getBoundingClientRect();
       setPointer({ x: e.clientX - rect.left, y: e.clientY - rect.top });
     };
 
@@ -980,8 +972,8 @@ export function ManipulableDrawer<T extends object, Config>({
         });
         setDragState({
           type: "animating",
-          startFlattened: flattenedToRender,
-          targetFlattened: postProcessForDrawing(targetContent),
+          startHoisted: hoistedToRender,
+          targetHoisted: postProcessForDrawing(targetContent),
           targetState: newState,
           startTime: Date.now(),
           easing: d3Ease.easeElastic,
@@ -1010,17 +1002,17 @@ export function ManipulableDrawer<T extends object, Config>({
     diagramConfig,
     dragState.type,
     drawerConfig.animationDuration,
-    flattenedToRender,
+    hoistedToRender,
     manipulable,
     newState,
     paused,
     setDragState,
-    svgElem,
+    Svgx,
     drawerConfigWithDefaults.animationDuration,
   ]);
 
   // Sort by data-z-index for rendering order
-  const sortedEntries = Array.from(flattenedToRender.entries()).sort(
+  const sortedEntries = Array.from(hoistedToRender.entries()).sort(
     ([_keyA, elemA], [_keyB, elemB]) => {
       const zIndexA = parseInt((elemA.props as any)["data-z-index"]) || 0;
       const zIndexB = parseInt((elemB.props as any)["data-z-index"]) || 0;
@@ -1032,7 +1024,7 @@ export function ManipulableDrawer<T extends object, Config>({
 
   return (
     <svg
-      ref={setSvgElem}
+      ref={setSvgx}
       width={width}
       height={height}
       xmlns="http://www.w3.org/2000/svg"

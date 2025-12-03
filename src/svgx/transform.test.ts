@@ -5,7 +5,7 @@ import {
   localToGlobal,
   parseTransform,
   serializeTransform,
-} from "./svg-transform";
+} from "./transform";
 
 describe("parseTransform", () => {
   it("parses translate", () => {

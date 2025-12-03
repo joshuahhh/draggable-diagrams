@@ -126,11 +126,11 @@ The main abstraction is `Manipulable<T>` - a function that takes state and retur
 ```typescript
 export type Manipulable<T extends object> = (props: {
   state: T;
-  draggable: (element: SvgElem, dragSpec: DragSpec<T>) => SvgElem;
+  draggable: (element: Svgx, dragSpec: DragSpec<T>) => Svgx;
   drag: (dragSpec: DragSpec<T>) => OnDragPropValue<T>;
   draggedId: string | null;
   setState: SetState<T>;
-}) => SvgElem;
+}) => Svgx;
 ```
 
 **Key props:**
@@ -216,7 +216,7 @@ The `localToGlobal` and `globalToLocal` functions in `svg-transform.ts` handle t
 - `src/DragSpec.ts` - Drag specification types (`straightTo`, `span`, `numsAtPaths`, etc.)
 - `src/svg-transform.ts` - Transform parsing, interpolation, coordinate conversion
 - `src/jsx-lerp.ts` - Interpolation between SVG elements (transforms, colors, points, etc.)
-- `src/jsx-flatten.ts` - Flattening SVG trees, accumulating transforms
+- `src/jsx-hoist.ts` - Flattening SVG trees, accumulating transforms
 - `src/vec2.ts` - 2D vector utilities
 
 ### Components

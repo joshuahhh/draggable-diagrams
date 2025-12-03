@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assignPaths, findByPath, getPath } from "./jsx-path";
+import { assignPaths, findByPath, getPath } from "./path";
 
 describe("assignPaths", () => {
   it("assigns numerical paths to nested elements", () => {

@@ -1,6 +1,6 @@
 import { span } from "./DragSpec";
-import { SvgElem } from "./jsx-flatten";
 import { Drag, Manipulable, translate } from "./manipulable";
+import { Svgx } from "./svgx";
 
 export namespace Outline {
   export type Tree = {
@@ -21,7 +21,7 @@ export namespace Outline {
     draggedId: string | null,
     drag: Drag<Tree>
   ): {
-    elem: SvgElem;
+    elem: Svgx;
     h: number;
   } {
     const isDragged = tree.id === draggedId;

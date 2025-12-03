@@ -1,8 +1,8 @@
 import { produce } from "immer";
 import _ from "lodash";
 import { span } from "./DragSpec";
-import { SvgElem } from "./jsx-flatten";
 import { Manipulable, SetState, translate } from "./manipulable";
+import { Svgx } from "./svgx";
 
 export namespace Todo {
   export type TodoItem = {
@@ -101,7 +101,7 @@ export namespace Todo {
     zIndex: number,
     opacity = 1,
     setState: SetState<State>
-  ): SvgElem {
+  ): Svgx {
     return (
       <foreignObject
         id={todo.id}
