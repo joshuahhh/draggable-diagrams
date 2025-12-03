@@ -98,7 +98,7 @@ export function Demo<T extends object, Config>(props: DemoProps<T, Config>) {
         </h2>
         {sourceFile && (
           <a
-            href={`https://github.com/joshuahhh/draggable-diagrams/blob/main/src/${sourceFile}`}
+            href={`https://github.com/joshuahhh/draggable-diagrams/blob/main/src/demo-diagrams/${sourceFile}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-gray-500 hover:text-gray-700 no-underline hover:underline"

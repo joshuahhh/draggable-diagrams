@@ -59,8 +59,16 @@ export function scale(sx: number, sy?: number): string {
   return `scale(${sx},${sy}) `; // end in space
 }
 
-export function points(...pts: Vec2able[]): string {
-  return pts.map((pt) => Vec2(pt).arr().join(",")).join(" ");
+export function path(...pts: (Vec2able | string | number)[]): string {
+  return pts
+    .map((pt) =>
+      typeof pt === "string"
+        ? pt
+        : typeof pt === "number"
+        ? pt.toString()
+        : Vec2(pt).str()
+    )
+    .join(" ");
 }
 
 export type SetState<T> = (
@@ -85,43 +93,6 @@ export type Manipulable<T extends object, Config = undefined> = (props: {
 }) => Svgx;
 
 function noOp(): void {}
-
-// /**
-//  * Extracts the position from an SVG element's transform attribute.
-//  * Only supports translate transforms - throws if other transform types are present.
-//  * Returns Vec2(0, 0) if no transform.
-//  */
-// function extractPosition(element: Svgx): Vec2 {
-//   // prettyLog(element, { label: "extractPosition element" });
-
-//   const transformStr = getAccumulatedTransform(element);
-//   assert(
-//     transformStr !== undefined,
-//     "extractPosition: no accumulated transform",
-//   );
-
-//   if (!transformStr) return Vec2(0, 0);
-
-//   const transforms = parseTransform(transformStr);
-
-//   // Only support translate transforms
-//   let x = 0;
-//   let y = 0;
-//   for (const t of transforms) {
-//     if (t.type === "translate") {
-//       x += t.x;
-//       y += t.y;
-//     } else {
-//       throw new Error(
-//         `extractPosition only supports translate transforms, found: ${t.type}`,
-//       );
-//     }
-//   }
-
-//   // console.log("extractPosition:", transformStr, "->", x, y);
-
-//   return Vec2(x, y);
-// }
 
 function lerpHoisted(a: HoistedSvgx, b: HoistedSvgx, t: number): HoistedSvgx {
   const result: HoistedSvgx = new Map();
@@ -558,8 +529,7 @@ function computeRenderState<T extends object, Config>(
 
         debugRender.push(
           <path
-            key={`manifold-${manifoldIdx}-tri-${i / 3}`}
-            d={`M ${ax} ${ay} L ${bx} ${by} L ${cx} ${cy} Z`}
+            d={path("M", ax, ay, "L", bx, by, "L", cx, cy, "Z")}
             stroke="red"
             strokeWidth={2}
             fill="none"
@@ -570,7 +540,6 @@ function computeRenderState<T extends object, Config>(
       // Draw blue circle at projected point
       debugRender.push(
         <circle
-          key={`manifold-${manifoldIdx}-projection`}
           cx={projectedPt.x}
           cy={projectedPt.y}
           r={10}
@@ -583,7 +552,6 @@ function computeRenderState<T extends object, Config>(
       // Draw blue line from draggable dest to projected point
       debugRender.push(
         <line
-          key={`manifold-${manifoldIdx}-line`}
           x1={draggableDestPt.x}
           y1={draggableDestPt.y}
           x2={projectedPt.x}

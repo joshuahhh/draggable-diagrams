@@ -180,7 +180,7 @@ rotate(45, Vec2(100, 100)); // rotate around point
 scale(2); // "scale(2,2) "
 scale(2, 0.5); // "scale(2,0.5) "
 
-points(Vec2(0, 0), Vec2(10, 5), Vec2(20, 10)); // "0,0 10,5 20,10"
+path(Vec2(0, 0), Vec2(10, 5), Vec2(20, 10)); // "0,0 10,5 20,10"
 ```
 
 **Combine with `+`:**

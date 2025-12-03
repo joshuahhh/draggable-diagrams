@@ -33,7 +33,7 @@ export const demos: ReactElement[] = [
     initialState={Simplest.state1}
     height={100}
     padding={20}
-    sourceFile="manipulable-simplest.tsx"
+    sourceFile="simplest.tsx"
   />,
   <Demo
     id="second-simplest"
@@ -42,7 +42,7 @@ export const demos: ReactElement[] = [
     initialState={SecondSimplest.state1}
     height={200}
     padding={20}
-    sourceFile="manipulable-second-simplest.tsx"
+    sourceFile="second-simplest.tsx"
   />,
   <Demo
     id="simplest-clicker"
@@ -51,7 +51,7 @@ export const demos: ReactElement[] = [
     initialState={SimplestClicker.state1}
     height={200}
     padding={20}
-    sourceFile="manipulable-simplest-clicker.tsx"
+    sourceFile="simplest-clicker.tsx"
   />,
   <Demo
     id="todo"
@@ -60,7 +60,7 @@ export const demos: ReactElement[] = [
     initialState={Todo.state1}
     height={400}
     padding={20}
-    sourceFile="manipulable-todo.tsx"
+    sourceFile="todo.tsx"
   />,
   <Demo
     id="lonely-tile-on-a-grid"
@@ -71,7 +71,7 @@ export const demos: ReactElement[] = [
     height={300}
     padding={20}
     initialRelativePointerMotion={true}
-    sourceFile="manipulable-tiles.tsx"
+    sourceFile="tiles.tsx"
   />,
   <Demo
     id="grid-polygon"
@@ -80,7 +80,7 @@ export const demos: ReactElement[] = [
     initialState={GridPoly.state1}
     height={300}
     padding={20}
-    sourceFile="manipulable-grid-poly.tsx"
+    sourceFile="grid-poly.tsx"
   />,
   <Demo
     id="permutation"
@@ -89,7 +89,7 @@ export const demos: ReactElement[] = [
     initialState={Perm.state1}
     height={100}
     padding={15}
-    sourceFile="manipulable-perm.tsx"
+    sourceFile="perm.tsx"
   />,
   <Demo
     id="permutation-of-permutations"
@@ -97,7 +97,7 @@ export const demos: ReactElement[] = [
     manipulable={PermDouble.manipulable}
     initialState={PermDouble.state1}
     height={200}
-    sourceFile="manipulable-perm-double.tsx"
+    sourceFile="perm-double.tsx"
   />,
   <Demo
     id="spinny"
@@ -108,7 +108,7 @@ export const demos: ReactElement[] = [
     height={200}
     padding={30}
     initialRelativePointerMotion={false}
-    sourceFile="manipulable-spinny.tsx"
+    sourceFile="spinny.tsx"
   />,
   <Demo
     id="nool-tree"
@@ -121,7 +121,7 @@ export const demos: ReactElement[] = [
     initialRelativePointerMotion={true}
     defaultConfig={NoolTree.defaultConfig}
     ConfigPanel={NoolTree.ConfigPanel}
-    sourceFile="manipulable-nool-tree.tsx"
+    sourceFile="nool-tree.tsx"
   />,
   <Demo
     id="nool-tree-simpler"
@@ -134,7 +134,7 @@ export const demos: ReactElement[] = [
     initialRelativePointerMotion={true}
     defaultConfig={NoolTree.defaultConfig}
     ConfigPanel={NoolTree.ConfigPanel}
-    sourceFile="manipulable-nool-tree.tsx"
+    sourceFile="nool-tree.tsx"
   />,
   <Demo
     id="tree-of-life"
@@ -144,7 +144,7 @@ export const demos: ReactElement[] = [
     height={1100}
     padding={20}
     initialSnapRadius={5}
-    sourceFile="manipulable-outline.tsx"
+    sourceFile="outline.tsx"
   />,
   <Demo
     id="graph"
@@ -153,7 +153,7 @@ export const demos: ReactElement[] = [
     initialState={Graph.state1}
     height={160}
     padding={20}
-    sourceFile="manipulable-graph.tsx"
+    sourceFile="graph.tsx"
   />,
   <Demo
     id="angle"
@@ -162,7 +162,7 @@ export const demos: ReactElement[] = [
     initialState={Angle.state1}
     height={200}
     padding={20}
-    sourceFile="manipulable-angle.tsx"
+    sourceFile="angle.tsx"
   />,
   <Demo
     id="angle-via-transform"
@@ -171,7 +171,7 @@ export const demos: ReactElement[] = [
     initialState={AngleViaTransform.state1}
     height={200}
     padding={20}
-    sourceFile="manipulable-angle-via-transform.tsx"
+    sourceFile="angle-via-transform.tsx"
   />,
   <Demo
     id="bezier"
@@ -192,7 +192,7 @@ export const demos: ReactElement[] = [
     initialState={Bezier.state2}
     height={200}
     padding={20}
-    sourceFile="manipulable-bezier.tsx"
+    sourceFile="bezier.tsx"
   />,
   <Demo
     id="stretchy-xy"
@@ -254,7 +254,7 @@ export const demos: ReactElement[] = [
     initialState={Clock.state1}
     height={200}
     padding={20}
-    sourceFile="manipulable-clock.tsx"
+    sourceFile="clock.tsx"
   />,
   <Demo
     id="braids"
@@ -263,7 +263,7 @@ export const demos: ReactElement[] = [
     initialState={Braid.state1}
     height={400}
     padding={20}
-    sourceFile="manipulable-braid.tsx"
+    sourceFile="braid.tsx"
   />,
   <Demo
     id="order-preserving"
@@ -286,7 +286,7 @@ export const demos: ReactElement[] = [
     padding={20}
     defaultConfig={{ ...OrderPreserving.defaultConfig, showTradRep: true }}
     ConfigPanel={OrderPreserving.ConfigPanel}
-    sourceFile="manipulable-order-preserving.tsx"
+    sourceFile="order-preserving.tsx"
   />,
   <Demo
     id="order-preserving-large"
@@ -309,7 +309,7 @@ export const demos: ReactElement[] = [
     padding={20}
     defaultConfig={OrderPreserving.defaultConfig}
     ConfigPanel={OrderPreserving.ConfigPanel}
-    sourceFile="manipulable-order-preserving.tsx"
+    sourceFile="order-preserving.tsx"
   />,
   <Demo
     id="rush-hour"
@@ -320,7 +320,7 @@ export const demos: ReactElement[] = [
     padding={20}
     defaultConfig={RushHour.defaultConfig}
     ConfigPanel={RushHour.ConfigPanel}
-    sourceFile="manipulable-rush-hour.tsx"
+    sourceFile="rush-hour.tsx"
   />,
   <Demo
     id="15-puzzle"
@@ -330,7 +330,7 @@ export const demos: ReactElement[] = [
     initialState={Fifteen.state1}
     height={200}
     padding={20}
-    sourceFile="manipulable-fifteen.tsx"
+    sourceFile="fifteen.tsx"
   />,
   <Demo
     id="inserting-removing-items"
@@ -340,7 +340,7 @@ export const demos: ReactElement[] = [
     initialState={InsertAndRemove.state1}
     height={150}
     padding={10}
-    sourceFile="manipulable-insert-and-remove.tsx"
+    sourceFile="insert-and-remove.tsx"
   />,
   <Demo
     id="sokoban"
@@ -352,6 +352,6 @@ export const demos: ReactElement[] = [
     initialRelativePointerMotion={true}
     defaultConfig={Sokoban.defaultConfig}
     ConfigPanel={Sokoban.ConfigPanel}
-    sourceFile="manipulable-sokoban.tsx"
+    sourceFile="sokoban.tsx"
   />,
 ];

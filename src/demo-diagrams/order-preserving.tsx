@@ -5,7 +5,7 @@ import { ConfigCheckbox } from "../config-controls";
 import { ConfigPanelProps } from "../Demo";
 import { span } from "../DragSpec";
 import { overlapIntervals } from "../layout";
-import { Drag, Manipulable, translate } from "../manipulable";
+import { Drag, Manipulable, path, translate } from "../manipulable";
 import { Vec2 } from "../math/vec2";
 import { Svgx } from "../svgx";
 import { Finalizers, pointRef, PointRef } from "../svgx/finalizers";
@@ -579,9 +579,7 @@ export namespace OrderPreserving {
         return (
           <g id={`morphism-arrow-${domElem}`}>
             <path
-              d={`M ${fromAdjusted.arr()} Q ${mid.arr()} ${toAdjusted
-                .towards(mid, 5)
-                .arr()}`}
+              d={path("M", fromAdjusted, "Q", mid, toAdjusted.towards(mid, 5))}
               fill="none"
               stroke="#4287f5"
               strokeWidth={2}

@@ -32,8 +32,14 @@ export function Vec2(xOrXY: number | Vec2able, y?: number): Vec2 {
 class Vec2Class {
   constructor(readonly x: number, readonly y: number) {}
 
+  // # extraction
+
   arr(): [number, number] {
     return [this.x, this.y];
+  }
+
+  str(sep = ","): string {
+    return `${this.x}${sep}${this.y}`;
   }
 
   xy(): { x: number; y: number } {
@@ -51,6 +57,8 @@ class Vec2Class {
   cxy(): { cx: number; cy: number } {
     return { cx: this.x, cy: this.y };
   }
+
+  // # operations
 
   eq(v: Vec2able): boolean {
     v = Vec2(v);

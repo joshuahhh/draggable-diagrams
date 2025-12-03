@@ -1,5 +1,5 @@
 import { SVGProps } from "react";
-import { points, translate } from "./manipulable";
+import { path, translate } from "./manipulable";
 import { Vec2, Vec2able } from "./math/vec2";
 
 /**
@@ -39,8 +39,8 @@ export function arrowhead({
   return (
     <polygon
       transform={translate(tipVec)}
-      points={points(
-        Vec2(0, 0),
+      points={path(
+        Vec2(0),
         backFromTip.rotate(headAngle),
         backFromTip.rotate(-headAngle)
       )}
