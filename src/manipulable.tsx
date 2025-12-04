@@ -2,7 +2,6 @@ import { Delaunay } from "d3-delaunay";
 import * as d3Ease from "d3-ease";
 import _ from "lodash";
 import {
-  cloneElement,
   Fragment,
   PointerEvent,
   ReactElement,
@@ -85,7 +84,6 @@ export type SetState<T> = (
  */
 export type Manipulable<T extends object, Config = undefined> = (props: {
   state: T;
-  draggable: Draggable<T>;
   drag: typeof drag<T>;
   draggedId: string | null;
   setState: SetState<T>;
@@ -198,19 +196,6 @@ function drag<T>(
 }
 
 export type Drag<T> = typeof drag<T>;
-
-function draggable<T>(
-  element: Svgx,
-  dragSpec: (() => DragSpec<T>) | DragSpec<T>
-): Svgx {
-  return cloneElement(element, {
-    [onDragPropName as any]: drag(
-      typeof dragSpec === "function" ? dragSpec : () => dragSpec
-    ),
-  });
-}
-
-export type Draggable<T> = typeof draggable<T>;
 
 function getDragSpecCallbackOnElement<T>(
   element: ReactElement
@@ -330,8 +315,6 @@ function computeEnterDraggingMode<T extends object, Config>(
     // Use a no-op draggable to avoid attaching event handlers
     const content = manipulable({
       state: targetState.targetState,
-      // draggable: makeDraggable(draggablePath),
-      draggable,
       drag,
       draggedId,
       setState: noOp,
@@ -430,8 +413,6 @@ function computeRenderState<T extends object, Config>(
     // console.log("rendering while idle");
     const content = manipulable({
       state: dragState.state,
-      // draggable: makeDraggable(undefined),
-      draggable,
       drag,
       draggedId: null,
       setState: (
@@ -456,7 +437,6 @@ function computeRenderState<T extends object, Config>(
         // animate to new state
         const endContent = manipulable({
           state: newState,
-          draggable,
           drag,
           draggedId: null,
           setState: noOp,
@@ -644,8 +624,6 @@ function computeRenderState<T extends object, Config>(
       const content = pipe(
         manipulable({
           state: candidateState,
-          // draggable: makeDraggable(dragState.draggablePath),
-          draggable,
           drag,
           draggedId: dragState.draggedId,
           setState: noOp,
@@ -668,8 +646,6 @@ function computeRenderState<T extends object, Config>(
     newState = dragState.stateFromParams(...dragState.curParams);
     const content = manipulable({
       state: newState,
-      // draggable: makeDraggable(dragState.draggablePath),
-      draggable,
       drag,
       draggedId: dragState.draggedId,
       setState: noOp,
@@ -923,8 +899,6 @@ export function ManipulableDrawer<T extends object, Config>({
       if (dragState.type === "dragging" && newState) {
         const targetContent = manipulable({
           state: newState,
-          // draggable: makeDraggable(undefined),
-          draggable,
           drag,
           draggedId: null,
           setState: noOp,

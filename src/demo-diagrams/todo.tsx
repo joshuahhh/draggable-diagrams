@@ -20,7 +20,7 @@ export namespace Todo {
 
   export const manipulable: Manipulable<State> = ({
     state,
-    draggable,
+    drag,
     draggedId,
     setState,
   }) => {
@@ -68,19 +68,25 @@ export namespace Todo {
             </button>
           </div>
         </foreignObject>
-        {drawTodoItem(state.todoDraft, translate(10, 10), 0, 0, setState)}
+        {drawTodoItem({
+          todo: state.todoDraft,
+          transform: translate(10, 10),
+          opacity: 0,
+          setState,
+        })}
 
         {state.todos.map((todo, idx) => {
           const isDragged = todo.id === draggedId;
-          return draggable(
-            drawTodoItem(
-              todo,
-              translate(10 - (isDragged ? 5 : 0), 80 + idx * TILE_SIZE),
-              isDragged ? 1 : 0,
-              1,
-              setState
+          return drawTodoItem({
+            todo,
+            transform: translate(
+              10 - (isDragged ? 5 : 0),
+              80 + idx * TILE_SIZE
             ),
-            () =>
+            "data-z-index": isDragged ? 1 : 0,
+            opacity: 1,
+            setState,
+            "data-on-drag": drag(() =>
               span(
                 _.range(state.todos.length).map((newIdx) =>
                   produce(state, (s) => {
@@ -89,29 +95,32 @@ export namespace Todo {
                   })
                 )
               )
-          );
+            ),
+          });
         })}
       </g>
     );
   };
 
-  function drawTodoItem(
-    todo: TodoItem,
-    transform: string,
-    zIndex: number,
+  function drawTodoItem({
+    todo,
+    setState,
     opacity = 1,
-    setState: SetState<State>
-  ): Svgx {
+    ...otherProps
+  }: {
+    todo: TodoItem;
+    opacity?: number;
+    setState: SetState<State>;
+  } & React.SVGProps<SVGForeignObjectElement>): Svgx {
     return (
       <foreignObject
         id={todo.id}
-        transform={transform}
-        data-z-index={zIndex}
         style={{ opacity, overflow: "visible" }}
         x={0}
         y={0}
         width={350}
         height={45}
+        {...otherProps}
       >
         <div className="flex flex-row items-center gap-3 bg-white border border-gray-200 rounded-lg px-4 py-3 hover:border-gray-300 hover:shadow-sm transition-all cursor-move">
           <input

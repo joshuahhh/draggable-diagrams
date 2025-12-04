@@ -198,18 +198,18 @@ export const demos: ReactElement[] = [
     id="stretchy-xy"
     title="Stretchy (xy)"
     initialState={{ scaleX: 1, scaleY: 1 }}
-    manipulable={({ state: { scaleX, scaleY }, draggable }) => (
+    manipulable={({ state: { scaleX, scaleY }, drag }) => (
       <g>
-        {draggable(
+        {
           <circle
             transform={translate(100, 100) + scale(scaleX, scaleY)}
             cx={0}
             cy={0}
             r={50}
             fill="lightblue"
-          />,
-          numsAtPaths([["scaleX"], ["scaleY"]])
-        )}
+            data-on-drag={drag(numsAtPaths([["scaleX"], ["scaleY"]]))}
+          />
+        }
         <ellipse
           cx={100}
           cy={100}
@@ -229,20 +229,18 @@ export const demos: ReactElement[] = [
     id="stretchy-rot"
     title="Stretchy (rot)"
     initialState={{ angle: 0, scaleX: 1 }}
-    manipulable={({ state: { angle, scaleX }, draggable }) =>
-      draggable(
-        <circle
-          transform={
-            translate(100, 100) + rotate(angle) + scale(scaleX, 1 / scaleX)
-          }
-          cx={0}
-          cy={0}
-          r={50}
-          fill="lightblue"
-        />,
-        numsAtPaths([["angle"], ["scaleX"]])
-      )
-    }
+    manipulable={({ state: { angle, scaleX }, drag }) => (
+      <circle
+        transform={
+          translate(100, 100) + rotate(angle) + scale(scaleX, 1 / scaleX)
+        }
+        cx={0}
+        cy={0}
+        r={50}
+        fill="lightblue"
+        data-on-drag={drag(numsAtPaths([["angle"], ["scaleX"]]))}
+      />
+    )}
     height={200}
     padding={20}
     sourceFile="demos.tsx"
