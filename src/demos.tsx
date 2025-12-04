@@ -5,6 +5,7 @@ import { rotate, scale, translate } from "./manipulable";
 import { Angle } from "./manipulable-angle";
 import { AngleViaTransform } from "./manipulable-angle-via-transform";
 import { Braid } from "./manipulable-braid";
+import { Chess } from "./manipulable-chess";
 import { Clock } from "./manipulable-clock";
 import { Fifteen } from "./manipulable-fifteen";
 import { Graph } from "./manipulable-graph";
@@ -25,6 +26,15 @@ import { Tiles } from "./manipulable-tiles";
 import { Todo } from "./manipulable-todo";
 
 export const demos: ReactElement[] = [
+  <Demo
+    id="chess"
+    title="Chess"
+    manipulable={Chess.manipulable}
+    initialState={Chess.initialState}
+    height={425}
+    padding={20}
+    sourceFile="manipulable-chess.tsx"
+  />,
   <Demo
     id="simplest"
     title="Simplest"
