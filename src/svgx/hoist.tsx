@@ -1,0 +1,264 @@
+import { cloneElement, Fragment } from "react";
+import { Svgx, updateElement, updatePropsDownTree } from ".";
+import { assert } from "../utils";
+
+export type HoistedSvgx = {
+  /**
+   * Svgx nodes keyed by ID (or "" for root).
+   */
+  byId: Map<string, Svgx>;
+  /**
+   * Map of ID to its set of descendents' IDs (including
+   * transitively). Will be null if we did wacky stuff to the
+   * HoistedSvgx and don't want to bother to preserve this info.
+   */
+  descendents: Map<string, Set<string>> | null;
+};
+
+const accumulatedTransformProp = "data-accumulated-transform";
+
+/**
+ * Step 1: Walks the SVG tree and adds data-accumulated-transform to
+   all elements.
+ * Accumulates transform attributes from parent <g> nodes.
+ */
+export function accumulateTransforms(element: Svgx): Svgx {
+  return walkAndAccumulateTransforms(element, "");
+}
+
+function walkAndAccumulateTransforms(
+  element: Svgx,
+  accumulatedTransform: string
+): Svgx {
+  const props = element.props as any;
+  const elementTransform = props.transform || "";
+  const newAccumulatedTransform = combineTransforms(
+    accumulatedTransform,
+    elementTransform
+  );
+
+  return updateElement(
+    element,
+    (child) => walkAndAccumulateTransforms(child, newAccumulatedTransform),
+    {
+      [accumulatedTransformProp as any]: newAccumulatedTransform || undefined,
+    }
+  );
+}
+
+/**
+ * Step 2: Partially flattens an SVG tree by pulling nodes with IDs
+ * to the top level. Reads data-accumulated-transform and sets it as
+ * transform for extracted nodes. Returns a map of elements keyed by
+ * their id, plus a descendents map tracking parent-child relationships.
+ * - Key "" contains the root with extracted nodes removed (or is not
+ *   set if root has an ID)
+ * - Extracted nodes are removed from their parents
+ * - Recurses into nodes with IDs to find deeper IDs
+ */
+export function hoistSvg(element: Svgx): HoistedSvgx {
+  const byId = new Map<string, Svgx>();
+  const descendents = new Map<string, Set<string>>();
+  const rootWithExtractedRemoved = extractIdNodes(
+    element,
+    byId,
+    descendents,
+    null
+  );
+  if (rootWithExtractedRemoved) {
+    byId.set("", rootWithExtractedRemoved);
+  }
+  return { byId, descendents };
+}
+
+/**
+ * Recursively extracts nodes with IDs into byId map and tracks
+ * descendents. Returns the element with extracted children removed
+ * (or null if this element itself has an ID and is extracted).
+ *
+ * @param ancestorId - The ID of the nearest ancestor with an ID, or null if none
+ */
+function extractIdNodes(
+  element: Svgx,
+  byId: Map<string, Svgx>,
+  descendents: Map<string, Set<string>>,
+  ancestorId: string | null
+): Svgx | null {
+  const props = element.props as any;
+
+  // Validate: data-z-index can only be set on nodes with ids
+  if (props["data-z-index"] !== undefined && !props.id) {
+    throw new Error(
+      `data-z-index can only be set on elements with an id attribute. Found data-z-index="${props["data-z-index"]}" on <${element.type}> without id.`
+    );
+  }
+
+  const currentId = props.id;
+  const newAncestorId = currentId || ancestorId;
+
+  const newElement = updateElement(element, (child) =>
+    extractIdNodes(child, byId, descendents, newAncestorId)
+  );
+
+  if (currentId) {
+    assert(
+      !byId.has(currentId),
+      `Duplicate id "${currentId}" found in SVG tree. Each element must have a unique id.`
+    );
+
+    // Track this ID as a descendent of its ancestor (if any)
+    if (ancestorId) {
+      if (!descendents.has(ancestorId)) {
+        descendents.set(ancestorId, new Set());
+      }
+      descendents.get(ancestorId)!.add(currentId);
+
+      // Also add all of this element's descendants to the ancestor's descendants (transitive)
+      if (descendents.has(currentId)) {
+        for (const desc of descendents.get(currentId)!) {
+          descendents.get(ancestorId)!.add(desc);
+        }
+      }
+    }
+
+    const accumulatedTransform = props[accumulatedTransformProp];
+    const elementToHoist = cloneElement(newElement, {
+      transform: accumulatedTransform || undefined,
+    });
+
+    byId.set(currentId, elementToHoist);
+    return null;
+  } else {
+    return newElement;
+  }
+}
+
+export function getAccumulatedTransform(element: Svgx): string | undefined {
+  const props = element.props as any;
+  return props[accumulatedTransformProp];
+}
+
+function combineTransforms(t1: string, t2: string): string {
+  if (!t1 && !t2) return "";
+  if (!t1) return t2;
+  if (!t2) return t1;
+  return t1 + " " + t2;
+}
+
+export function drawHoisted(hoisted: HoistedSvgx): Svgx {
+  return (
+    <>
+      {Array.from(hoisted.byId.entries())
+        .sort(([_keyA, elemA], [_keyB, elemB]) => {
+          const zIndexA = parseInt((elemA.props as any)["data-z-index"]) || 0;
+          const zIndexB = parseInt((elemB.props as any)["data-z-index"]) || 0;
+          return zIndexA - zIndexB;
+        })
+        .map(([key, element]) => (
+          <Fragment key={key}>
+            {updatePropsDownTree(element, (props) => {
+              // find data- props with fancy values
+              const newProps: any = {};
+              for (const [propName, propValue] of Object.entries(props)) {
+                if (
+                  propName.startsWith("data-") &&
+                  typeof propValue !== "string" &&
+                  typeof propValue !== "number"
+                ) {
+                  newProps[propName] = undefined;
+                }
+              }
+              return newProps;
+            })}
+          </Fragment>
+        ))}
+    </>
+  );
+}
+
+export function hoistedExtract(
+  hoisted: HoistedSvgx,
+  id: string
+): { remaining: HoistedSvgx; extracted: HoistedSvgx } {
+  assert(hoisted.descendents !== null, "hoisted.descendents is null");
+  assert(hoisted.byId.has(id), `Hoisted SVG does not contain id "${id}"`);
+
+  // Collect the ID and all its descendants
+  const extractedIds = new Set([id]);
+  if (hoisted.descendents.has(id)) {
+    for (const descId of hoisted.descendents.get(id)!) {
+      extractedIds.add(descId);
+    }
+  }
+
+  // Split byId into extracted and remaining
+  const extractedById = new Map<string, Svgx>();
+  const remainingById = new Map<string, Svgx>();
+  for (const [key, value] of hoisted.byId.entries()) {
+    if (extractedIds.has(key)) {
+      extractedById.set(key, value);
+    } else {
+      remainingById.set(key, value);
+    }
+  }
+
+  // Split descendents into extracted and remaining
+  // Only keep descendent relationships where both ancestor and descendent are in the same set
+  const extractedDescendents = new Map<string, Set<string>>();
+  const remainingDescendents = new Map<string, Set<string>>();
+
+  for (const [ancestorId, descIds] of hoisted.descendents.entries()) {
+    const isAncestorExtracted = extractedIds.has(ancestorId);
+
+    const filteredDescs = new Set<string>();
+    for (const descId of descIds) {
+      const isDescExtracted = extractedIds.has(descId);
+      // Only keep the relationship if both are in the same set
+      if (isAncestorExtracted === isDescExtracted) {
+        filteredDescs.add(descId);
+      }
+    }
+
+    if (filteredDescs.size > 0) {
+      if (isAncestorExtracted) {
+        extractedDescendents.set(ancestorId, filteredDescs);
+      } else {
+        remainingDescendents.set(ancestorId, filteredDescs);
+      }
+    }
+  }
+
+  return {
+    remaining: { byId: remainingById, descendents: remainingDescendents },
+    extracted: { byId: extractedById, descendents: extractedDescendents },
+  };
+}
+
+export function hoistedMerge(h1: HoistedSvgx, h2: HoistedSvgx): HoistedSvgx {
+  const mergedById = new Map<string, Svgx>(h1.byId);
+  for (const [key, value] of h2.byId.entries()) {
+    assert(
+      !mergedById.has(key),
+      `Cannot merge HoistedSvgx: duplicate id "${key}" found.`
+    );
+    mergedById.set(key, value);
+  }
+  return { byId: mergedById, descendents: null };
+}
+
+export function hoistedTransform(
+  hoisted: HoistedSvgx,
+  transform: string
+): HoistedSvgx {
+  const transformedById = new Map<string, Svgx>();
+  for (const [key, element] of hoisted.byId.entries()) {
+    const props = element.props as any;
+    const elementTransform = props.transform || "";
+    const newTransform = combineTransforms(transform, elementTransform);
+    const transformedElement = cloneElement(element, {
+      transform: newTransform || undefined,
+    });
+    transformedById.set(key, transformedElement);
+  }
+  return { byId: transformedById, descendents: hoisted.descendents };
+}

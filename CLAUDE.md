@@ -6,6 +6,7 @@ This document provides guidance for working on the draggable-diagrams codebase.
 
 - NEVER say "Perfect!" or similar overly enthusiastic confirmations – your work is rarely perfect. Just explain what was done.
 - NEVER use `any` as a lazy workaround for type errors. Only use `any` when it is truly called for (e.g., interfacing with untyped external code, or when the type system genuinely cannot express the constraint). Ask first.
+- NEVER use React keys in "Manipulable" definitions. They don't use them.
 - NEVER run `npm run dev`. The user will start the dev server when needed.
 
 ## Project Overview

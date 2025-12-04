@@ -9,10 +9,12 @@ import { Fifteen } from "./demo-diagrams/fifteen";
 import { Graph } from "./demo-diagrams/graph";
 import { GridPoly } from "./demo-diagrams/grid-poly";
 import { InsertAndRemove } from "./demo-diagrams/insert-and-remove";
+import { ListOfLists } from "./demo-diagrams/list-of-lists";
 import { NoolTree } from "./demo-diagrams/nool-tree";
 import { OrderPreserving } from "./demo-diagrams/order-preserving";
 import { Outline } from "./demo-diagrams/outline";
 import { Perm } from "./demo-diagrams/perm";
+import { PermDetach } from "./demo-diagrams/perm-detach";
 import { PermDouble } from "./demo-diagrams/perm-double";
 import { RushHour } from "./demo-diagrams/rush-hour";
 import { SecondSimplest } from "./demo-diagrams/second-simplest";
@@ -146,7 +148,7 @@ export const demos: SomeDemoData[] = [
     sourceFile: "grid-poly.tsx",
   }),
   demoData({
-    id: "permutation",
+    id: "perm",
     title: "Permutation",
     manipulable: Perm.manipulable,
     initialStates: [Perm.state1],
@@ -155,12 +157,30 @@ export const demos: SomeDemoData[] = [
     sourceFile: "perm.tsx",
   }),
   demoData({
-    id: "permutation-of-permutations",
+    id: "perm-detach",
+    title: "Permutation (detach-reattach)",
+    manipulable: PermDetach.manipulable,
+    initialStates: [PermDetach.state1],
+    height: 100,
+    padding: 15,
+    sourceFile: "perm-detach.tsx",
+  }),
+  demoData({
+    id: "perm-double",
     title: "Permutation of permutations",
     manipulable: PermDouble.manipulable,
     initialStates: [PermDouble.state1],
     height: 200,
     sourceFile: "perm-double.tsx",
+  }),
+  demoData({
+    id: "list-of-lists",
+    title: "List of lists",
+    notes: "Uses detach-reattach.",
+    manipulable: ListOfLists.manipulable,
+    initialStates: [ListOfLists.state1],
+    height: 220,
+    sourceFile: "list-of-lists.tsx",
   }),
   demoData({
     id: "spinny",

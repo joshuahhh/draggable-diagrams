@@ -1,17 +1,19 @@
 import { produce } from "immer";
 import _ from "lodash";
-import { span } from "../DragSpec";
-import { Manipulable, SetState, translate } from "../manipulable";
+import { ConfigCheckbox, ConfigPanelProps } from "../configurable";
+import { configurableManipulable } from "../demos";
+import { detachReattach, span } from "../DragSpec";
+import { SetState, translate } from "../manipulable";
 import { Svgx } from "../svgx";
 
 export namespace Todo {
-  export type TodoItem = {
+  type TodoItem = {
     id: string;
     completed: boolean;
     text: string;
   };
 
-  export type State = {
+  type State = {
     todos: TodoItem[];
     todoDraft: TodoItem;
   };
@@ -25,91 +27,101 @@ export namespace Todo {
     todoDraft: { id: "draft", completed: false, text: "" },
   };
 
+  export type Config = {
+    useDetachReattach: boolean;
+  };
+
+  const initialConfig: Config = {
+    useDetachReattach: false,
+  };
+
   const TILE_SIZE = 55;
 
-  export const manipulable: Manipulable<State> = ({
-    state,
-    drag,
-    draggedId,
-    setState,
-  }) => {
-    return (
-      <g>
-        <foreignObject
-          x={10}
-          y={10}
-          width={350}
-          height={60}
-          style={{ overflow: "visible" }}
-        >
-          <div className="flex flex-row gap-2">
-            <input
-              type="text"
-              value={state.todoDraft.text}
-              onChange={(e) => {
-                setState(
-                  produce(state, (s) => {
-                    s.todoDraft.text = e.target.value;
-                  }),
-                  { immediate: true }
-                );
-              }}
-              placeholder="What needs to be done?"
-              className="border-2 border-gray-200 rounded-lg px-4 py-2 flex-1 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-400 transition-colors"
-            />
-            <button
-              className="px-5 py-2 bg-blue-500 text-white rounded-lg whitespace-nowrap hover:bg-blue-600 active:bg-blue-700 transition-colors font-medium shadow-sm"
-              onClick={() => {
-                if (state.todoDraft.text === "") return;
-                setState(
-                  produce(state, (s) => {
-                    s.todos.unshift(s.todoDraft);
-                    s.todoDraft = {
-                      id: `todo-${Date.now()}`,
-                      completed: false,
-                      text: "",
-                    };
-                  })
-                );
-              }}
-            >
-              Add
-            </button>
-          </div>
-        </foreignObject>
-        {drawTodoItem({
-          todo: state.todoDraft,
-          transform: translate(10, 10),
-          opacity: 0,
-          setState,
-        })}
-
-        {state.todos.map((todo, idx) => {
-          const isDragged = todo.id === draggedId;
-          return drawTodoItem({
-            todo,
-            transform: translate(
-              10 - (isDragged ? 5 : 0),
-              80 + idx * TILE_SIZE
-            ),
-            "data-z-index": isDragged ? 1 : 0,
-            opacity: 1,
+  export const manipulable = configurableManipulable<State, Config>(
+    { initialConfig, ConfigPanel },
+    (config, { state, drag, draggedId, setState }) => {
+      return (
+        <g>
+          <foreignObject
+            x={10}
+            y={10}
+            width={350}
+            height={60}
+            style={{ overflow: "visible" }}
+          >
+            <div className="flex flex-row gap-2">
+              <input
+                type="text"
+                value={state.todoDraft.text}
+                onChange={(e) => {
+                  setState(
+                    produce(state, (s) => {
+                      s.todoDraft.text = e.target.value;
+                    }),
+                    { immediate: true }
+                  );
+                }}
+                placeholder="What needs to be done?"
+                className="border-2 border-gray-200 rounded-lg px-4 py-2 flex-1 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-blue-400 transition-colors"
+              />
+              <button
+                className="px-5 py-2 bg-blue-500 text-white rounded-lg whitespace-nowrap hover:bg-blue-600 active:bg-blue-700 transition-colors font-medium shadow-sm"
+                onClick={() => {
+                  if (state.todoDraft.text === "") return;
+                  setState(
+                    produce(state, (s) => {
+                      s.todos.unshift(s.todoDraft);
+                      s.todoDraft = {
+                        id: `todo-${Date.now()}`,
+                        completed: false,
+                        text: "",
+                      };
+                    })
+                  );
+                }}
+              >
+                Add
+              </button>
+            </div>
+          </foreignObject>
+          {drawTodoItem({
+            todo: state.todoDraft,
+            transform: translate(10, 10),
+            opacity: 0,
             setState,
-            "data-on-drag": drag(() =>
-              span(
-                _.range(state.todos.length).map((newIdx) =>
-                  produce(state, (s) => {
-                    const [removed] = s.todos.splice(idx, 1);
-                    s.todos.splice(newIdx, 0, removed);
-                  })
-                )
-              )
-            ),
-          });
-        })}
-      </g>
-    );
-  };
+          })}
+
+          {state.todos.map((todo, idx) => {
+            const isDragged = todo.id === draggedId;
+            return drawTodoItem({
+              todo,
+              transform: translate(
+                10 - (isDragged && !config.useDetachReattach ? 5 : 0),
+                80 + idx * TILE_SIZE
+              ),
+              "data-z-index": isDragged ? 1 : 0,
+              opacity: 1,
+              setState,
+              "data-on-drag": drag(() => {
+                const detachedState = produce(state, (s) => {
+                  s.todos.splice(idx, 1);
+                });
+                const reattachedStates = _.range(state.todos.length).map(
+                  (newIdx) =>
+                    produce(detachedState, (s) => {
+                      s.todos.splice(newIdx, 0, todo);
+                    })
+                );
+                return config.useDetachReattach
+                  ? detachReattach(detachedState, reattachedStates)
+                  : span(reattachedStates);
+              }),
+            });
+          })}
+        </g>
+      );
+    }
+  );
 
   function drawTodoItem({
     todo,
@@ -160,6 +172,18 @@ export namespace Todo {
           </span>
         </div>
       </foreignObject>
+    );
+  }
+
+  function ConfigPanel({ config, setConfig }: ConfigPanelProps<Config>) {
+    return (
+      <ConfigCheckbox
+        label="Detach/reattach"
+        value={config.useDetachReattach}
+        onChange={(newValue) =>
+          setConfig({ ...config, useDetachReattach: newValue })
+        }
+      />
     );
   }
 }

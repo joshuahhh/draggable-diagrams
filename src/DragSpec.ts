@@ -5,7 +5,10 @@ import { hasKey, Many, manyToArray } from "./utils";
 // DragSpec is the value that specifies how dragging works. It can,
 // in some cases, be a bunch of nested arrays or nulls or whatever.
 // TODO: more sophisticated combos
-export type DragSpec<T> = Many<DragSpecManifold<T>> | DragSpecParams<T>;
+export type DragSpec<T> =
+  | Many<DragSpecManifold<T>>
+  | DragSpecParams<T>
+  | DragSpecDetachReattach<T>;
 
 const targetStateSymbol: unique symbol = Symbol("TargetState");
 
@@ -27,6 +30,12 @@ export type DragSpecParams<T> =
       initParams: number[];
       stateFromParams: (...params: number[]) => T;
     };
+
+export type DragSpecDetachReattach<T> = {
+  type: "detach-reattach";
+  detachedState: T;
+  reattachedStates: T[];
+};
 
 export type TargetStateLike<T> = T | TargetState<T>;
 export function toTargetState<T>(state: TargetStateLike<T>): TargetState<T> {
@@ -53,20 +62,31 @@ export function span<T>(
     states: manyToArray(manyStates).map(toTargetState),
   };
 }
+
 export function straightTo<T>(state: TargetStateLike<T>): DragSpecManifold<T> {
   return { type: "manifold", states: [toTargetState(state)] };
 }
+
+export function detachReattach<T>(
+  detachedState: T,
+  reattachedStates: T[]
+): DragSpecDetachReattach<T> {
+  return { type: "detach-reattach", detachedState, reattachedStates };
+}
+
 export function params<T>(
   initParams: number[],
   stateFromParams: (...params: number[]) => T
 ): DragSpecParams<T> {
   return { type: "params", initParams, stateFromParams };
 }
+
 export function numsAtPaths<T>(
   paramPaths: PathIn<T, number>[]
 ): DragSpecParams<T> {
   return { type: "param-paths", paramPaths };
 }
+
 export function numAtPath<T>(paramPath: PathIn<T, number>): DragSpecParams<T> {
   return { type: "param-paths", paramPaths: [paramPath] };
 }

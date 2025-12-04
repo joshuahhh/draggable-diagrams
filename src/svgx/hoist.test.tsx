@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accumulateTransforms, hoistSvg } from "./hoist";
+import { accumulateTransforms, hoistSvg, hoistedExtract } from "./hoist";
 
 describe("hoistSvg", () => {
   it("pulls nodes with IDs to the top level", () => {
@@ -11,14 +11,17 @@ describe("hoistSvg", () => {
     );
 
     expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
-      Map {
-        "r1" => <rect
-          id="r1"
-        />,
-        "c1" => <circle
-          id="c1"
-        />,
-        "" => <g />,
+      {
+        "byId": Map {
+          "r1" => <rect
+            id="r1"
+          />,
+          "c1" => <circle
+            id="c1"
+          />,
+          "" => <g />,
+        },
+        "descendents": Map {},
       }
     `);
   });
@@ -31,16 +34,19 @@ describe("hoistSvg", () => {
     );
 
     expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
-      Map {
-        "r1" => <rect
-          data-accumulated-transform="translate(10, 20)"
-          id="r1"
-          transform="translate(10, 20)"
-        />,
-        "" => <g
-          data-accumulated-transform="translate(10, 20)"
-          transform="translate(10, 20)"
-        />,
+      {
+        "byId": Map {
+          "r1" => <rect
+            data-accumulated-transform="translate(10, 20)"
+            id="r1"
+            transform="translate(10, 20)"
+          />,
+          "" => <g
+            data-accumulated-transform="translate(10, 20)"
+            transform="translate(10, 20)"
+          />,
+        },
+        "descendents": Map {},
       }
     `);
   });
@@ -55,21 +61,24 @@ describe("hoistSvg", () => {
     );
 
     expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
-      Map {
-        "r1" => <rect
-          data-accumulated-transform="translate(10, 20) rotate(45) scale(2)"
-          id="r1"
-          transform="translate(10, 20) rotate(45) scale(2)"
-        />,
-        "" => <g
-          data-accumulated-transform="translate(10, 20)"
-          transform="translate(10, 20)"
-        >
-          <g
-            data-accumulated-transform="translate(10, 20) rotate(45)"
-            transform="rotate(45)"
-          />
-        </g>,
+      {
+        "byId": Map {
+          "r1" => <rect
+            data-accumulated-transform="translate(10, 20) rotate(45) scale(2)"
+            id="r1"
+            transform="translate(10, 20) rotate(45) scale(2)"
+          />,
+          "" => <g
+            data-accumulated-transform="translate(10, 20)"
+            transform="translate(10, 20)"
+          >
+            <g
+              data-accumulated-transform="translate(10, 20) rotate(45)"
+              transform="rotate(45)"
+            />
+          </g>,
+        },
+        "descendents": Map {},
       }
     `);
   });
@@ -85,26 +94,29 @@ describe("hoistSvg", () => {
     );
 
     expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
-      Map {
-        "r1" => <rect
-          data-accumulated-transform="translate(100, 0) rotate(90)"
-          id="r1"
-          transform="translate(100, 0) rotate(90)"
-        />,
-        "c1" => <circle
-          data-accumulated-transform="translate(100, 0) rotate(90) scale(0.5)"
-          id="c1"
-          transform="translate(100, 0) rotate(90) scale(0.5)"
-        />,
-        "" => <g
-          data-accumulated-transform="translate(100, 0)"
-          transform="translate(100, 0)"
-        >
-          <g
+      {
+        "byId": Map {
+          "r1" => <rect
             data-accumulated-transform="translate(100, 0) rotate(90)"
-            transform="rotate(90)"
-          />
-        </g>,
+            id="r1"
+            transform="translate(100, 0) rotate(90)"
+          />,
+          "c1" => <circle
+            data-accumulated-transform="translate(100, 0) rotate(90) scale(0.5)"
+            id="c1"
+            transform="translate(100, 0) rotate(90) scale(0.5)"
+          />,
+          "" => <g
+            data-accumulated-transform="translate(100, 0)"
+            transform="translate(100, 0)"
+          >
+            <g
+              data-accumulated-transform="translate(100, 0) rotate(90)"
+              transform="rotate(90)"
+            />
+          </g>,
+        },
+        "descendents": Map {},
       }
     `);
   });
@@ -117,19 +129,22 @@ describe("hoistSvg", () => {
     );
 
     expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
-      Map {
-        "r1" => <rect
-          data-accumulated-transform="translate(10, 20)"
-          fill="red"
-          id="r1"
-          transform="translate(10, 20)"
-          x={5}
-          y={10}
-        />,
-        "" => <g
-          data-accumulated-transform="translate(10, 20)"
-          transform="translate(10, 20)"
-        />,
+      {
+        "byId": Map {
+          "r1" => <rect
+            data-accumulated-transform="translate(10, 20)"
+            fill="red"
+            id="r1"
+            transform="translate(10, 20)"
+            x={5}
+            y={10}
+          />,
+          "" => <g
+            data-accumulated-transform="translate(10, 20)"
+            transform="translate(10, 20)"
+          />,
+        },
+        "descendents": Map {},
       }
     `);
   });
@@ -144,14 +159,17 @@ describe("hoistSvg", () => {
     );
 
     expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
-      Map {
-        "c1" => <circle
-          id="c1"
-        />,
-        "" => <g>
-          <rect />
-          <line />
-        </g>,
+      {
+        "byId": Map {
+          "c1" => <circle
+            id="c1"
+          />,
+          "" => <g>
+            <rect />
+            <line />
+          </g>,
+        },
+        "descendents": Map {},
       }
     `);
   });
@@ -167,23 +185,26 @@ describe("hoistSvg", () => {
     );
 
     expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
-      Map {
-        "r1" => <rect
-          data-accumulated-transform="translate(0, 0)"
-          id="r1"
-          transform="translate(0, 0)"
-        />,
-        "c1" => <circle
-          data-accumulated-transform="translate(10, 10)"
-          id="c1"
-          transform="translate(10, 10)"
-        />,
-        "" => <React.Fragment>
-          <g
+      {
+        "byId": Map {
+          "r1" => <rect
+            data-accumulated-transform="translate(0, 0)"
+            id="r1"
+            transform="translate(0, 0)"
+          />,
+          "c1" => <circle
             data-accumulated-transform="translate(10, 10)"
+            id="c1"
             transform="translate(10, 10)"
-          />
-        </React.Fragment>,
+          />,
+          "" => <React.Fragment>
+            <g
+              data-accumulated-transform="translate(10, 10)"
+              transform="translate(10, 10)"
+            />
+          </React.Fragment>,
+        },
+        "descendents": Map {},
       }
     `);
   });
@@ -197,19 +218,22 @@ describe("hoistSvg", () => {
     );
 
     expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
-      Map {
-        "group1" => <g
-          data-accumulated-transform="translate(50, 50)"
-          id="group1"
-          transform="translate(50, 50)"
-        >
-          <rect
+      {
+        "byId": Map {
+          "group1" => <g
             data-accumulated-transform="translate(50, 50)"
-          />
-          <circle
-            data-accumulated-transform="translate(50, 50)"
-          />
-        </g>,
+            id="group1"
+            transform="translate(50, 50)"
+          >
+            <rect
+              data-accumulated-transform="translate(50, 50)"
+            />
+            <circle
+              data-accumulated-transform="translate(50, 50)"
+            />
+          </g>,
+        },
+        "descendents": Map {},
       }
     `);
   });
@@ -226,22 +250,25 @@ describe("hoistSvg", () => {
     );
 
     expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
-      Map {
-        "inner" => <g
-          data-accumulated-transform="translate(10, 10) rotate(45)"
-          id="inner"
-          transform="translate(10, 10) rotate(45)"
-        >
-          <rect
+      {
+        "byId": Map {
+          "inner" => <g
             data-accumulated-transform="translate(10, 10) rotate(45)"
-          />
-        </g>,
-        "" => <React.Fragment>
-          <g
-            data-accumulated-transform="translate(10, 10)"
-            transform="translate(10, 10)"
-          />
-        </React.Fragment>,
+            id="inner"
+            transform="translate(10, 10) rotate(45)"
+          >
+            <rect
+              data-accumulated-transform="translate(10, 10) rotate(45)"
+            />
+          </g>,
+          "" => <React.Fragment>
+            <g
+              data-accumulated-transform="translate(10, 10)"
+              transform="translate(10, 10)"
+            />
+          </React.Fragment>,
+        },
+        "descendents": Map {},
       }
     `);
   });
@@ -257,25 +284,28 @@ describe("hoistSvg", () => {
     );
 
     expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
-      Map {
-        "r1" => <rect
-          data-accumulated-transform="translate(100, 100)"
-          id="r1"
-          transform="translate(100, 100)"
-        />,
-        "c1" => <circle
-          data-accumulated-transform="translate(100, 100)"
-          id="c1"
-          transform="translate(100, 100)"
-        />,
-        "" => <g
-          className="wrapper"
-        >
-          <g
+      {
+        "byId": Map {
+          "r1" => <rect
             data-accumulated-transform="translate(100, 100)"
+            id="r1"
             transform="translate(100, 100)"
-          />
-        </g>,
+          />,
+          "c1" => <circle
+            data-accumulated-transform="translate(100, 100)"
+            id="c1"
+            transform="translate(100, 100)"
+          />,
+          "" => <g
+            className="wrapper"
+          >
+            <g
+              data-accumulated-transform="translate(100, 100)"
+              transform="translate(100, 100)"
+            />
+          </g>,
+        },
+        "descendents": Map {},
       }
     `);
   });
@@ -291,26 +321,33 @@ describe("hoistSvg", () => {
     );
 
     expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
-      Map {
-        "inner" => <rect
-          data-accumulated-transform="translate(10, 10) rotate(45)"
-          id="inner"
-          transform="translate(10, 10) rotate(45)"
-          x={5}
-        />,
-        "outer" => <g
-          data-accumulated-transform="translate(10, 10) rotate(45)"
-          id="outer"
-          transform="translate(10, 10) rotate(45)"
-        >
-          <circle
+      {
+        "byId": Map {
+          "inner" => <rect
             data-accumulated-transform="translate(10, 10) rotate(45)"
-          />
-        </g>,
-        "" => <g
-          data-accumulated-transform="translate(10, 10)"
-          transform="translate(10, 10)"
-        />,
+            id="inner"
+            transform="translate(10, 10) rotate(45)"
+            x={5}
+          />,
+          "outer" => <g
+            data-accumulated-transform="translate(10, 10) rotate(45)"
+            id="outer"
+            transform="translate(10, 10) rotate(45)"
+          >
+            <circle
+              data-accumulated-transform="translate(10, 10) rotate(45)"
+            />
+          </g>,
+          "" => <g
+            data-accumulated-transform="translate(10, 10)"
+            transform="translate(10, 10)"
+          />,
+        },
+        "descendents": Map {
+          "outer" => Set {
+            "inner",
+          },
+        },
       }
     `);
   });
@@ -382,25 +419,28 @@ describe("hoistSvg", () => {
     );
 
     expect(hoistSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
-      Map {
-        "label1" => <text
-          data-accumulated-transform="translate(50, 100)"
-          id="label1"
-          transform="translate(50, 100)"
-          x={10}
-          y={20}
-        >
-          hi
-        </text>,
-        "r1" => <rect
-          data-accumulated-transform="translate(50, 100)"
-          id="r1"
-          transform="translate(50, 100)"
-        />,
-        "" => <g
-          data-accumulated-transform="translate(50, 100)"
-          transform="translate(50, 100)"
-        />,
+      {
+        "byId": Map {
+          "label1" => <text
+            data-accumulated-transform="translate(50, 100)"
+            id="label1"
+            transform="translate(50, 100)"
+            x={10}
+            y={20}
+          >
+            hi
+          </text>,
+          "r1" => <rect
+            data-accumulated-transform="translate(50, 100)"
+            id="r1"
+            transform="translate(50, 100)"
+          />,
+          "" => <g
+            data-accumulated-transform="translate(50, 100)"
+            transform="translate(50, 100)"
+          />,
+        },
+        "descendents": Map {},
       }
     `);
   });
@@ -470,5 +510,151 @@ describe("hoistSvg", () => {
     expect(() => hoistSvg(accumulateTransforms(tree))).toThrow(
       /Duplicate id "inner" found in SVG tree/
     );
+  });
+});
+
+describe("hoistedExtract", () => {
+  it("extracts a single element with no descendants", () => {
+    const tree = (
+      <g>
+        <rect id="r1" />
+        <circle id="c1" />
+      </g>
+    );
+
+    const hoisted = hoistSvg(accumulateTransforms(tree));
+    const { extracted, remaining } = hoistedExtract(hoisted, "r1");
+
+    expect(extracted).toMatchInlineSnapshot(`
+      {
+        "byId": Map {
+          "r1" => <rect
+            id="r1"
+          />,
+        },
+        "descendents": Map {},
+      }
+    `);
+    expect(remaining).toMatchInlineSnapshot(`
+      {
+        "byId": Map {
+          "c1" => <circle
+            id="c1"
+          />,
+          "" => <g />,
+        },
+        "descendents": Map {},
+      }
+    `);
+  });
+
+  it("extracts an element and its descendants", () => {
+    const tree = (
+      <g transform="translate(10, 10)">
+        <g id="outer" transform="rotate(45)">
+          <rect id="inner" x={5} />
+          <circle />
+        </g>
+        <rect id="sibling" />
+      </g>
+    );
+
+    const hoisted = hoistSvg(accumulateTransforms(tree));
+    const { extracted, remaining } = hoistedExtract(hoisted, "outer");
+
+    expect(extracted).toMatchInlineSnapshot(`
+      {
+        "byId": Map {
+          "inner" => <rect
+            data-accumulated-transform="translate(10, 10) rotate(45)"
+            id="inner"
+            transform="translate(10, 10) rotate(45)"
+            x={5}
+          />,
+          "outer" => <g
+            data-accumulated-transform="translate(10, 10) rotate(45)"
+            id="outer"
+            transform="translate(10, 10) rotate(45)"
+          >
+            <circle
+              data-accumulated-transform="translate(10, 10) rotate(45)"
+            />
+          </g>,
+        },
+        "descendents": Map {
+          "outer" => Set {
+            "inner",
+          },
+        },
+      }
+    `);
+    expect(remaining).toMatchInlineSnapshot(`
+      {
+        "byId": Map {
+          "sibling" => <rect
+            data-accumulated-transform="translate(10, 10)"
+            id="sibling"
+            transform="translate(10, 10)"
+          />,
+          "" => <g
+            data-accumulated-transform="translate(10, 10)"
+            transform="translate(10, 10)"
+          />,
+        },
+        "descendents": Map {},
+      }
+    `);
+  });
+
+  it("extracts deeply nested descendants", () => {
+    const tree = (
+      <g>
+        <g id="a">
+          <g id="b">
+            <rect id="c" />
+          </g>
+        </g>
+        <rect id="d" />
+      </g>
+    );
+
+    const hoisted = hoistSvg(accumulateTransforms(tree));
+    const { extracted, remaining } = hoistedExtract(hoisted, "a");
+
+    expect(extracted).toMatchInlineSnapshot(`
+      {
+        "byId": Map {
+          "c" => <rect
+            id="c"
+          />,
+          "b" => <g
+            id="b"
+          />,
+          "a" => <g
+            id="a"
+          />,
+        },
+        "descendents": Map {
+          "b" => Set {
+            "c",
+          },
+          "a" => Set {
+            "b",
+            "c",
+          },
+        },
+      }
+    `);
+    expect(remaining).toMatchInlineSnapshot(`
+      {
+        "byId": Map {
+          "d" => <rect
+            id="d"
+          />,
+          "" => <g />,
+        },
+        "descendents": Map {},
+      }
+    `);
   });
 });
