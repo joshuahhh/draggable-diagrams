@@ -10,6 +10,7 @@ import { Graph } from "./demo-diagrams/graph";
 import { GridPoly } from "./demo-diagrams/grid-poly";
 import { InsertAndRemove } from "./demo-diagrams/insert-and-remove";
 import { ListOfLists } from "./demo-diagrams/list-of-lists";
+import { ListOfListsSizes } from "./demo-diagrams/list-of-lists-sizes";
 import { NoolTree } from "./demo-diagrams/nool-tree";
 import { OrderPreserving } from "./demo-diagrams/order-preserving";
 import { Outline } from "./demo-diagrams/outline";
@@ -180,6 +181,15 @@ export const demos: SomeDemoData[] = [
     manipulable: ListOfLists.manipulable,
     initialStates: [ListOfLists.state1],
     height: 220,
+    sourceFile: "list-of-lists.tsx",
+  }),
+  demoData({
+    id: "list-of-lists-sizes",
+    title: "List of lists (different sizes)",
+    notes: "Uses detach-reattach.",
+    manipulable: ListOfListsSizes.manipulable,
+    initialStates: [ListOfListsSizes.state1],
+    height: 360,
     sourceFile: "list-of-lists.tsx",
   }),
   demoData({
