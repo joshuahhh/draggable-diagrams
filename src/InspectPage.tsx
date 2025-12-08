@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { demos } from "./demos";
 import {
   DragState,
@@ -158,11 +158,11 @@ function RHSDragging({
         )}{" "}
         total)
       </h2>
-      <div className="flex flex-col gap-4 overflow-y-auto">
+      <div className="flex flex-col gap-4 overflow-y-auto overflow-x-hidden">
         {dragState.manifolds.map(
           (manifold: Manifold<unknown>, manifoldIdx: number) => (
-            <div key={manifoldIdx}>
-              <div className="text-xs font-medium text-gray-600 mb-2">
+            <Fragment key={manifoldIdx}>
+              <div className="text-xs font-medium text-gray-600 mt-2">
                 Manifold {manifoldIdx} ({manifold.points.length} points)
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -178,7 +178,7 @@ function RHSDragging({
                   )
                 )}
               </div>
-            </div>
+            </Fragment>
           )
         )}
       </div>
