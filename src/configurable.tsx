@@ -50,3 +50,47 @@ export function ConfigCheckbox({
     </label>
   );
 }
+
+export function ConfigSelect<T>({
+  label,
+  value,
+  onChange,
+  options,
+  stringifyOption,
+  children,
+}: {
+  label?: string;
+  value: T;
+  onChange: (newValue: T) => void;
+  options: readonly T[];
+  stringifyOption?: (option: T) => string;
+  children?: React.ReactNode;
+}) {
+  assert(!(label && children), "Provide either label or children, not both");
+  const stringify = stringifyOption ?? ((opt: T) => String(opt));
+  return (
+    <label className="flex items-start gap-2 text-xs">
+      <span>{label ?? children}</span>
+      <select
+        value={stringify(value)}
+        onChange={(e) => {
+          const selected = options.find(
+            (opt) => stringify(opt) === e.target.value
+          );
+          assert(selected !== undefined, "Selected option not found");
+          onChange(selected);
+        }}
+        className="text-xs border border-gray-300 rounded px-2 py-1"
+      >
+        {options.map((option) => {
+          const stringValue = stringify(option);
+          return (
+            <option key={stringValue} value={stringValue}>
+              {stringValue}
+            </option>
+          );
+        })}
+      </select>
+    </label>
+  );
+}

@@ -14,7 +14,7 @@ export namespace Angle {
   export const manipulable: Manipulable<State> = ({ state, drag }) => {
     const center = Vec2(100, 100);
     const radius = 100;
-    const knobPos = Vec2(radius, 0).rotate(state.angle).add(center);
+    const knobPos = Vec2(radius, 0).rotateDeg(state.angle).add(center);
 
     return (
       <g>

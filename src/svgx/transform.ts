@@ -66,7 +66,7 @@ export function localToGlobal(transforms: Transform[], able: Vec2able): Vec2 {
       case "rotate":
         point = point
           .sub([t.cx ?? 0, t.cy ?? 0])
-          .rotate((t.degrees * Math.PI) / 180)
+          .rotateDeg(t.degrees)
           .add([t.cx ?? 0, t.cy ?? 0]);
         break;
       case "scale":
@@ -88,7 +88,7 @@ export function globalToLocal(transforms: Transform[], able: Vec2able): Vec2 {
       case "rotate":
         point = point
           .sub([t.cx ?? 0, t.cy ?? 0])
-          .rotate((-t.degrees * Math.PI) / 180)
+          .rotateDeg(-t.degrees)
           .add([t.cx ?? 0, t.cy ?? 0]);
         break;
       case "scale":

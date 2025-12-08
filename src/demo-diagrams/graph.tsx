@@ -48,7 +48,7 @@ export namespace Graph {
           if (oppositeEdgeKey) {
             // Offset arrow perpendicular to its direction
             const dir = toArrow.sub(fromArrow).norm();
-            offset = dir.rotate(Math.PI / 2).mul(8);
+            offset = dir.rotateDeg(90).mul(8);
           }
 
           const tailPos = fromArrow.towards(toArrow, 5).add(offset);

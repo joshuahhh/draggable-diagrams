@@ -12,8 +12,6 @@ export namespace SecondSimplest {
     <rect
       id="switch"
       transform={translate(state.value * 100, 20 * (-1) ** state.value + 20)}
-      x={0}
-      y={0}
       width={100}
       height={100}
       data-on-drag={drag(() => [

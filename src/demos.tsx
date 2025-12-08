@@ -5,6 +5,7 @@ import { AngleViaTransform } from "./demo-diagrams/angle-via-transform";
 import { Bezier } from "./demo-diagrams/bezier";
 import { Braid } from "./demo-diagrams/braid";
 import { Clock } from "./demo-diagrams/clock";
+import { Dragon } from "./demo-diagrams/dragon";
 import { Fifteen } from "./demo-diagrams/fifteen";
 import { Graph } from "./demo-diagrams/graph";
 import { GridPoly } from "./demo-diagrams/grid-poly";
@@ -252,7 +253,7 @@ export const demos: SomeDemoData[] = [
   }),
   demoData({
     id: "bezier",
-    title: "Bezier Curve Editor",
+    title: "Bezier curve editor",
     notes: (
       <>
         Drag the endpoints (red) or control points (yellow) orrrrr the curve
@@ -400,5 +401,28 @@ export const demos: SomeDemoData[] = [
     padding: 20,
     initialDrawerConfig: { relativePointerMotion: true },
     sourceFile: "sokoban.tsx",
+  }),
+  demoData({
+    id: "dragon",
+    title: "Dragon curve",
+    notes: (
+      <>
+        Adapted from{" "}
+        <a
+          href="https://omrelli.ug/g9/"
+          className="hover:text-gray-700 hover:underline"
+        >
+          g9's famous example
+        </a>
+        . Nice performance stress test (which we are failing; try larger
+        "Levels").
+      </>
+    ),
+    manipulable: Dragon.manipulable,
+    initialStates: [Dragon.state1],
+    height: 300,
+    padding: 20,
+    initialDrawerConfig: { relativePointerMotion: true },
+    sourceFile: "dragon.tsx",
   }),
 ];
