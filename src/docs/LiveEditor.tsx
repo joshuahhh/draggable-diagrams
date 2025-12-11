@@ -66,7 +66,7 @@ export function LiveEditor({
         "produce",
         `
         const { numsAtPaths, straightTo, span, numAtPath } = DragSpec;
-        const { translate, rotate, scale } = Manipulable;
+        const { translate, rotateDeg, scale } = Manipulable;
         ${transformed}
         return { manipulable, initialState };
         `

@@ -176,7 +176,7 @@ The most novel part of Draggable Diagrams is the "drag between discrete states" 
 
     const manipulable = ({ state, drag }) => (
       <g transform={translate(150, 150)}>
-        <g transform={rotate(state.angle)}>
+        <g transform={rotateDeg(state.angle)}>
           <line
             x2={100}
             stroke="black"
