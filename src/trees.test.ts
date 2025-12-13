@@ -161,33 +161,33 @@ describe("covers", () => {
   it("detects covering when one node maps to parent", () => {
     const f = { x: "root", y: "root" };
     const g = { x: "root", y: "a" };
-    expect(covers(f, g, tree)).toBe(true);
+    expect(covers(f, g, tree)).toBe("y");
   });
 
-  it("returns false when morphisms differ at multiple nodes", () => {
+  it("returns null when morphisms differ at multiple nodes", () => {
     const f = { x: "root", y: "root" };
     const g = { x: "a", y: "b" };
-    expect(covers(f, g, tree)).toBe(false);
+    expect(covers(f, g, tree)).toBe(null);
   });
 
-  it("returns false when morphisms are identical", () => {
+  it("returns null when morphisms are identical", () => {
     const f = { x: "root", y: "a" };
     const g = { x: "root", y: "a" };
-    expect(covers(f, g, tree)).toBe(false);
+    expect(covers(f, g, tree)).toBe(null);
   });
 
-  it("returns false when difference is not parent relationship", () => {
+  it("returns null when difference is not parent relationship", () => {
     const f = { x: "a", y: "a" };
     const g = { x: "b", y: "a" };
     // a and b are siblings, not parent-child
-    expect(covers(f, g, tree)).toBe(false);
+    expect(covers(f, g, tree)).toBe(null);
   });
 
-  it("returns false when mapping goes down instead of up", () => {
+  it("returns null when mapping goes down instead of up", () => {
     const f = { x: "root", y: "a" };
     const g = { x: "root", y: "root" };
     // g maps to parent of where f maps, not the other way around
-    expect(covers(f, g, tree)).toBe(false);
+    expect(covers(f, g, tree)).toBe(null);
   });
 
   it("works with deeper tree", () => {
@@ -203,11 +203,11 @@ describe("covers", () => {
 
     const f = { x: "a", y: "a1" };
     const g = { x: "a", y: "a" };
-    expect(covers(f, g, deepTree)).toBe(false); // wrong direction
+    expect(covers(f, g, deepTree)).toBe(null); // wrong direction
 
     const f2 = { x: "a", y: "a" };
     const g2 = { x: "a", y: "a1" };
-    expect(covers(f2, g2, deepTree)).toBe(true); // f2 covers g2
+    expect(covers(f2, g2, deepTree)).toBe("y"); // f2 covers g2
   });
 });
 
@@ -231,7 +231,7 @@ describe("buildHasseDiagram", () => {
     const pMorphIndex = diagram.nodes.findIndex((m) => m.x === "p");
     const cMorphIndex = diagram.nodes.findIndex((m) => m.x === "c");
 
-    expect(diagram.edges[0]).toEqual([pMorphIndex, cMorphIndex]);
+    expect(diagram.edges[0]).toEqual([pMorphIndex, cMorphIndex, "x"]);
   });
 
   it("builds diagram for Elliot's example", () => {
@@ -250,8 +250,8 @@ describe("buildHasseDiagram", () => {
     expect(diagram.edges.length).toBeGreaterThan(0);
 
     // All edges should be valid covering relations
-    for (const [from, to] of diagram.edges) {
-      expect(covers(diagram.nodes[from], diagram.nodes[to], tree)).toBe(true);
+    for (const [from, to, key] of diagram.edges) {
+      expect(covers(diagram.nodes[from], diagram.nodes[to], tree)).toBe(key);
     }
   });
 });
