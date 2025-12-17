@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import { demos } from "./demos";
+import { ErrorBoundary } from "./ErrorBoundary";
 import {
   DragState,
   Manifold,
@@ -83,18 +84,20 @@ export function InspectPage({
               </label>
             </div>
             <div style={{ padding: demo.padding }}>
-              <ManipulableDrawer
-                manipulable={demo.manipulable.withConfig(
-                  demo.manipulable.type === "configurable"
-                    ? demo.manipulable.defaultConfig
-                    : undefined
-                )}
-                initialState={initialState}
-                drawerConfig={demo.initialDrawerConfig}
-                height={demo.height}
-                debugMode={debugMode}
-                onDragStateChange={setDragState}
-              />
+              <ErrorBoundary>
+                <ManipulableDrawer
+                  manipulable={demo.manipulable.withConfig(
+                    demo.manipulable.type === "configurable"
+                      ? demo.manipulable.defaultConfig
+                      : undefined
+                  )}
+                  initialState={initialState}
+                  drawerConfig={demo.initialDrawerConfig}
+                  height={demo.height}
+                  debugMode={debugMode}
+                  onDragStateChange={setDragState}
+                />
+              </ErrorBoundary>
             </div>
             <div className="mt-4">
               <h2 className="text-lg font-semibold mb-2">State</h2>
