@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactElement } from "react";
 import { configurable, Configurable, ConfigurableProps } from "./configurable";
 import { Angle } from "./demo-diagrams/angle";
 import { AngleViaTransform } from "./demo-diagrams/angle-via-transform";
@@ -38,7 +38,7 @@ import { hasKey } from "./utils";
 export type DemoData<T extends object> = {
   id: string;
   title: string;
-  notes?: ReactNode;
+  notes?: ReactElement; // not ReactNode, for better wrapping with Prettier
   manipulable:
     | {
         type: "constant";
@@ -168,7 +168,7 @@ export const demos: SomeDemoData[] = [
   demoData({
     id: "list-of-lists",
     title: "List of lists",
-    notes: "Uses detach-reattach.",
+    notes: <>Uses detach-reattach.</>,
     manipulable: ListOfLists.manipulable,
     initialStates: [ListOfLists.state1],
     height: 220,
@@ -177,7 +177,7 @@ export const demos: SomeDemoData[] = [
   demoData({
     id: "list-of-lists-sizes",
     title: "List of lists (different sizes)",
-    notes: "Uses detach-reattach.",
+    notes: <>Uses detach-reattach.</>,
     manipulable: ListOfListsSizes.manipulable,
     initialStates: [ListOfListsSizes.state1],
     height: 360,
@@ -186,8 +186,12 @@ export const demos: SomeDemoData[] = [
   demoData({
     id: "inserting-removing-items",
     title: "Inserting & removing items",
-    notes:
-      "This shows kinda-hacky ways to insert and remove items from a draggable diagram. Much to consider.",
+    notes: (
+      <>
+        This shows kinda-hacky ways to insert and remove items from a draggable
+        diagram. Much to consider.
+      </>
+    ),
     manipulable: InsertAndRemove.manipulable,
     initialStates: [InsertAndRemove.state1],
     height: 150,
@@ -197,8 +201,13 @@ export const demos: SomeDemoData[] = [
   demoData({
     id: "lonely-tile-on-a-grid",
     title: "Lonely tile on a grid",
-    notes:
-      "I'm trying to make dragging feel right here. Goal is for the tile to only drag orthogonally, AND to not jump discontinuously. This seems to require 'Relative Pointer Motion' mode (or divergent approaches).",
+    notes: (
+      <>
+        I'm trying to make dragging feel right here. Goal is for the tile to
+        only drag orthogonally, AND to not jump discontinuously. This seems to
+        require 'Relative Pointer Motion' mode (or divergent approaches).
+      </>
+    ),
     manipulable: Tiles.manipulable,
     initialStates: [Tiles.stateLonely],
     height: 300,
@@ -256,10 +265,13 @@ export const demos: SomeDemoData[] = [
   demoData({
     id: "carousel",
     title: "Carousel",
-    notes:
-      "Partially-AI-generated carousel with swipe navigation, interactive dots, and arrow buttons." +
-      " Ought to use clipPaths but those don't work yet." +
-      " Fun bug: try clicking next/prev buttons rapidly.",
+    notes: (
+      <>
+        Partially-AI-generated carousel with swipe navigation, interactive dots,
+        and arrow buttons. Ought to use clipPaths but those don't work yet. Fun
+        bug: try clicking next/prev buttons rapidly.
+      </>
+    ),
     manipulable: Carousel.manipulable,
     initialStates: [Carousel.state1],
     height: 300,
@@ -279,7 +291,7 @@ export const demos: SomeDemoData[] = [
   demoData({
     id: "15-puzzle",
     title: "15 puzzle",
-    notes: "Weird experiment: I made the blank draggable",
+    notes: <>Weird experiment: I made the blank draggable</>,
     manipulable: Fifteen.manipulable,
     initialStates: [Fifteen.state1],
     height: 200,
@@ -299,7 +311,7 @@ export const demos: SomeDemoData[] = [
   demoData({
     id: "spinny",
     title: "Spinny",
-    notes: "Tests interpolation of rotations.",
+    notes: <>Tests interpolation of rotations.</>,
     manipulable: Spinny.manipulable,
     initialStates: [Spinny.state1],
     height: 200,
