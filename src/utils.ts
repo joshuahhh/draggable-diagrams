@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { memo, ReactNode } from "react";
 import { ErrorWithJSX } from "./ErrorBoundary";
 
 export function assertNever(_never: never, message?: string): never {
@@ -180,3 +180,14 @@ export function noOp(): void {}
 export function throwError(): never {
   throw new Error("This function should not have been called");
 }
+
+/**
+ * "Distributive" version of Omit, which works on union types.
+ */
+export type DOmit<T, K extends keyof any> = T extends any ? Omit<T, K> : never;
+
+/**
+ * version of React.memo that works with generic components, maybe.
+ */
+export const memoGeneric = <C extends (...props: any) => ReactNode>(c: C) =>
+  memo(c as any) as unknown as C;

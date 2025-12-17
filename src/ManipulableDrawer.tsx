@@ -1,10 +1,10 @@
 import * as d3Ease from "d3-ease";
 import _ from "lodash";
-import {
+import React, {
   SetStateAction,
   useCallback,
   useEffect,
-  useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -12,11 +12,12 @@ import { assert } from "vitest";
 import { DragSpec, TargetStateLike, span, toTargetState } from "./DragSpec";
 import {
   Manipulable,
+  ManipulableProps,
   getDragSpecCallbackOnElement,
   unsafeDrag,
 } from "./manipulable";
 import { Delaunay } from "./math/delaunay";
-import { LerpSpring } from "./math/lerp-spring";
+import { LerpSpringState, step } from "./math/lerp-spring-f";
 import { minimize } from "./math/minimize";
 import { Vec2 } from "./math/vec2";
 import { getAtPath, setAtPath } from "./paths";
@@ -37,12 +38,16 @@ import {
 import { lerpHoisted, lerpHoisted3 } from "./svgx/lerp";
 import { assignPaths, findByPath, getPath } from "./svgx/path";
 import { globalToLocal, localToGlobal, parseTransform } from "./svgx/transform";
+import { useAnimationLoop } from "./useAnimationLoop";
 import { useRenderError } from "./useRenderError";
 import {
+  DOmit,
+  assertDefined,
   assertNever,
   assertWithJSX,
   hasKey,
   manyToArray,
+  memoGeneric,
   pipe,
   throwError,
 } from "./utils";
@@ -66,72 +71,28 @@ export function ManipulableDrawer<T extends object>({
   debugMode,
   onDragStateChange,
 }: ManipulableDrawerProps<T>) {
-  // console.log("ManipulableDrawer render");
-
   const throwRenderError = useRenderError();
 
-  const [dragState, setDragStateRaw] = useState<DragState<T>>({
+  const [dragState, setDragState] = useState<DragState<T>>({
     type: "idle",
     state: initialState,
   });
-  const [pointer, setPointer] = useState<Vec2 | null>(null);
   const [paused, setPaused] = useState(false);
-  const pendingStateTransition = useRef<DragState<T> | null>(null);
+  const pointerRef = useRef<Vec2 | null>(null);
 
-  const drawerConfigWithDefaults = {
-    snapRadius: drawerConfig.snapRadius ?? 10,
-    chainDrags: drawerConfig.chainDrags ?? true,
-    relativePointerMotion: drawerConfig.relativePointerMotion ?? false,
-    animationDuration: drawerConfig.animationDuration ?? 300,
-  };
-
-  const setDragState = useCallback(
-    (newDragState: DragState<T>) => {
-      // console.log("setDragState", newDragState);
-      setDragStateRaw(newDragState);
-      onDragStateChange?.(newDragState);
-    },
-    [onDragStateChange]
+  const drawerConfigWithDefaults = useMemo(
+    () => ({
+      snapRadius: drawerConfig.snapRadius ?? 10,
+      chainDrags: drawerConfig.chainDrags ?? true,
+      relativePointerMotion: drawerConfig.relativePointerMotion ?? false,
+      animationDuration: drawerConfig.animationDuration ?? 300,
+    }),
+    [drawerConfig]
   );
 
-  // Animation loop
   useEffect(() => {
-    let rafId: number;
-    const animate = () => {
-      if (dragState.type === "animating") {
-        const now = Date.now();
-        const elapsed = now - dragState.startTime;
-        const progress = Math.min(elapsed / dragState.duration, 1);
-
-        if (progress >= 1) {
-          setDragState(dragState.nextDragState);
-        } else {
-          setDragStateRaw({ ...dragState });
-          rafId = requestAnimationFrame(animate);
-        }
-      } else if (dragState.type === "dragging-detach-reattach") {
-        setDragStateRaw({ ...dragState });
-        rafId = requestAnimationFrame(animate);
-      }
-    };
-    if (
-      dragState.type === "animating" ||
-      dragState.type === "dragging-detach-reattach"
-    ) {
-      rafId = requestAnimationFrame(animate);
-    }
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-    };
-  }, [dragState, setDragState]);
-
-  // Handle pending state transitions from render
-  useLayoutEffect(() => {
-    if (pendingStateTransition.current) {
-      setDragState(pendingStateTransition.current);
-      pendingStateTransition.current = null;
-    }
-  });
+    onDragStateChange?.(dragState);
+  }, [dragState, onDragStateChange]);
 
   // Handle pause keyboard shortcut (cmd-p or ctrl-p)
   useEffect(() => {
@@ -149,74 +110,61 @@ export function ManipulableDrawer<T extends object>({
 
   const [svgElem, setSvgElem] = useState<SVGSVGElement | null>(null);
 
-  function postProcessForInteraction(element: Svgx, state: T): HoistedSvgx {
-    return pipe(
-      element,
-      (el) => {
-        // prettyLog(el, { label: "original element" });
-        return el;
-      },
-      assignPaths,
-      (el) => {
-        // prettyLog(el, { label: "postProcessForInteraction element" });
-        return el;
-      },
-      accumulateTransforms,
-      (el) =>
-        updatePropsDownTree(el, (el) => {
-          const dragSpecCallback = getDragSpecCallbackOnElement<T>(el);
-          if (!dragSpecCallback) return;
-          return {
-            style: { cursor: "grab", ...(el.props.style || {}) },
-            onPointerDown: (e: React.PointerEvent) => {
-              try {
-                // console.log("onPointerDown");
-                e.stopPropagation();
-                const pointerPos = setPointerFromEvent(e.nativeEvent);
-                const accumulatedTransform = getAccumulatedTransform(el);
-                const transforms = parseTransform(accumulatedTransform || "");
-                const pointerLocal = globalToLocal(transforms, pointerPos);
-                const path = getPath(el);
-                assert(!!path, "Draggable element must have a path");
-                setDragState(
-                  computeEnterDraggingMode(
-                    state,
-                    path,
-                    el.props.id || null,
-                    dragSpecCallback(),
-                    pointerLocal,
-                    manipulable
-                  )
-                );
-              } catch (error) {
-                throwRenderError(error);
-              }
-            },
-          };
-        }),
-      hoistSvg
-    );
-  }
+  const setPointerFromEvent = useCallback(
+    (e: globalThis.PointerEvent) => {
+      assert(!!svgElem);
+      const rect = svgElem.getBoundingClientRect();
+      const pointer = Vec2(e.clientX - rect.left, e.clientY - rect.top);
+      pointerRef.current = pointer;
+      return pointer;
+    },
+    [svgElem]
+  );
 
-  const { hoistedToRender, pendingTransition, debugRender, onPointerUp } =
-    computeRenderState(
-      dragState,
-      pointer,
-      drawerConfigWithDefaults,
+  const dragContext: DragContext<T> = useMemo(() => {
+    return {
+      drawerConfig: drawerConfigWithDefaults,
       manipulable,
-      postProcessForInteraction,
-      setDragState
-    );
+      debugMode: !!debugMode,
+    };
+  }, [debugMode, drawerConfigWithDefaults, manipulable]);
 
-  if (pendingTransition) {
-    pendingStateTransition.current = pendingTransition;
-  }
+  const setDragStateWithoutByproducts = useCallback(
+    (newDragState: DOmit<DragState<T>, "byproducts">) => {
+      setDragState(
+        updateDragState(
+          newDragState,
+          dragContext,
+          assertDefined(pointerRef.current)
+        )
+      );
+    },
+    [dragContext, setDragState]
+  );
+
+  useAnimationLoop(
+    useCallback(() => {
+      // These are the only two states that need updating over time
+      if (
+        dragState.type === "animating" ||
+        dragState.type === "drag-detach-reattach"
+      ) {
+        setDragState(
+          updateDragState(
+            dragState,
+            dragContext,
+            assertDefined(pointerRef.current)
+          )
+        );
+      }
+    }, [dragContext, dragState, setDragState])
+  );
 
   useEffect(() => {
     if (
-      dragState.type === "dragging" ||
-      dragState.type === "dragging-detach-reattach" ||
-      dragState.type === "dragging-params"
+      dragState.type === "drag" ||
+      dragState.type === "drag-detach-reattach" ||
+      dragState.type === "drag-params"
     ) {
       document.body.style.cursor = "grabbing";
     } else {
@@ -224,43 +172,30 @@ export function ManipulableDrawer<T extends object>({
     }
   }, [dragState.type]);
 
-  const setPointerFromEvent = useCallback(
-    (e: globalThis.PointerEvent) => {
-      assert(!!svgElem);
-      const rect = svgElem.getBoundingClientRect();
-      const pointerPos = Vec2(e.clientX - rect.left, e.clientY - rect.top);
-      setPointer(pointerPos);
-      return pointerPos;
-    },
-    [svgElem]
-  );
-
   // Attach document-level event listeners during drag
   useEffect(() => {
     if (
-      dragState.type !== "dragging" &&
-      dragState.type !== "dragging-detach-reattach" &&
-      dragState.type !== "dragging-params"
+      dragState.type !== "drag" &&
+      dragState.type !== "drag-detach-reattach" &&
+      dragState.type !== "drag-params"
     ) {
       return;
     }
 
     const handlePointerMove = (e: globalThis.PointerEvent) => {
       if (paused) return;
-      setPointerFromEvent(e);
+      const pointer = setPointerFromEvent(e);
+      setDragState(updateDragState(dragState, dragContext, pointer));
     };
 
-    const handlePointerUp = () => {
+    const handlePointerUp = (e: globalThis.PointerEvent) => {
       if (paused) return;
-      if (onPointerUp) {
-        onPointerUp();
-      }
-      setPointer(null);
+      const pointer = setPointerFromEvent(e);
+      setDragState(onPointerUp(dragState, dragContext, pointer));
     };
 
     const handlePointerCancel = () => {
       // TODO: we need to do something with dragstate in this case
-      setPointer(null);
     };
 
     document.addEventListener("pointermove", handlePointerMove);
@@ -272,9 +207,23 @@ export function ManipulableDrawer<T extends object>({
       document.removeEventListener("pointerup", handlePointerUp);
       document.removeEventListener("pointercancel", handlePointerCancel);
     };
-  }, [dragState.type, onPointerUp, paused, setPointerFromEvent]);
+  }, [dragContext, dragState, paused, setDragState, setPointerFromEvent]);
 
   // prettyLog(sortedEntries, { label: "sortedEntries for rendering" });
+
+  const renderContext: RenderContext<T> = useMemo(() => {
+    return {
+      ...dragContext,
+      setPointerFromEvent,
+      setDragState: setDragStateWithoutByproducts,
+      throwRenderError,
+    };
+  }, [
+    dragContext,
+    setDragStateWithoutByproducts,
+    setPointerFromEvent,
+    throwRenderError,
+  ]);
 
   return (
     <svg
@@ -284,8 +233,19 @@ export function ManipulableDrawer<T extends object>({
       xmlns="http://www.w3.org/2000/svg"
       className="overflow-visible select-none touch-none"
     >
-      {drawHoisted(hoistedToRender)}
-      {debugMode && debugRender}
+      {dragState.type === "idle" ? (
+        <DrawIdleMode dragState={dragState} ctx={renderContext} />
+      ) : dragState.type === "animating" ? (
+        <DrawAnimatingMode dragState={dragState} ctx={renderContext} />
+      ) : dragState.type === "drag" ? (
+        <DrawDragMode dragState={dragState} ctx={renderContext} />
+      ) : dragState.type === "drag-detach-reattach" ? (
+        <DrawDragDetachReattachMode dragState={dragState} ctx={renderContext} />
+      ) : dragState.type === "drag-params" ? (
+        <DrawDragParamsMode dragState={dragState} ctx={renderContext} />
+      ) : (
+        assertNever(dragState)
+      )}
     </svg>
   );
 }
@@ -321,15 +281,25 @@ export type Manifold<T> = {
 export type DragState<T> =
   | { type: "idle"; state: T }
   | {
-      type: "dragging";
+      type: "drag";
       draggedPath: string;
       draggedId: string | null;
       pointerLocal: Vec2;
       startingPoint: ManifoldPoint<T>;
       manifolds: Manifold<T>[];
+      byproducts: {
+        hoistedToRender: HoistedSvgx;
+        manifoldProjections: Array<{
+          manifold: Manifold<T>;
+          projectedPt: Vec2;
+          dist: number;
+        }>;
+        pointer: Vec2;
+        newState: T;
+      };
     }
   | {
-      type: "dragging-detach-reattach";
+      type: "drag-detach-reattach";
       draggedPath: string;
       draggedId: string;
       pointerLocal: Vec2;
@@ -338,15 +308,34 @@ export type DragState<T> =
       detachedState: T;
       detachedHoisted: HoistedSvgx;
       reattachedPoints: ManifoldPoint<T>[];
-      backgroundSpring: LerpSpring<HoistedSvgx>;
+      backgroundSpringState: LerpSpringState<HoistedSvgx>;
+      byproducts: {
+        /**
+         * the hoisted to render, made by combining the springing
+         * background with the foreground
+         */
+        hoistedToRender: HoistedSvgx;
+        /**
+         * the state that releasing the pointer should take us to
+         */
+        newState: T;
+        /**
+         * the hoisted rendered diagram for newState
+         */
+        newStateHoisted: HoistedSvgx;
+      };
     }
   | {
-      type: "dragging-params";
+      type: "drag-params";
       draggedPath: string;
       draggedId: string | null;
       pointerLocal: Vec2;
       curParams: number[];
       stateFromParams: (...params: number[]) => T;
+      byproducts: {
+        content: Svgx;
+        pointer: Vec2;
+      };
     }
   | {
       type: "animating";
@@ -356,10 +345,66 @@ export type DragState<T> =
       startTime: number;
       duration: number;
       nextDragState: DragState<T>;
+      byproducts: {
+        easedProgress: number;
+      };
     };
 
-function postProcessForDrawing(element: Svgx): HoistedSvgx {
+function renderManipulableReadOnly<T extends object>(
+  manipulable: Manipulable<T>,
+  props: Omit<ManipulableProps<T>, "drag" | "setState">
+): HoistedSvgx {
+  return postProcessReadOnly(
+    manipulable({ ...props, drag: unsafeDrag, setState: throwError })
+  );
+}
+function postProcessReadOnly(element: Svgx): HoistedSvgx {
   return pipe(element, assignPaths, accumulateTransforms, hoistSvg);
+}
+
+function postProcessForInteraction<T extends object>(
+  element: Svgx,
+  state: T,
+  ctx: RenderContext<T>
+): HoistedSvgx {
+  return pipe(
+    element,
+    assignPaths,
+    accumulateTransforms,
+    (el) =>
+      updatePropsDownTree(el, (el) => {
+        const dragSpecCallback = getDragSpecCallbackOnElement<T>(el);
+        if (!dragSpecCallback) return;
+        return {
+          style: { cursor: "grab", ...(el.props.style || {}) },
+          onPointerDown: (e: React.PointerEvent) => {
+            try {
+              // console.log("onPointerDown");
+              e.stopPropagation();
+              const pointer = ctx.setPointerFromEvent(e.nativeEvent);
+              const accumulatedTransform = getAccumulatedTransform(el);
+              const transforms = parseTransform(accumulatedTransform || "");
+              const pointerLocal = globalToLocal(transforms, pointer);
+              const path = getPath(el);
+              assert(!!path, "Draggable element must have a path");
+              ctx.setDragState(
+                computeEnterDraggingMode(
+                  state,
+                  path,
+                  el.props.id || null,
+                  dragSpecCallback(),
+                  pointerLocal,
+                  ctx.manipulable
+                )
+              );
+            } catch (error) {
+              ctx.throwRenderError(error);
+            }
+          },
+        };
+      }),
+    hoistSvg
+  );
 }
 
 function makeManifoldPoint<T extends object>({
@@ -380,13 +425,10 @@ function makeManifoldPoint<T extends object>({
   const targetState = toTargetState(targetStateLike);
 
   // Use a no-op draggable to avoid attaching event handlers
-  const content = manipulable({
+  const hoisted = renderManipulableReadOnly(manipulable, {
     state: targetState.targetState,
-    drag: unsafeDrag,
     draggedId,
-    setState: throwError,
   });
-  const hoisted = postProcessForDrawing(content);
   // prettyLog(hoisted, { label: "hoisted in makeManifoldPoint" });
   console.log("gonna find", draggedPath, "in hoisted:");
   // prettyLog(hoisted);
@@ -426,6 +468,11 @@ function makeManifoldPoint<T extends object>({
   };
 }
 
+/**
+ * If we want to enter a dragging mode (defined by a dragSpec) from a
+ * state, this gives the resulting DragState (minus "byproducts",
+ * which should be calculated by updateDragState).
+ */
 function computeEnterDraggingMode<T extends object>(
   state: T,
   draggedPath: string,
@@ -433,12 +480,12 @@ function computeEnterDraggingMode<T extends object>(
   dragSpec: DragSpec<T>,
   pointerLocal: Vec2,
   manipulable: Manipulable<T>
-): DragState<T> {
+): DOmit<DragState<T>, "byproducts"> {
   console.log("enterDraggingMode", state, draggedPath);
 
   if (hasKey(dragSpec, "type") && dragSpec.type === "params") {
     return {
-      type: "dragging-params",
+      type: "drag-params",
       draggedPath,
       draggedId,
       pointerLocal,
@@ -449,7 +496,7 @@ function computeEnterDraggingMode<T extends object>(
 
   if (hasKey(dragSpec, "type") && dragSpec.type === "param-paths") {
     return {
-      type: "dragging-params",
+      type: "drag-params",
       draggedPath,
       draggedId,
       pointerLocal,
@@ -491,16 +538,13 @@ function computeEnterDraggingMode<T extends object>(
 
     // draw the detached state
     const { detachedState, reattachedStates } = dragSpec;
-    const detachedContent = manipulable({
+    const detachedHoisted = renderManipulableReadOnly(manipulable, {
       state: detachedState,
-      drag: unsafeDrag,
       draggedId,
-      setState: throwError,
     });
-    const detachedHoisted = postProcessForDrawing(detachedContent);
 
     return {
-      type: "dragging-detach-reattach",
+      type: "drag-detach-reattach",
       draggedPath,
       draggedId,
       pointerLocal,
@@ -518,15 +562,12 @@ function computeEnterDraggingMode<T extends object>(
           pointerLocal,
         })
       ),
-      backgroundSpring: new LerpSpring<HoistedSvgx>({
-        initial: background,
-        time: Date.now(),
-        params: {
-          omega: 0.03, // spring frequency (rad/ms)
-          gamma: 0.1, // damping rate (1/ms)
-        },
-        lerp: lerpHoisted,
-      }),
+      backgroundSpringState: {
+        cur: background,
+        curT: Date.now(),
+        prev: background,
+        prevT: Date.now(),
+      },
     };
   }
 
@@ -534,11 +575,6 @@ function computeEnterDraggingMode<T extends object>(
     manyToArray(dragSpec),
     (arr) => (arr.length === 0 ? [span([])] : arr) // things go wrong if no manifolds
   );
-
-  console.log("dragSpec", dragSpec);
-
-  console.log("manifoldSpecs");
-  // prettyLog(manifoldSpecs);
 
   const makeManifoldPointProps: Parameters<typeof makeManifoldPoint<T>>[0] = {
     state,
@@ -575,7 +611,7 @@ function computeEnterDraggingMode<T extends object>(
   });
 
   return {
-    type: "dragging",
+    type: "drag",
     draggedPath,
     draggedId,
     pointerLocal,
@@ -584,155 +620,164 @@ function computeEnterDraggingMode<T extends object>(
   };
 }
 
-function computeRenderState<T extends object>(
-  dragState: DragState<T>,
-  pointer: Vec2 | null,
-  drawerConfig: DrawerConfig,
-  manipulable: Manipulable<T>,
-  postProcessForInteraction: (element: Svgx, state: T) => HoistedSvgx,
-  setDragState: (newDragState: DragState<T>) => void
-): {
-  hoistedToRender: HoistedSvgx;
-  pendingTransition: DragState<T> | null;
-  debugRender: React.ReactNode;
-  onPointerUp: (() => void) | null;
-} {
-  let hoistedToRender: HoistedSvgx;
-  let pendingTransition: DragState<T> | null = null;
-  let debugRender: React.ReactElement[] = [];
-  let onPointerUp: (() => void) | null = null;
+function debugForDragMode(
+  manifoldProjections: Array<{
+    manifold: Manifold<any>;
+    projectedPt: Vec2;
+    dist: number;
+  }>,
+  snapRadius: number,
+  pointer: Vec2
+) {
+  const debugRender: React.ReactElement[] = [];
 
-  if (dragState.type === "idle") {
-    // console.log("rendering while idle");
-    const content = manipulable({
-      state: dragState.state,
-      drag: unsafeDrag,
-      draggedId: null,
-      setState: (
-        newState: SetStateAction<T>,
-        {
-          easing = d3Ease.easeCubicInOut,
-          seconds = 0.4,
-          immediate = false,
-        } = {}
-      ) => {
-        newState =
-          typeof newState === "function" ? newState(dragState.state) : newState;
+  manifoldProjections.forEach((proj, manifoldIdx) => {
+    const { manifold, projectedPt } = proj;
 
-        if (immediate) {
-          setDragState({
-            type: "idle",
-            state: newState,
-          });
-          return;
-        }
-
-        // animate to new state
-        const endContent = manipulable({
-          state: newState,
-          drag: unsafeDrag,
-          draggedId: null,
-          setState: throwError,
-        });
-        setDragState({
-          type: "animating",
-          startHoisted: postProcessForDrawing(content),
-          targetHoisted: postProcessForDrawing(endContent),
-          startTime: Date.now(),
-          easing,
-          duration: seconds * 1000,
-          nextDragState: { type: "idle", state: newState },
-        });
-      },
+    // Draw red circles at manifold points
+    manifold.points.forEach((pt, ptIdx) => {
+      debugRender.push(
+        <circle
+          key={`manifold-${manifoldIdx}-point-${ptIdx}`}
+          cx={pt.position.x}
+          cy={pt.position.y}
+          r={snapRadius}
+          fill="red"
+          opacity={0.3}
+        />
+      );
     });
-    // console.log("content from idle state:", content);
-    // prettyLog(content, { label: "content from idle state" });
-    hoistedToRender = postProcessForInteraction(content, dragState.state);
+
+    // Draw red triangulation edges
+    manifold.delaunay.triangles().forEach((tri) => {
+      const [a, b, c] = tri;
+      debugRender.push(
+        <path
+          d={path("M", a.x, a.y, "L", b.x, b.y, "L", c.x, c.y, "Z")}
+          stroke="red"
+          strokeWidth={2}
+          fill="none"
+        />
+      );
+    });
+
+    // Draw blue circle at projected point
+    debugRender.push(
+      <circle
+        cx={projectedPt.x}
+        cy={projectedPt.y}
+        r={10}
+        stroke="blue"
+        strokeWidth={2}
+        fill="none"
+      />
+    );
+
+    // Draw blue line from draggable dest to projected point
+    debugRender.push(
+      <line
+        x1={pointer.x}
+        y1={pointer.y}
+        x2={projectedPt.x}
+        y2={projectedPt.y}
+        stroke="blue"
+        strokeWidth={2}
+      />
+    );
+  });
+
+  return debugRender;
+}
+
+function debugForDragParamsMode(
+  content: Svgx,
+  draggedPath: string,
+  pointerLocal: Vec2,
+  pointer: Vec2
+) {
+  const debugRender: React.ReactElement[] = [];
+
+  const processedContent = pipe(content, assignPaths, accumulateTransforms);
+  const element = findByPath(draggedPath, processedContent);
+  if (element) {
+    const accumulateTransform = getAccumulatedTransform(element);
+    const transforms = parseTransform(accumulateTransform || "");
+    const achievedPos = localToGlobal(transforms, pointerLocal);
+
+    debugRender.push(
+      <circle
+        key="drag-params-achieved"
+        cx={achievedPos.x}
+        cy={achievedPos.y}
+        r={5}
+        fill="green"
+        stroke="darkgreen"
+        strokeWidth={2}
+      />
+    );
+
+    debugRender.push(
+      <line
+        key="drag-params-line"
+        x1={achievedPos.x}
+        y1={achievedPos.y}
+        x2={pointer.x}
+        y2={pointer.y}
+        stroke="orange"
+        strokeWidth={2}
+        strokeDasharray="4 4"
+      />
+    );
+  }
+
+  return debugRender;
+}
+
+type DragContext<T extends object> = {
+  // pointer: Vec2;
+  drawerConfig: DrawerConfig;
+  manipulable: Manipulable<T>;
+  debugMode: boolean;
+};
+
+function updateDragState<T extends object>(
+  dragState: DOmit<DragState<T>, "byproducts">,
+  ctx: DragContext<T>,
+  pointer: Vec2
+): DragState<T> {
+  if (dragState.type === "idle") {
+    return dragState;
   } else if (dragState.type === "animating") {
     const now = Date.now();
     const elapsed = now - dragState.startTime;
     const progress = Math.min(elapsed / dragState.duration, 1);
     const easedProgress = dragState.easing(progress);
 
-    hoistedToRender = lerpHoisted(
-      dragState.startHoisted,
-      dragState.targetHoisted,
-      easedProgress
-    );
-  } else if (dragState.type === "dragging") {
-    assert(!!pointer, "Pointer must be defined while dragging");
-
+    if (progress >= 1) {
+      return dragState.nextDragState;
+    } else {
+      return {
+        ...dragState,
+        byproducts: {
+          easedProgress,
+        },
+      };
+    }
+  } else if (dragState.type === "drag") {
     let newState: T;
-
-    const draggableDestPt = Vec2(pointer);
+    let hoistedToRender: HoistedSvgx;
 
     const manifoldProjections = dragState.manifolds.map((manifold) => ({
-      ...manifold.delaunay.projectOntoConvexHull(draggableDestPt),
+      ...manifold.delaunay.projectOntoConvexHull(pointer),
       manifold,
     }));
-
-    // Compute debug visualization
-    manifoldProjections.forEach((proj, manifoldIdx) => {
-      const { manifold, projectedPt } = proj;
-
-      // Draw red circles at manifold points
-      manifold.points.forEach((pt, ptIdx) => {
-        debugRender.push(
-          <circle
-            key={`manifold-${manifoldIdx}-point-${ptIdx}`}
-            cx={pt.position.x}
-            cy={pt.position.y}
-            r={drawerConfig.snapRadius}
-            fill="red"
-            opacity={0.3}
-          />
-        );
-      });
-
-      // Draw red triangulation edges
-      manifold.delaunay.triangles().forEach((tri) => {
-        const [a, b, c] = tri;
-        debugRender.push(
-          <path
-            d={path("M", a.x, a.y, "L", b.x, b.y, "L", c.x, c.y, "Z")}
-            stroke="red"
-            strokeWidth={2}
-            fill="none"
-          />
-        );
-      });
-
-      // Draw blue circle at projected point
-      debugRender.push(
-        <circle
-          cx={projectedPt.x}
-          cy={projectedPt.y}
-          r={10}
-          stroke="blue"
-          strokeWidth={2}
-          fill="none"
-        />
-      );
-
-      // Draw blue line from draggable dest to projected point
-      debugRender.push(
-        <line
-          x1={draggableDestPt.x}
-          y1={draggableDestPt.y}
-          x2={projectedPt.x}
-          y2={projectedPt.y}
-          stroke="blue"
-          strokeWidth={2}
-        />
-      );
-    });
 
     const bestManifoldProjection = _.minBy(
       manifoldProjections,
       (proj) => proj.dist
     )!;
 
-    if (drawerConfig.relativePointerMotion) {
+    if (ctx.drawerConfig.relativePointerMotion) {
       // TODO: implement relative pointer motion
       // dragState.pointerOffset = Vec2(pointer).sub(
       //   bestManifoldProjection.projectedPt,
@@ -741,7 +786,7 @@ function computeRenderState<T extends object>(
 
     const closestManifoldPt = _.minBy(
       dragState.manifolds.flatMap((m) => m.points),
-      (info) => draggableDestPt.dist(info.position)
+      (info) => pointer.dist(info.position)
     )!;
 
     // TODO: it would be nice to animate towards .state before
@@ -750,9 +795,9 @@ function computeRenderState<T extends object>(
 
     // Check if it's time to snap
     if (
-      drawerConfig.chainDrags &&
+      ctx.drawerConfig.chainDrags &&
       bestManifoldProjection.projectedPt.dist(closestManifoldPt.position) <
-        drawerConfig.snapRadius
+        ctx.drawerConfig.snapRadius
     ) {
       if (!_.isEqual(newState, dragState.startingPoint.state)) {
         // time to snap!
@@ -763,17 +808,19 @@ function computeRenderState<T extends object>(
 
         // special case: the thing we're snapping to doesn't have a drag spec at all
         if (!dragSpecCallback) {
-          pendingTransition = { type: "idle", state: newState };
+          return { type: "idle", state: newState };
         } else {
           // normal case
-          pendingTransition = computeEnterDraggingMode(
+          const newDragState = computeEnterDraggingMode(
             newState,
             dragState.draggedPath,
             dragState.draggedId,
             dragSpecCallback(),
             dragState.pointerLocal,
-            manipulable
+            ctx.manipulable
           );
+          // recursive updateDragState call
+          return updateDragState(newDragState, ctx, pointer);
         }
       }
       hoistedToRender = closestManifoldPt.hoisted;
@@ -800,80 +847,73 @@ function computeRenderState<T extends object>(
       }
     }
 
-    onPointerUp = () => {
-      // TODO: redundant render, it's in the ManifoldPoint
-      const targetContent = manipulable({
-        state: newState,
-        drag: unsafeDrag,
-        draggedId: null,
-        setState: throwError,
-      });
-      setDragState({
-        type: "animating",
-        startHoisted: hoistedToRender,
-        targetHoisted: postProcessForDrawing(targetContent),
-        startTime: Date.now(),
-        easing: d3Ease.easeElastic,
-        duration: drawerConfig.animationDuration,
-        nextDragState: { type: "idle", state: newState },
-      });
+    return {
+      ...dragState,
+      byproducts: {
+        hoistedToRender,
+        manifoldProjections,
+        pointer,
+        newState,
+      },
     };
-  } else if (dragState.type === "dragging-detach-reattach") {
-    assert(!!pointer, "Pointer must be defined while dragging-detach-reattach");
-
+  } else if (dragState.type === "drag-detach-reattach") {
     // compute background target based on proximity to positions
     const closestPoint = _.minBy(
       [dragState.startingPoint, ...dragState.reattachedPoints],
       (pt) => pointer.dist(pt.position)
     )!;
     let newState = dragState.startingPoint.state;
-    let newStateTarget = dragState.startingPoint.hoisted;
+    let newStateHoisted = dragState.startingPoint.hoisted;
     // let newState = dragState.detachedState;
     // let newStateTarget = dragState.detachedHoisted;
-    let backgroundTarget = dragState.detachedHoisted;
+    let backgroundHoisted = dragState.detachedHoisted;
     if (pointer.dist(closestPoint.position) < 50) {
       // that's perm TILE_SIZE lol
       newState = closestPoint.andThen ?? closestPoint.state;
-      newStateTarget = closestPoint.hoisted;
+      newStateHoisted = closestPoint.hoisted;
       const { remaining } = hoistedExtract(
         closestPoint.hoisted,
         dragState.draggedId
       );
-      backgroundTarget = remaining;
+      backgroundHoisted = remaining;
     }
 
     // now animate background towards target
-    const backgroundCur = dragState.backgroundSpring.step(
+    const newBackgroundSpringState = step(
+      dragState.backgroundSpringState,
+      {
+        omega: 0.03, // spring frequency (rad/ms)
+        gamma: 0.1, // damping rate (1/ms)
+      },
+      lerpHoisted,
       Date.now(),
-      backgroundTarget
+      backgroundHoisted
     );
 
-    hoistedToRender = hoistedMerge(
-      backgroundCur,
+    const hoistedToRender = hoistedMerge(
+      newBackgroundSpringState.cur,
       hoistedTransform(
         dragState.draggedHoisted,
         translate(pointer.sub(dragState.startingPoint.position))
       )
     );
 
-    onPointerUp = () => {
-      setDragState({
-        type: "animating",
-        startHoisted: hoistedToRender,
-        targetHoisted: newStateTarget,
-        startTime: Date.now(),
-        easing: d3Ease.easeElastic,
-        duration: drawerConfig.animationDuration,
-        nextDragState: { type: "idle", state: newState },
-      });
+    return {
+      ...dragState,
+      backgroundSpringState: newBackgroundSpringState,
+      byproducts: {
+        hoistedToRender,
+        newState,
+        newStateHoisted,
+      },
     };
-  } else if (dragState.type === "dragging-params") {
-    assert(!!pointer, "Pointer must be defined while dragging-params");
+  } else if (dragState.type === "drag-params") {
+    assert(!!pointer, "Pointer must be defined while drag-params");
 
     const objectiveFn = (params: number[]) => {
       const candidateState = dragState.stateFromParams(...params);
       const content = pipe(
-        manipulable({
+        ctx.manipulable({
           state: candidateState,
           drag: unsafeDrag,
           draggedId: dragState.draggedId,
@@ -894,62 +934,183 @@ function computeRenderState<T extends object>(
     dragState.curParams = r.solution;
 
     const newState = dragState.stateFromParams(...dragState.curParams);
-    const content = manipulable({
+    const content = ctx.manipulable({
       state: newState,
       drag: unsafeDrag,
       draggedId: dragState.draggedId,
       setState: throwError,
     });
-    hoistedToRender = postProcessForDrawing(content);
 
-    onPointerUp = () => {
-      setDragState({ type: "idle", state: newState });
+    return {
+      ...dragState,
+      byproducts: { content, pointer },
     };
-
-    // Debug rendering for dragging-params
-    const processedContent = pipe(content, assignPaths, accumulateTransforms);
-    const element = findByPath(dragState.draggedPath, processedContent);
-    if (element) {
-      const accumulateTransform = getAccumulatedTransform(element);
-      const transforms = parseTransform(accumulateTransform || "");
-      const achievedPos = localToGlobal(transforms, dragState.pointerLocal);
-
-      debugRender.push(
-        <circle
-          key="dragging-params-achieved"
-          cx={achievedPos.x}
-          cy={achievedPos.y}
-          r={5}
-          fill="green"
-          stroke="darkgreen"
-          strokeWidth={2}
-        />
-      );
-
-      debugRender.push(
-        <line
-          key="dragging-params-line"
-          x1={achievedPos.x}
-          y1={achievedPos.y}
-          x2={pointer.x}
-          y2={pointer.y}
-          stroke="orange"
-          strokeWidth={2}
-          strokeDasharray="4 4"
-        />
-      );
-    }
   } else {
     assertNever(dragState);
   }
-
-  return {
-    hoistedToRender,
-    pendingTransition,
-    debugRender,
-    onPointerUp,
-  };
 }
+
+function onPointerUp<T extends object>(
+  dragState: DragState<T>,
+  ctx: DragContext<T>,
+  pointer: Vec2
+): DragState<T> {
+  if (dragState.type === "idle") {
+    return dragState;
+  } else if (dragState.type === "animating") {
+    return dragState;
+  } else if (dragState.type === "drag") {
+    return updateDragState(
+      {
+        type: "animating",
+        startHoisted: dragState.byproducts.hoistedToRender,
+        // TODO: redundant render, it's in the ManifoldPoint
+        targetHoisted: renderManipulableReadOnly(ctx.manipulable, {
+          state: dragState.byproducts.newState,
+          draggedId: null,
+        }),
+        startTime: Date.now(),
+        easing: d3Ease.easeElastic,
+        duration: ctx.drawerConfig.animationDuration,
+        nextDragState: { type: "idle", state: dragState.byproducts.newState },
+      },
+      ctx,
+      pointer
+    );
+  } else if (dragState.type === "drag-detach-reattach") {
+    return updateDragState(
+      {
+        type: "animating",
+        startHoisted: dragState.byproducts.hoistedToRender,
+        targetHoisted: dragState.byproducts.newStateHoisted,
+        startTime: Date.now(),
+        easing: d3Ease.easeElastic,
+        duration: ctx.drawerConfig.animationDuration,
+        nextDragState: { type: "idle", state: dragState.byproducts.newState },
+      },
+      ctx,
+      pointer
+    );
+  } else if (dragState.type === "drag-params") {
+    return {
+      type: "idle",
+      state: dragState.stateFromParams(...dragState.curParams),
+    };
+  } else {
+    assertNever(dragState);
+  }
+}
+
+type RenderContext<T extends object> = DragContext<T> & {
+  setDragState: (newDragState: DOmit<DragState<T>, "byproducts">) => void;
+  throwRenderError: (error: unknown) => void;
+  setPointerFromEvent: (e: globalThis.PointerEvent) => Vec2;
+};
+
+type DrawModeProps<T extends object, Type> = {
+  dragState: DragState<T> & { type: Type };
+  ctx: RenderContext<T>;
+};
+
+const DrawIdleMode = memoGeneric(
+  <T extends object>({ dragState, ctx }: DrawModeProps<T, "idle">) => {
+    const content = ctx.manipulable({
+      state: dragState.state,
+      drag: unsafeDrag,
+      draggedId: null,
+      setState: (
+        newState: SetStateAction<T>,
+        {
+          easing = d3Ease.easeCubicInOut,
+          seconds = 0.4,
+          immediate = false,
+        } = {}
+      ) => {
+        newState =
+          typeof newState === "function" ? newState(dragState.state) : newState;
+
+        if (immediate) {
+          ctx.setDragState({
+            type: "idle",
+            state: newState,
+          });
+          return;
+        }
+
+        // animate to new state
+        ctx.setDragState({
+          type: "animating",
+          startHoisted: postProcessReadOnly(content),
+          targetHoisted: renderManipulableReadOnly(ctx.manipulable, {
+            state: newState,
+            draggedId: null,
+          }),
+          startTime: Date.now(),
+          easing,
+          duration: seconds * 1000,
+          nextDragState: { type: "idle", state: newState },
+        });
+      },
+    });
+
+    return drawHoisted(
+      postProcessForInteraction(content, dragState.state, ctx)
+    );
+  }
+);
+
+const DrawAnimatingMode = memoGeneric(
+  <T extends object>({ dragState }: DrawModeProps<T, "animating">) => {
+    return drawHoisted(
+      lerpHoisted(
+        dragState.startHoisted,
+        dragState.targetHoisted,
+        dragState.byproducts.easedProgress
+      )
+    );
+  }
+);
+
+const DrawDragMode = memoGeneric(
+  <T extends object>({ dragState, ctx }: DrawModeProps<T, "drag">) => {
+    return (
+      <>
+        {drawHoisted(dragState.byproducts.hoistedToRender)}
+        {ctx.debugMode &&
+          debugForDragMode(
+            dragState.byproducts.manifoldProjections,
+            ctx.drawerConfig.snapRadius,
+            dragState.byproducts.pointer
+          )}
+      </>
+    );
+  }
+);
+
+const DrawDragDetachReattachMode = memoGeneric(
+  <T extends object>({
+    dragState,
+  }: DrawModeProps<T, "drag-detach-reattach">) => {
+    return drawHoisted(dragState.byproducts.hoistedToRender);
+  }
+);
+
+const DrawDragParamsMode = memoGeneric(
+  <T extends object>({ dragState, ctx }: DrawModeProps<T, "drag-params">) => {
+    return (
+      <>
+        {drawHoisted(postProcessReadOnly(dragState.byproducts.content))}
+        {ctx.debugMode &&
+          debugForDragParamsMode(
+            dragState.byproducts.content,
+            dragState.draggedPath,
+            dragState.pointerLocal,
+            dragState.byproducts.pointer
+          )}
+      </>
+    );
+  }
+);
 
 export type DrawerConfig = {
   snapRadius: number;

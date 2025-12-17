@@ -8,12 +8,16 @@ import { isObject } from "./utils";
 /**
  * A Manipulable is a function that takes state and draggable helper, returns SVG JSX.
  */
-export type Manipulable<T extends object> = (props: {
+export type Manipulable<T extends object> = (
+  props: ManipulableProps<T>
+) => Svgx;
+
+export type ManipulableProps<T extends object> = {
   state: T;
   drag: typeof unsafeDrag<T>;
   draggedId: string | null;
   setState: SetState<T>;
-}) => Svgx;
+};
 
 // # setState
 

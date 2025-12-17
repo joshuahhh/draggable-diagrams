@@ -35,9 +35,9 @@ export function InspectPage({
 
     if (dragState.type === "idle") {
       setCurrentState(dragState.state);
-    } else if (dragState.type === "dragging") {
+    } else if (dragState.type === "drag") {
       setCurrentState(dragState.startingPoint.state);
-    } else if (dragState.type === "dragging-detach-reattach") {
+    } else if (dragState.type === "drag-detach-reattach") {
       setCurrentState(dragState.startingPoint.state);
     }
   }, [dragState]);
@@ -108,14 +108,14 @@ export function InspectPage({
           {/* Right side */}
           <div className="w-1/2 flex flex-col min-h-0">
             {dragState &&
-              (dragState.type === "dragging" ? (
-                <RHSDragging
+              (dragState.type === "drag" ? (
+                <RHSDragMode
                   dragState={dragState}
                   demoHeight={demo.height}
                   demoPadding={demo.padding}
                 />
-              ) : dragState.type === "dragging-detach-reattach" ? (
-                <RHSDraggingDetachReattach
+              ) : dragState.type === "drag-detach-reattach" ? (
+                <RHSDragDetachReattachMode
                   dragState={dragState}
                   demoHeight={demo.height}
                   demoPadding={demo.padding}
@@ -137,12 +137,12 @@ export function InspectPage({
   });
 }
 
-function RHSDragging({
+function RHSDragMode({
   dragState,
   demoHeight,
   demoPadding,
 }: {
-  dragState: DragState<unknown> & { type: "dragging" };
+  dragState: DragState<unknown> & { type: "drag" };
   demoHeight: number;
   demoPadding?: number;
 }) {
@@ -184,12 +184,12 @@ function RHSDragging({
   );
 }
 
-function RHSDraggingDetachReattach({
+function RHSDragDetachReattachMode({
   dragState,
   demoHeight,
   demoPadding,
 }: {
-  dragState: DragState<unknown> & { type: "dragging-detach-reattach" };
+  dragState: DragState<unknown> & { type: "drag-detach-reattach" };
   demoHeight: number;
   demoPadding?: number;
 }) {
