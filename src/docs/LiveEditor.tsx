@@ -6,13 +6,39 @@ import _ from "lodash";
 import parserBabel from "prettier/parser-babel";
 import prettier from "prettier/standalone";
 import { createElement, useMemo, useState } from "react";
-import * as DragSpecModule from "../DragSpec";
+import {
+  andThen,
+  detachReattach,
+  numAtPath,
+  numsAtPaths,
+  params,
+  span,
+  straightTo,
+} from "../DragSpec";
 import { ErrorBoundary } from "../ErrorBoundary";
 import { Manipulable } from "../manipulable";
 import { ManipulableDrawer } from "../ManipulableDrawer";
 import { normalizeIndent } from "../normalizeIndent";
-import * as Helpers from "../svgx/helpers";
+import { path, rotateDeg, rotateRad, scale, translate } from "../svgx/helpers";
 import { numberScrubber } from "./numberScrubber";
+
+// Globals available in LiveEditor code
+const GLOBALS = {
+  _,
+  produce,
+  translate,
+  rotateDeg,
+  rotateRad,
+  scale,
+  path,
+  numsAtPaths,
+  straightTo,
+  span,
+  numAtPath,
+  andThen,
+  detachReattach,
+  params,
+} as const;
 
 interface LiveEditorProps {
   secretCode?: string;
@@ -60,14 +86,9 @@ export function LiveEditor({
 
       // Create a function that returns { manipulable, initialState }
       const fn = new Function(
-        "createElement",
-        "DragSpec",
-        "Helpers",
-        "_",
-        "produce",
+        "createElement", // needed for JSX
+        ...Object.keys(GLOBALS),
         `
-        const { numsAtPaths, straightTo, span, numAtPath } = DragSpec;
-        const { translate, rotateDeg, scale } = Helpers;
         ${transformed}
         return { manipulable, initialState };
         `
@@ -76,10 +97,7 @@ export function LiveEditor({
       // Execute with dependencies
       const { manipulable, initialState } = fn(
         createElement,
-        DragSpecModule,
-        Helpers,
-        _,
-        produce
+        ...Object.values(GLOBALS)
       );
 
       setError(null);
