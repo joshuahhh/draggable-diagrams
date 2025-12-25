@@ -30,6 +30,7 @@ import { Sokoban } from "./demo-diagrams/sokoban";
 import { Spinny } from "./demo-diagrams/spinny";
 import { Tiles } from "./demo-diagrams/tiles";
 import { Todo } from "./demo-diagrams/todo";
+import { Tromino } from "./demo-diagrams/tromino";
 import { numsAtPaths } from "./DragSpec";
 import { Manipulable } from "./manipulable";
 import { DrawerConfig } from "./ManipulableDrawer";
@@ -338,6 +339,28 @@ export const demos: SomeDemoData[] = [
     height: 160,
     padding: 20,
     sourceFile: "graph.tsx",
+  }),
+  demoData({
+    id: "tromino",
+    title: "Tromino tiling",
+    notes: (
+      <>
+        Inspired by a{" "}
+        <a
+          href="https://www.reddit.com/r/math/comments/gpxwl4/animated_golombs_ltromino_tiling/"
+          className="hover:text-gray-700 hover:underline"
+        >
+          neat Reddit post
+        </a>
+        .
+      </>
+    ),
+    manipulable: Tromino.manipulable,
+    initialStates: [Tromino.state1],
+    height: 320,
+    padding: 0,
+    sourceFile: "tromino.tsx",
+    initialDrawerConfig: { snapRadius: 2 },
   }),
   demoData({
     id: "angle",
