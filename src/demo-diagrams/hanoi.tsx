@@ -1,4 +1,5 @@
 import { produce } from "immer";
+import { amb, produceAmb, require } from "../amb";
 import { detachReattach } from "../DragSpec";
 import { Manipulable } from "../manipulable";
 import { translate } from "../svgx/helpers";
@@ -99,26 +100,17 @@ export namespace Hanoi {
                 data-on-drag={
                   isTopDisk &&
                   drag(() => {
-                    // Remove disk from its peg
                     const detached = produce(state, (draft) => {
                       draft.pegs[pegIdx].shift();
                     });
 
-                    // Find all valid positions to place this disk
-                    const validStates = [0, 1, 2]
-                      .map((toPeg) => {
-                        const topDisk = detached.pegs[toPeg][0];
-                        // Can place if peg is empty or top disk is larger
-                        if (topDisk === undefined || diskId < topDisk) {
-                          return produce(detached, (draft) => {
-                            draft.pegs[toPeg].unshift(diskId);
-                          });
-                        }
-                        return null;
-                      })
-                      .filter((s) => s !== null);
+                    const reattached = produceAmb(detached, (draft) => {
+                      const newPeg = draft.pegs[amb([0, 1, 2])];
+                      newPeg.unshift(diskId);
+                      require(newPeg.length === 1 || newPeg[0] < newPeg[1]);
+                    });
 
-                    return detachReattach(detached, validStates);
+                    return detachReattach(detached, reattached);
                   })
                 }
               >
