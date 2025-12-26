@@ -35,7 +35,7 @@ export function InspectPage({
 
     if (dragState.type === "idle") {
       setCurrentState(dragState.state);
-    } else if (dragState.type === "drag") {
+    } else if (dragState.type === "drag-manifolds") {
       setCurrentState(dragState.startingPoint.state);
     } else if (dragState.type === "drag-detach-reattach") {
       setCurrentState(dragState.startingPoint.state);
@@ -108,8 +108,8 @@ export function InspectPage({
           {/* Right side */}
           <div className="w-1/2 flex flex-col min-h-0">
             {dragState &&
-              (dragState.type === "drag" ? (
-                <RHSDragMode
+              (dragState.type === "drag-manifolds" ? (
+                <RHSDragManifoldsMode
                   dragState={dragState}
                   demoHeight={demo.height}
                   demoPadding={demo.padding}
@@ -137,12 +137,12 @@ export function InspectPage({
   });
 }
 
-function RHSDragMode({
+function RHSDragManifoldsMode({
   dragState,
   demoHeight,
   demoPadding,
 }: {
-  dragState: DragState<unknown> & { type: "drag" };
+  dragState: DragState<unknown> & { type: "drag-manifolds" };
   demoHeight: number;
   demoPadding?: number;
 }) {

@@ -153,7 +153,7 @@ export function ManipulableDrawer<T extends object>({
 
   useEffect(() => {
     if (
-      dragState.type === "drag" ||
+      dragState.type === "drag-manifolds" ||
       dragState.type === "drag-detach-reattach" ||
       dragState.type === "drag-params"
     ) {
@@ -166,7 +166,7 @@ export function ManipulableDrawer<T extends object>({
   // Attach document-level event listeners during drag
   useEffect(() => {
     if (
-      dragState.type !== "drag" &&
+      dragState.type !== "drag-manifolds" &&
       dragState.type !== "drag-detach-reattach" &&
       dragState.type !== "drag-params"
     ) {
@@ -228,8 +228,8 @@ export function ManipulableDrawer<T extends object>({
         <DrawIdleMode dragState={dragState} ctx={renderContext} />
       ) : dragState.type === "animating" ? (
         <DrawAnimatingMode dragState={dragState} ctx={renderContext} />
-      ) : dragState.type === "drag" ? (
-        <DrawDragMode dragState={dragState} ctx={renderContext} />
+      ) : dragState.type === "drag-manifolds" ? (
+        <DrawDragManifoldsMode dragState={dragState} ctx={renderContext} />
       ) : dragState.type === "drag-detach-reattach" ? (
         <DrawDragDetachReattachMode dragState={dragState} ctx={renderContext} />
       ) : dragState.type === "drag-params" ? (
@@ -272,7 +272,7 @@ export type Manifold<T> = {
 export type DragState<T> =
   | { type: "idle"; state: T }
   | {
-      type: "drag";
+      type: "drag-manifolds";
       draggedPath: string;
       draggedId: string | null;
       pointerLocal: Vec2;
@@ -602,7 +602,7 @@ function computeEnterDraggingMode<T extends object>(
   });
 
   return {
-    type: "drag",
+    type: "drag-manifolds",
     draggedPath,
     draggedId,
     pointerLocal,
@@ -754,7 +754,7 @@ function updateDragState<T extends object>(
         },
       };
     }
-  } else if (dragState.type === "drag") {
+  } else if (dragState.type === "drag-manifolds") {
     assert(!!pointer, "Pointer must be defined in drag mode");
 
     let newState: T;
@@ -968,7 +968,7 @@ function onPointerUp<T extends object>(
     return dragState;
   } else if (dragState.type === "animating") {
     return dragState;
-  } else if (dragState.type === "drag") {
+  } else if (dragState.type === "drag-manifolds") {
     return updateDragState(
       {
         type: "animating",
@@ -1086,8 +1086,11 @@ const DrawAnimatingMode = memoGeneric(
   }
 );
 
-const DrawDragMode = memoGeneric(
-  <T extends object>({ dragState, ctx }: DrawModeProps<T, "drag">) => {
+const DrawDragManifoldsMode = memoGeneric(
+  <T extends object>({
+    dragState,
+    ctx,
+  }: DrawModeProps<T, "drag-manifolds">) => {
     return (
       <>
         {drawHoisted(dragState.byproducts.hoistedToRender)}
