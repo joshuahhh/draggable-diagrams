@@ -1,7 +1,8 @@
 import _ from "lodash";
 import { amb, produceAmb } from "../amb";
-import { span } from "../DragSpec";
-import { Manipulable } from "../manipulable";
+import { ConfigCheckbox, ConfigPanelProps } from "../configurable";
+import { configurableManipulable } from "../demos";
+import { span, straightTo } from "../DragSpec";
 import { Vec2 } from "../math/vec2";
 import { path, rotateDeg, translate } from "../svgx/helpers";
 
@@ -16,29 +17,84 @@ export namespace Tromino {
     boardLevel: 3,
   };
 
-  export const manipulable: Manipulable<State> = ({ state, drag }) => (
-    <g>
-      {drawState(state)}
-      <rect
-        transform={translate(
-          state.missingSquare.mul(CELL_SIZE).add(TROMINO_PADDING)
-        )}
-        width={CELL_SIZE - 2 * TROMINO_PADDING}
-        height={CELL_SIZE - 2 * TROMINO_PADDING}
-        fill="black"
-        data-on-drag={drag(() =>
-          span(
-            produceAmb(state, (s) => {
-              s.missingSquare = Vec2(
-                amb(_.range(2 ** s.boardLevel)),
-                amb(_.range(2 ** s.boardLevel))
-              );
-            })
-          )
-        )}
-      />
-    </g>
+  export type Config = {
+    mazeMode: boolean;
+  };
+
+  const defaultConfig: Config = {
+    mazeMode: false,
+  };
+
+  export const manipulable = configurableManipulable<State, Config>(
+    { defaultConfig, ConfigPanel },
+    (config, { state, drag }) => (
+      <g>
+        {drawState(state)}
+        <rect
+          transform={translate(
+            state.missingSquare.mul(CELL_SIZE).add(TROMINO_PADDING)
+          )}
+          width={CELL_SIZE - 2 * TROMINO_PADDING}
+          height={CELL_SIZE - 2 * TROMINO_PADDING}
+          fill="black"
+          data-on-drag={drag(() =>
+            config.mazeMode
+              ? _.range(1, state.boardLevel + 1).flatMap((level) => {
+                  // are we in the center square of 2**level x 2**level blocks?
+                  const fullCount = 2 ** level;
+                  const halfCount = 2 ** (level - 1);
+                  const isCenterL =
+                    state.missingSquare.x % fullCount === halfCount - 1;
+                  const isCenterR =
+                    state.missingSquare.x % fullCount === halfCount;
+                  const isCenterT =
+                    state.missingSquare.y % fullCount === halfCount - 1;
+                  const isCenterB =
+                    state.missingSquare.y % fullCount === halfCount;
+                  if ((isCenterL || isCenterR) && (isCenterT || isCenterB)) {
+                    // allow straightTo motion to the two adjacent
+                    // center squares
+                    return [
+                      straightTo({
+                        ...state,
+                        missingSquare: state.missingSquare.add([
+                          isCenterL ? 1 : -1,
+                          0,
+                        ]),
+                      }),
+                      straightTo({
+                        ...state,
+                        missingSquare: state.missingSquare.add([
+                          0,
+                          isCenterT ? 1 : -1,
+                        ]),
+                      }),
+                    ];
+                  }
+                })
+              : span(
+                  produceAmb(state, (s) => {
+                    s.missingSquare = Vec2(
+                      amb(_.range(2 ** s.boardLevel)),
+                      amb(_.range(2 ** s.boardLevel))
+                    );
+                  })
+                )
+          )}
+        />
+      </g>
+    )
   );
+
+  function ConfigPanel({ config, setConfig }: ConfigPanelProps<Config>) {
+    return (
+      <ConfigCheckbox
+        label="Maze mode"
+        value={config.mazeMode}
+        onChange={(newValue) => setConfig({ ...config, mazeMode: newValue })}
+      />
+    );
+  }
 
   const CELL_SIZE = 40;
   const TROMINO_PADDING = 6;
