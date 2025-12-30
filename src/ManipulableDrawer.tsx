@@ -1,4 +1,5 @@
 import * as d3Ease from "d3-ease";
+import deepFreeze from "deep-freeze-es6";
 import _ from "lodash";
 import React, {
   SetStateAction,
@@ -495,13 +496,13 @@ function makeManifoldPoint<T extends object>({
   const accumulatedTransform = getAccumulatedTransform(element);
   const transforms = parseTransform(accumulatedTransform || "");
 
-  return {
+  return deepFreeze({
     state: targetState.targetState,
     hoisted,
     position: localToGlobal(transforms, pointerLocal),
     dragSpecCallbackAtNewState: getDragSpecCallbackOnElement<T>(element),
     andThen: targetState.andThen,
-  };
+  });
 }
 
 /**

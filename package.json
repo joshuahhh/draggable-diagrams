@@ -55,6 +55,7 @@
     "d3-interpolate-path": "^2.3.0",
     "d3-shape": "^3.2.0",
     "dagre": "^0.8.5",
+    "deep-freeze-es6": "^5.0.0",
     "html-react-parser": "^5.2.10",
     "immer": "^11.0.0",
     "json-diff-ts": "^4.8.2",
