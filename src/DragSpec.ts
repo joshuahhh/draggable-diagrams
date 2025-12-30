@@ -2,22 +2,20 @@ import { isObject } from "lodash";
 import { PathIn } from "./paths";
 import { assert, hasKey, Many, manyToArray } from "./utils";
 
-// DragSpec is the value that specifies how dragging works. It can,
-// in some cases, be a bunch of nested arrays or nulls or whatever.
-// TODO: more sophisticated combos
+// # DragSpec
+
+/**
+ * DragSpec is information a diagram author attaches to an SVG
+ * element to say what states should be accessible by dragging it
+ * (and how).
+ */
 export type DragSpec<T> =
   | Many<DragSpecManifold<T>>
   | DragSpecParams<T>
   | DragSpecDetachReattach<T>
   | DragSpecFree<T>;
 
-const targetStateSymbol: unique symbol = Symbol("TargetState");
-
-export type TargetState<T> = {
-  type: typeof targetStateSymbol;
-  targetState: T;
-  andThen: T | undefined;
-};
+// TODO: more sophisticated combos
 
 export type DragSpecManifold<T> =
   | {
@@ -49,22 +47,39 @@ export type DragSpecFree<T> = {
   animate: boolean;
 };
 
+// # TargetState
+
+const targetStateSymbol: unique symbol = Symbol("TargetState");
+
+/**
+ * A TargetState is a state you want to be able to drag towards. It
+ * optionally includes "what to do when you get there" via `andThen`.
+ */
+export type TargetState<T> = {
+  type: typeof targetStateSymbol;
+  state: T;
+  andThen: T | undefined;
+};
+
 export type TargetStateLike<T> = T | TargetState<T>;
-export function toTargetState<T>(state: TargetStateLike<T>): TargetState<T> {
-  if (
-    isObject(state) &&
-    hasKey(state, "type") &&
-    state.type === targetStateSymbol
-  ) {
-    return state as TargetState<T>;
-  } else {
-    return {
-      type: targetStateSymbol,
-      targetState: state as T,
-      andThen: undefined,
-    };
-  }
+export function isTargetState<T>(
+  state: TargetStateLike<T>
+): state is TargetState<T> {
+  return (
+    isObject(state) && hasKey(state, "type") && state.type === targetStateSymbol
+  );
 }
+export function toTargetState<T>(state: TargetStateLike<T>): TargetState<T> {
+  return isTargetState(state)
+    ? state
+    : {
+        type: targetStateSymbol,
+        state,
+        andThen: undefined,
+      };
+}
+
+// # Constructors
 
 export function span<T>(
   ...manyStates: Many<TargetStateLike<T>>[]
@@ -123,10 +138,10 @@ export function numAtPath<T>(paramPath: PathIn<T, number>): DragSpecParams<T> {
   return { type: "param-paths", paramPaths: [paramPath] };
 }
 
-export function andThen<T>(targetState: T, andThen: T): TargetState<T> {
+export function andThen<T>(state: T, andThen: T): TargetState<T> {
   return {
     type: targetStateSymbol,
-    targetState,
+    state,
     andThen,
   };
 }

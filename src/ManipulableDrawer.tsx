@@ -448,7 +448,7 @@ function makeManifoldPoint<T extends object>({
   draggedId,
   ghostId,
   pointerLocal,
-  state,
+  prevState,
 }: {
   targetStateLike: TargetStateLike<T>;
   manipulable: Manipulable<T>;
@@ -456,13 +456,13 @@ function makeManifoldPoint<T extends object>({
   draggedId: string | null;
   ghostId?: string;
   pointerLocal: Vec2;
-  state: T;
+  prevState: T;
 }): ManifoldPoint<T> {
   const targetState = toTargetState(targetStateLike);
 
   // Use a no-op draggable to avoid attaching event handlers
   const hoisted = renderManipulableReadOnly(manipulable, {
-    state: targetState.targetState,
+    state: targetState.state,
     draggedId,
     ghostId: ghostId || null,
   });
@@ -483,9 +483,9 @@ function makeManifoldPoint<T extends object>({
         <p className="mb-2">
           This came up when figuring out how to go from state:
         </p>
-        <PrettyPrint value={state} />
+        <PrettyPrint value={prevState} />
         <p className="mb-2">to state:</p>
-        <PrettyPrint value={targetStateLike} />
+        <PrettyPrint value={targetState.state} />
       </>
     )
   );
@@ -497,7 +497,7 @@ function makeManifoldPoint<T extends object>({
   const transforms = parseTransform(accumulatedTransform || "");
 
   return deepFreeze({
-    state: targetState.targetState,
+    state: targetState.state,
     hoisted,
     position: localToGlobal(transforms, pointerLocal),
     dragSpecCallbackAtNewState: getDragSpecCallbackOnElement<T>(element),
@@ -511,7 +511,7 @@ function makeManifoldPoint<T extends object>({
  * which should be calculated by updateDragState).
  */
 function computeEnterDraggingMode<T extends object>(
-  state: T,
+  prevState: T,
   draggedPath: string,
   draggedId: string | null,
   dragSpec: DragSpec<T>,
@@ -519,7 +519,7 @@ function computeEnterDraggingMode<T extends object>(
   pointerStart: Vec2,
   manipulable: Manipulable<T>
 ): DOmit<DragState<T>, "byproducts"> {
-  console.log("enterDraggingMode", state, draggedPath);
+  console.log("enterDraggingMode", prevState, draggedPath);
 
   if (hasKey(dragSpec, "type") && dragSpec.type === "params") {
     return {
@@ -538,9 +538,9 @@ function computeEnterDraggingMode<T extends object>(
       draggedPath,
       draggedId,
       pointerLocal,
-      curParams: dragSpec.paramPaths.map((path) => getAtPath(state, path)),
+      curParams: dragSpec.paramPaths.map((path) => getAtPath(prevState, path)),
       stateFromParams: (...params: number[]) => {
-        let newState = state;
+        let newState = prevState;
         dragSpec.paramPaths.forEach((path, idx) => {
           newState = setAtPath(newState, path, params[idx]);
         });
@@ -552,8 +552,8 @@ function computeEnterDraggingMode<T extends object>(
   if (hasKey(dragSpec, "type") && dragSpec.type === "detach-reattach") {
     // where we start
     const startingPoint = makeManifoldPoint({
-      state,
-      targetStateLike: state,
+      prevState,
+      targetStateLike: prevState,
       manipulable,
       draggedPath,
       draggedId,
@@ -591,10 +591,10 @@ function computeEnterDraggingMode<T extends object>(
       detachedState,
       draggedHoisted,
       detachedHoisted,
-      reattachedPoints: reattachedStates.map((state) =>
+      reattachedPoints: reattachedStates.map((targetState) =>
         makeManifoldPoint({
-          state: state.targetState,
-          targetStateLike: state,
+          prevState,
+          targetStateLike: targetState,
           manipulable,
           draggedPath,
           draggedId,
@@ -608,8 +608,8 @@ function computeEnterDraggingMode<T extends object>(
   if (hasKey(dragSpec, "type") && dragSpec.type === "free") {
     // where we start
     const startingPoint = makeManifoldPoint({
-      state,
-      targetStateLike: state,
+      prevState,
+      targetStateLike: prevState,
       manipulable,
       draggedPath,
       draggedId,
@@ -637,10 +637,10 @@ function computeEnterDraggingMode<T extends object>(
       pointerLocal,
       pointerStart,
       draggedHoisted,
-      points: dragSpec.states.map((state) =>
+      points: dragSpec.states.map((targetState) =>
         makeManifoldPoint({
-          state: state.targetState,
-          targetStateLike: state,
+          prevState,
+          targetStateLike: targetState,
           manipulable,
           draggedPath,
           draggedId,
@@ -661,8 +661,8 @@ function computeEnterDraggingMode<T extends object>(
   );
 
   const makeManifoldPointProps: Parameters<typeof makeManifoldPoint<T>>[0] = {
-    state,
-    targetStateLike: state,
+    prevState,
+    targetStateLike: prevState,
     manipulable,
     draggedPath,
     draggedId,
@@ -676,14 +676,11 @@ function computeEnterDraggingMode<T extends object>(
       manifoldSpec.type === "manifold"
         ? manifoldSpec.states
         : manifoldSpec.type === "straight-to"
-        ? [state, manifoldSpec.state]
+        ? [prevState, manifoldSpec.state]
         : assertNever(manifoldSpec);
 
     const points = states.map((state) =>
-      makeManifoldPoint({
-        ...makeManifoldPointProps,
-        targetStateLike: state,
-      })
+      makeManifoldPoint({ ...makeManifoldPointProps, targetStateLike: state })
     );
     console.log(
       "triangulating manifold with points:",
