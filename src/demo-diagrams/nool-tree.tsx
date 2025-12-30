@@ -93,14 +93,14 @@ export namespace NoolTree {
 
   type RewriteSet = {
     rewrites: Rewrite[];
-    title: string;
-    subtitle?: string;
+    title: ReactNode;
+    subtitle?: ReactNode;
     defaultEnabled?: boolean;
   };
 
   const rewriteSets: RewriteSet[] = [
     {
-      title: "Commutativity",
+      title: <>Commutativity</>,
       rewrites: [
         rewr("(+ #A #B)", "(+ B A)"),
         rewr("(× #A #B)", "(× B A)"),
@@ -109,8 +109,8 @@ export namespace NoolTree {
       defaultEnabled: true,
     },
     {
-      title: "Associativity",
-      subtitle: "Pull up op",
+      title: <>Associativity</>,
+      subtitle: <>Pull up op</>,
       rewrites: [
         rewr("(+2 #(+1 A B) C)", "(+1 A (+2 B C))"),
         rewr("(+1 A #(+2 B C))", "(+2 (+1 A B) C)"),
@@ -119,8 +119,8 @@ export namespace NoolTree {
       ],
     },
     {
-      title: "Associativity",
-      subtitle: "Pull down op",
+      title: <>Associativity</>,
+      subtitle: <>Pull down op</>,
       rewrites: [
         rewr("#(+1 A (+2 B C))", "(+2 (+1 A B) C)"),
         rewr("#(+2 (+1 A B) C)", "(+1 A (+2 B C))"),
@@ -129,8 +129,8 @@ export namespace NoolTree {
       ],
     },
     {
-      title: "Associativity",
-      subtitle: "Pull up operand",
+      title: <>Associativity</>,
+      subtitle: <>Pull up operand</>,
       rewrites: [
         rewr("(+2 (+1 #A B) C)", "(+1 A (+2 B C))"),
         rewr("(+1 A (+2 #B C))", "(+2 (+1 A B) C)"),
@@ -140,8 +140,8 @@ export namespace NoolTree {
       defaultEnabled: true,
     },
     {
-      title: "Associativity",
-      subtitle: "Pull down operand",
+      title: <>Associativity</>,
+      subtitle: <>Pull down operand</>,
       rewrites: [
         rewr("(+1 #A (+2 B C))", "(+2 (+1 A B) C)"),
         rewr("(+2 (+1 A B) #C)", "(+1 A (+2 B C))"),
@@ -149,6 +149,24 @@ export namespace NoolTree {
         rewr("(×2 (×1 A B) #C)", "(×1 A (×2 B C))"),
       ],
       defaultEnabled: true,
+    },
+    {
+      title: <>Associativity</>,
+      subtitle: (
+        <>
+          Pull op sideways
+          <br />
+          <span className="italic text-red-500">
+            (Conflicts with commutativity!)
+          </span>
+        </>
+      ),
+      rewrites: [
+        rewr("(+2 #(+1 A B) C)", "(+2 A #(+1 B C))"),
+        rewr("(+1 A #(+2 B C))", "(+1 #(+2 A B) C)"),
+        rewr("(×2 #(×1 A B) C)", "(×2 A #(×1 B C))"),
+        rewr("(×1 A #(×2 B C))", "(×1 #(×2 A B) C)"),
+      ],
     },
   ];
 
