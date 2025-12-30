@@ -109,10 +109,7 @@ export function serializeTransform(transforms: Transform[]): string {
         case "translate":
           return `translate(${t.x}, ${t.y})`;
         case "rotate":
-          if (t.cx !== undefined && t.cy !== undefined) {
-            return `rotate(${t.degrees}, ${t.cx}, ${t.cy})`;
-          }
-          return `rotate(${t.degrees})`;
+          return `rotate(${t.degrees}, ${t.cx}, ${t.cy})`;
         case "scale":
           return t.x === t.y ? `scale(${t.x})` : `scale(${t.x}, ${t.y})`;
       }

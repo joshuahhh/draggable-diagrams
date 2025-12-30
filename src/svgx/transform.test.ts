@@ -21,7 +21,7 @@ describe("parseTransform", () => {
   it("parses rotate", () => {
     const result = parseTransform("rotate(45)");
     expect(result).toEqual([
-      { type: "rotate", degrees: 45, cx: undefined, cy: undefined },
+      { type: "rotate", degrees: 45, cx: 0, cy: 0 },
     ]);
   });
 
@@ -44,7 +44,7 @@ describe("parseTransform", () => {
     const result = parseTransform("translate(10, 20) rotate(45) scale(2)");
     expect(result).toEqual([
       { type: "translate", x: 10, y: 20 },
-      { type: "rotate", degrees: 45, cx: undefined, cy: undefined },
+      { type: "rotate", degrees: 45, cx: 0, cy: 0 },
       { type: "scale", x: 2, y: 2 },
     ]);
   });
@@ -62,8 +62,8 @@ describe("serializeTransform", () => {
   });
 
   it("serializes rotate", () => {
-    const result = serializeTransform([{ type: "rotate", degrees: 45 }]);
-    expect(result).toBe("rotate(45)");
+    const result = serializeTransform([{ type: "rotate", degrees: 45, cx: 0, cy: 0 }]);
+    expect(result).toBe("rotate(45, 0, 0)");
   });
 
   it("serializes rotate with center", () => {
@@ -86,10 +86,10 @@ describe("serializeTransform", () => {
   it("serializes multiple transforms", () => {
     const result = serializeTransform([
       { type: "translate", x: 10, y: 20 },
-      { type: "rotate", degrees: 45 },
+      { type: "rotate", degrees: 45, cx: 0, cy: 0 },
       { type: "scale", x: 2, y: 2 },
     ]);
-    expect(result).toBe("translate(10, 20) rotate(45) scale(2)");
+    expect(result).toBe("translate(10, 20) rotate(45, 0, 0) scale(2)");
   });
 });
 
@@ -123,7 +123,7 @@ describe("lerpTransformString", () => {
 
   it("lerps rotate", () => {
     const result = lerpTransformString("rotate(0)", "rotate(90)", 0.5);
-    expect(result).toBe("rotate(45)");
+    expect(result).toBe("rotate(45, 0, 0)");
   });
 
   it("lerps scale", () => {
@@ -137,7 +137,7 @@ describe("lerpTransformString", () => {
       "translate(100, 100) rotate(90)",
       0.5
     );
-    expect(result).toBe("translate(50, 50) rotate(45)");
+    expect(result).toBe("translate(50, 50) rotate(45, 0, 0)");
   });
 
   it("throws on mismatched transform counts", () => {
@@ -204,7 +204,7 @@ describe("lerpTransformString", () => {
 
   it("lerps complex transform to itself", () => {
     const transform =
-      "translate(100, 100) rotate(180) translate(100, 0) rotate(-180)";
+      "translate(100, 100) rotate(180, 0, 0) translate(100, 0) rotate(-180, 0, 0)";
     const result = lerpTransformString(transform, transform, 0.5);
     expect(result).toBe(transform);
   });
