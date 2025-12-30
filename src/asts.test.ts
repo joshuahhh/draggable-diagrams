@@ -118,7 +118,6 @@ describe("rewrites", () => {
       ],
     };
 
-    const fromPattern = pattern`(+ A B)`;
     const toPattern = pattern`(+ B A)`;
 
     // Create match map manually
