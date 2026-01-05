@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { describe, expect, it } from "vitest";
-import { amb, fail, produceAmb, require, runAmb, runAmbGenerator } from "./amb";
+import { amb, fail, generateAmb, produceAmb, require, runAmb } from "./amb";
 
 describe("amb", () => {
   it("returns all options from a single amb", () => {
@@ -64,12 +64,12 @@ describe("amb", () => {
     expect(results).toEqual([42]);
   });
 
-  it("throws error for empty options", () => {
-    expect(() => {
-      runAmb(() => {
-        return amb([]);
-      });
-    }).toThrow("amb called with empty options");
+  it("works with no options", () => {
+    const results = runAmb(() => {
+      return amb([]);
+    });
+
+    expect(results).toEqual([]);
   });
 
   it("works with nested function calls", () => {
@@ -171,7 +171,7 @@ describe("amb", () => {
 
 describe("runAmbGenerator", () => {
   it("yields results one at a time", () => {
-    const gen = runAmbGenerator(() => {
+    const gen = generateAmb(() => {
       const a = amb([1, 2]);
       const b = amb([10, 20]);
       return a + b;
@@ -182,7 +182,7 @@ describe("runAmbGenerator", () => {
   });
 
   it("can be used to get first result only", () => {
-    const gen = runAmbGenerator(() => {
+    const gen = generateAmb(() => {
       const x = amb([1, 2, 3, 4, 5]);
       const y = amb([1, 2, 3, 4, 5]);
       require(x + y === 7);
@@ -194,7 +194,7 @@ describe("runAmbGenerator", () => {
   });
 
   it("handles fail() correctly", () => {
-    const gen = runAmbGenerator(() => {
+    const gen = generateAmb(() => {
       const x = amb([1, 2, 3, 4, 5]);
       if (x % 2 === 0) fail();
       return x;
