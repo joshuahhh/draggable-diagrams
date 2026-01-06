@@ -22,6 +22,7 @@ import { Outline } from "./demo-diagrams/outline";
 import { Perm } from "./demo-diagrams/perm";
 import { PermDetach } from "./demo-diagrams/perm-detach";
 import { PermDouble } from "./demo-diagrams/perm-double";
+import { RecursiveDrawing } from "./demo-diagrams/recursive-drawing";
 import { RushHour } from "./demo-diagrams/rush-hour";
 import { SecondSimplest } from "./demo-diagrams/second-simplest";
 import { Simplest } from "./demo-diagrams/simplest";
@@ -474,6 +475,22 @@ export const demos: SomeDemoData[] = [
     padding: 20,
     initialDrawerConfig: { relativePointerMotion: true },
     sourceFile: "dragon.tsx",
+  }),
+  demoData({
+    id: "recursive",
+    title: "Recursive Drawing",
+    notes: (
+      <>
+        Inspired by Toby Schachman's{" "}
+        <a href="http://recursivedrawing.com/">Recursive Drawing</a>.
+      </>
+    ),
+    manipulable: RecursiveDrawing.manipulable,
+    initialStates: [RecursiveDrawing.state1],
+    height: 300,
+    padding: 20,
+    initialDrawerConfig: { relativePointerMotion: true },
+    sourceFile: "recursive-drawing.tsx",
   }),
   demoData({
     id: "bluefish-static",
