@@ -113,10 +113,7 @@ export namespace Todo {
                   })
                 );
                 return config.useDetachReattach
-                  ? floating(statesWith, {
-                      backdrop: stateWithout,
-                      ghost: "invisible",
-                    })
+                  ? floating(statesWith, { backdrop: stateWithout })
                   : span(statesWith);
               }),
             });

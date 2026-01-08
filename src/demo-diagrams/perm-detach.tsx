@@ -18,7 +18,6 @@ export namespace PermDetach {
     state,
     drag,
     draggedId,
-    ghostId,
   }) => {
     const TILE_SIZE = 50;
 
@@ -26,7 +25,6 @@ export namespace PermDetach {
       <g>
         {state.perm.map((p, idx) => {
           const isDragged = p === draggedId;
-          const isGhost = p === ghostId;
           return (
             <g
               id={p}
@@ -41,10 +39,7 @@ export namespace PermDetach {
                   const idx = amb(_.range(stateWithout.perm.length + 1));
                   draft.perm.splice(idx, 0, p);
                 });
-                return floating(statesWith, {
-                  backdrop: stateWithout,
-                  ghost: "invisible",
-                });
+                return floating(statesWith, { backdrop: stateWithout });
               })}
             >
               <rect

@@ -115,7 +115,6 @@ export namespace InsertAndRemove {
 
               return floating(statesWith, {
                 backdrop: stateWithout,
-                ghost: "invisible",
               });
             }),
           })
@@ -149,10 +148,7 @@ export namespace InsertAndRemove {
 
               return floating(
                 [rearrangeStates, andThen(deleteState, postDeleteState)],
-                {
-                  backdrop: stateWithout,
-                  ghost: "invisible",
-                }
+                { backdrop: stateWithout }
               );
             }),
           })

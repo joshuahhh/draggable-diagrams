@@ -53,7 +53,7 @@ import { lerpHoisted, lerpHoisted3 } from "./svgx/lerp";
 import { assignPaths, findByPath, getPath } from "./svgx/path";
 import { globalToLocal, localToGlobal, parseTransform } from "./svgx/transform";
 import { useAnimationLoop } from "./useAnimationLoop";
-import { useRenderError } from "./useRenderError";
+import { CatchToRenderError, useCatchToRenderError } from "./useRenderError";
 import {
   DOmit,
   assertDefined,
@@ -85,7 +85,7 @@ export function ManipulableDrawer<T extends object>({
   debugMode,
   onDragStateChange,
 }: ManipulableDrawerProps<T>) {
-  const throwRenderError = useRenderError();
+  const catchToRenderError = useCatchToRenderError();
 
   const [dragState, setDragState] = useState<DragState<T>>({
     type: "idle",
@@ -110,15 +110,15 @@ export function ManipulableDrawer<T extends object>({
 
   // Handle pause keyboard shortcut (cmd-p or ctrl-p)
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const onKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "p") {
         e.preventDefault();
         setPaused((prev) => !prev);
       }
     };
-    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", onKeyDown);
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keydown", onKeyDown);
     };
   }, []);
 
@@ -188,32 +188,39 @@ export function ManipulableDrawer<T extends object>({
       return;
     }
 
-    const handlePointerMove = (e: globalThis.PointerEvent) => {
+    const onPointerMove = catchToRenderError((e: globalThis.PointerEvent) => {
       if (paused) return;
       const pointer = setPointerFromEvent(e);
       setDragState(updateDragState(dragState, dragContext, pointer));
-    };
+    });
 
-    const handlePointerUp = (e: globalThis.PointerEvent) => {
+    const onPointerUp = catchToRenderError((e: globalThis.PointerEvent) => {
       if (paused) return;
       const pointer = setPointerFromEvent(e);
-      setDragState(onPointerUp(dragState, dragContext, pointer));
-    };
+      setDragState(handlePointerUp(dragState, dragContext, pointer));
+    });
 
-    const handlePointerCancel = () => {
+    const onPointerCancel = () => {
       // TODO: we need to do something with dragstate in this case
     };
 
-    document.addEventListener("pointermove", handlePointerMove);
-    document.addEventListener("pointerup", handlePointerUp);
-    document.addEventListener("pointercancel", handlePointerCancel);
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp);
+    document.addEventListener("pointercancel", onPointerCancel);
 
     return () => {
-      document.removeEventListener("pointermove", handlePointerMove);
-      document.removeEventListener("pointerup", handlePointerUp);
-      document.removeEventListener("pointercancel", handlePointerCancel);
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", onPointerUp);
+      document.removeEventListener("pointercancel", onPointerCancel);
     };
-  }, [dragContext, dragState, paused, setDragState, setPointerFromEvent]);
+  }, [
+    catchToRenderError,
+    dragContext,
+    dragState,
+    paused,
+    setDragState,
+    setPointerFromEvent,
+  ]);
 
   // prettyLog(sortedEntries, { label: "sortedEntries for rendering" });
 
@@ -222,13 +229,13 @@ export function ManipulableDrawer<T extends object>({
       ...dragContext,
       setPointerFromEvent,
       setDragState: setDragStateWithoutByproducts,
-      throwRenderError,
+      catchToRenderError,
     };
   }, [
     dragContext,
     setDragStateWithoutByproducts,
     setPointerFromEvent,
-    throwRenderError,
+    catchToRenderError,
   ]);
 
   return (
@@ -382,31 +389,27 @@ function postProcessForInteraction<T extends object>(
         if (!dragSpecCallback) return;
         return {
           style: { cursor: "grab", ...(el.props.style || {}) },
-          onPointerDown: (e: React.PointerEvent) => {
-            try {
-              // console.log("onPointerDown");
-              e.stopPropagation();
-              const pointer = ctx.setPointerFromEvent(e.nativeEvent);
-              const accumulatedTransform = getAccumulatedTransform(el);
-              const transforms = parseTransform(accumulatedTransform || "");
-              const pointerLocal = globalToLocal(transforms, pointer);
-              const path = getPath(el);
-              assert(!!path, "Draggable element must have a path");
-              ctx.setDragState(
-                dragStateFromSpec(
-                  state,
-                  path,
-                  el.props.id || null,
-                  dragSpecCallback(),
-                  pointerLocal,
-                  pointer,
-                  ctx.manipulable
-                )
-              );
-            } catch (error) {
-              ctx.throwRenderError(error);
-            }
-          },
+          onPointerDown: ctx.catchToRenderError((e: React.PointerEvent) => {
+            // console.log("onPointerDown");
+            e.stopPropagation();
+            const pointer = ctx.setPointerFromEvent(e.nativeEvent);
+            const accumulatedTransform = getAccumulatedTransform(el);
+            const transforms = parseTransform(accumulatedTransform || "");
+            const pointerLocal = globalToLocal(transforms, pointer);
+            const path = getPath(el);
+            assert(!!path, "Draggable element must have a path");
+            ctx.setDragState(
+              dragStateFromSpec(
+                state,
+                path,
+                el.props.id || null,
+                dragSpecCallback(),
+                pointerLocal,
+                pointer,
+                ctx.manipulable
+              )
+            );
+          }),
         };
       }),
     hoistSvg
@@ -506,6 +509,8 @@ export function getManifoldPointPosition<T>(
  * If we want to enter a dragging mode (defined by a dragSpec) from a
  * state, this gives the resulting DragState (minus "byproducts",
  * which should be calculated by updateDragState).
+ *
+ * This is the spiritual core of pointer-down handling.
  */
 function dragStateFromSpec<T extends object>(
   /** The state we enter from. */
@@ -561,33 +566,35 @@ function dragStateFromSpec<T extends object>(
       draggedId
     );
 
-    // now we want to render the background (with ghost if needed)
-    const startingExit = renderExit({
-      exitLike: prevState,
-      manipulable,
-      draggedId,
-      ghostId: draggedId,
-    });
-
     const { ghost } = dragSpec;
     const draggedIdForSure = draggedId;
     function postProcessExitForGhost(exit: RenderedExitWithDragged<T>) {
-      if (ghost) {
+      if (ghost === false) {
+        const { remaining } = hoistedExtract(exit.hoisted, draggedIdForSure);
+        return { ...exit, hoisted: remaining };
+      } else if (ghost === true) {
+        return exit;
+      } else {
+        // SVG attributes
         // TODO: support for merging style? other stuff like that?
-        const ghostProps = ghost === "invisible" ? { opacity: 0 } : ghost;
         const oldGhost = assertDefined(exit.hoisted.byId.get(draggedIdForSure));
-        exit.hoisted.byId.set(
-          draggedIdForSure,
-          cloneElement(oldGhost, ghostProps)
-        );
-        // console.group("applied ghost props");
-        // console.log(ghostProps);
-        // prettyLog(oldGhost);
-        // prettyLog(startingExit.hoisted.byId.get(draggedId)!);
-        // console.groupEnd();
+        exit.hoisted.byId.set(draggedIdForSure, cloneElement(oldGhost, ghost));
+        return exit;
       }
-      return exit;
     }
+
+    // now we want to render the background (with ghost if needed)
+    const startingExit = pipe(
+      renderExitWithDragged({
+        prevState,
+        exitLike: prevState,
+        manipulable,
+        draggedPath,
+        draggedId,
+        ghostId: draggedId,
+      }),
+      postProcessExitForGhost
+    );
 
     return {
       type: "drag-floating",
@@ -778,6 +785,10 @@ type DragContext<T extends object> = {
   debugMode: boolean;
 };
 
+/**
+ * This is the spiritual core of pointer-move and animation frame
+ * handling.
+ */
 function updateDragState<T extends object>(
   dragState: DOmit<DragState<T>, "byproducts">,
   ctx: DragContext<T>,
@@ -992,7 +1003,10 @@ function updateDragState<T extends object>(
   }
 }
 
-function onPointerUp<T extends object>(
+/**
+ * This is the spiritual core of pointer-up handling.
+ */
+function handlePointerUp<T extends object>(
   dragState: DragState<T>,
   ctx: DragContext<T>,
   pointer: Vec2
@@ -1028,28 +1042,26 @@ function onPointerUp<T extends object>(
     // a state where the floating element is at its position in the
     // final state. In the second case, we want it to animate out.
     const exit = dragState.byproducts.exit;
-    assert(
-      !exit.andThen,
-      "we don't support andThen on floating exits yet sorry"
-    );
+    const targetState = exit.andThen ?? exit.state;
     let hoistedToRenderAfter = renderExit({
-      exitLike: exit.state,
+      exitLike: targetState,
       draggedId: dragState.draggedId,
       manipulable: ctx.manipulable,
     }).hoisted;
 
     if (hoistedToRenderAfter.byId.has(dragState.draggedId)) {
-      // make a copy to represent the floating element at its final position
-      const { extracted: floatHoistedAfter } = hoistedExtract(
+      // To properly animate the floating element to its final
+      // position, re-id the final-diagram version of the dragged
+      // element to have the "floating-" prefix.
+      const { extracted, remaining } = hoistedExtract(
         hoistedToRenderAfter,
         dragState.draggedId
       );
       hoistedToRenderAfter = hoistedMerge(
-        hoistedToRenderAfter,
-        hoistedPrefixIds(floatHoistedAfter, "floating-")
+        hoistedPrefixIds(extracted, "floating-"),
+        remaining
       );
     }
-    // TODO: handle andThen
     return updateDragState(
       {
         type: "animating",
@@ -1058,7 +1070,7 @@ function onPointerUp<T extends object>(
         startTime: Date.now(),
         easing: d3Ease.easeElastic,
         duration: ctx.drawerConfig.animationDuration,
-        nextDragState: { type: "idle", state: exit.state },
+        nextDragState: { type: "idle", state: targetState },
       },
       ctx,
       pointer
@@ -1075,7 +1087,7 @@ function onPointerUp<T extends object>(
 
 type RenderContext<T extends object> = DragContext<T> & {
   setDragState: (newDragState: DOmit<DragState<T>, "byproducts">) => void;
-  throwRenderError: (error: unknown) => void;
+  catchToRenderError: CatchToRenderError;
   setPointerFromEvent: (e: globalThis.PointerEvent) => Vec2;
 };
 
@@ -1091,15 +1103,15 @@ const DrawIdleMode = memoGeneric(
       drag: unsafeDrag,
       draggedId: null,
       ghostId: null,
-      setState: (
-        newState: SetStateAction<T>,
-        {
-          easing = d3Ease.easeCubicInOut,
-          seconds = 0.4,
-          immediate = false,
-        } = {}
-      ) => {
-        try {
+      setState: ctx.catchToRenderError(
+        (
+          newState: SetStateAction<T>,
+          {
+            easing = d3Ease.easeCubicInOut,
+            seconds = 0.4,
+            immediate = false,
+          } = {}
+        ) => {
           newState =
             typeof newState === "function"
               ? newState(dragState.state)
@@ -1127,10 +1139,8 @@ const DrawIdleMode = memoGeneric(
             duration: seconds * 1000,
             nextDragState: { type: "idle", state: newState },
           });
-        } catch (error) {
-          ctx.throwRenderError(error);
         }
-      },
+      ),
     });
 
     return drawHoisted(

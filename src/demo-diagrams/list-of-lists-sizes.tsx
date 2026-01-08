@@ -95,10 +95,7 @@ export namespace ListOfListsSizes {
                     draft.rows.splice(newIdx, 0, row);
                   })
                 );
-                return floating(statesWith, {
-                  backdrop: stateWithout,
-                  ghost: "invisible",
-                });
+                return floating(statesWith, { backdrop: stateWithout });
               })}
             >
               <rect
@@ -179,10 +176,7 @@ export namespace ListOfListsSizes {
                         }
                       });
 
-                      return floating(statesWith, {
-                        backdrop: stateWithout,
-                        ghost: "invisible",
-                      });
+                      return floating(statesWith, { backdrop: stateWithout });
                     })}
                   >
                     <rect

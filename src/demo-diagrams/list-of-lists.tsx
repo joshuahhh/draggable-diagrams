@@ -1,6 +1,6 @@
 import { produce } from "immer";
 import _ from "lodash";
-import { floating } from "../DragSpec";
+import { andThen, floating } from "../DragSpec";
 import { Manipulable } from "../manipulable";
 import { translate } from "../svgx/helpers";
 
@@ -90,10 +90,7 @@ export namespace ListOfLists {
                     draft.rows.splice(newIdx, 0, row);
                   })
                 );
-                return floating(statesWith, {
-                  backdrop: stateWithout,
-                  ghost: "invisible",
-                });
+                return floating(statesWith, { backdrop: stateWithout });
               })}
             >
               <rect
@@ -158,8 +155,7 @@ export namespace ListOfLists {
                     });
 
                     return floating(statesWith, {
-                      backdrop: stateWithout,
-                      ghost: "invisible",
+                      backdrop: andThen(stateWithout, state),
                     });
                   })}
                 >

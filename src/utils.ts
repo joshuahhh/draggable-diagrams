@@ -93,6 +93,7 @@ export function defined<T>(x: T | undefined | null): x is T {
   return x !== undefined && x !== null;
 }
 
+export function pipe<T>(arg: T): T;
 export function pipe<T1, T2>(arg: T1, fn1: (arg: T1) => T2): T2;
 export function pipe<T1, T2, T3>(
   arg: T1,

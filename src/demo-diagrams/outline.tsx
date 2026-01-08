@@ -296,10 +296,7 @@ export namespace Outline {
             const statesWith = insertAtAllPositions(stateWithout, foundNode);
 
             if (config.useDetachReattach) {
-              return floating(statesWith, {
-                backdrop: stateWithout,
-                ghost: "invisible",
-              });
+              return floating(statesWith, { backdrop: stateWithout });
             } else {
               return span(statesWith);
             }

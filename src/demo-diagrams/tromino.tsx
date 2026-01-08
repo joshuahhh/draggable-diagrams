@@ -30,13 +30,12 @@ export namespace Tromino {
 
   export const manipulable = configurableManipulable<State, Config>(
     { defaultConfig, ConfigPanel },
-    (config, { state, drag, ghostId }) => (
+    (config, { state, drag }) => (
       <g>
         {drawState(state)}
         <rect
           id="missing-square"
           data-z-index={1}
-          opacity={ghostId ? 0.1 : 1}
           transform={translate(
             state.missingSquare.mul(CELL_SIZE).add(TROMINO_PADDING)
           )}
@@ -47,11 +46,16 @@ export namespace Tromino {
             config.mazeMode
               ? pipe(singleRotationStates(state), (states) =>
                   config.snappyMode
-                    ? floating([state, ...states])
+                    ? // TODO: snappy + maze needs "chain drags" (when
+                      // you snap into a new state, compute new drag
+                      // possibilities)
+                      floating([state, ...states], { ghost: { opacity: 0.1 } })
                     : states.map(straightTo)
                 )
               : pipe(allStates(state), (states) =>
-                  config.snappyMode ? floating(states) : span(states)
+                  config.snappyMode
+                    ? floating(states, { ghost: { opacity: 0.1 } })
+                    : span(states)
                 )
           )}
         />

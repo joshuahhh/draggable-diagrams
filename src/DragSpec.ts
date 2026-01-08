@@ -39,7 +39,7 @@ export type DragSpecFloating<T> = {
   type: "floating";
   states: Exit<T>[];
   backdropExit: Exit<T> | undefined;
-  ghost: "invisible" | SVGProps<SVGElement> | undefined;
+  ghost: boolean | SVGProps<SVGElement>;
   onTop: boolean;
 };
 
@@ -55,6 +55,10 @@ export type DragSpecFree<T> = {
  * An Exit is a state you want to be able to transition into by
  * dragging towards it. It optionally includes "what to do when you
  * get there" via `andThen`.
+ *
+ * It might be better to see `state` as "what you'll see if you drag
+ * here" and `andThen` as "what you'll actually go to if you drag
+ * here"; doesn't seem like we're actually "sequencing" these.
  */
 export type Exit<T> = {
   state: T;
@@ -108,20 +112,20 @@ export function floating<T>(
      * If provided, drags to locations far from `states` will access
      * this state.
      */
-    backdrop?: T;
+    backdrop?: ExitLike<T>;
     /**
-     * If a state from `states` is shown during the drag, the dragged
-     * item will appear twice on the screen: floating and as part of
-     * the background. The version in the background is called the
-     * "ghost" because it represents a hypothetical future position
-     * of the dragged item. By default, it is shown normally (and we
-     * signal it to the render function via `ghostId` for arbitrary
-     * custom display). This option provides a shortcut: if set to
-     * "invisible", the ghost will be removed, and if set to SVG
+     * When a state from `states` is shown during the drag, the
+     * dragged item is typically removed from the background, since
+     * it will be shown floating. By setting `ghost` to `true`, the
+     * dragged item will not be removed, and will instead exist as a
+     * "ghost" alongside the floating version, showing a potential
+     * future position of the dragged item. We signal the ghost to
+     * the render function via `ghostId` for arbitrary custom
+     * display. As a shortcut, if this option is set to SVG
      * attributes, those attributes will be applied to the ghost
-     * element.
+     * element (alongside the typical `true` behavior).
      */
-    ghost?: "invisible" | SVGProps<SVGElement>;
+    ghost?: boolean | SVGProps<SVGElement>;
     /**
      * If true (default), the floating item will be rendered on top
      * of all other elements during the drag.
@@ -134,7 +138,7 @@ export function floating<T>(
     type: "floating",
     states: manyToArray(states).map(toExit),
     backdropExit: options?.backdrop ? toExit(options.backdrop) : undefined,
-    ghost: options?.ghost,
+    ghost: options?.ghost ?? false,
     onTop: options?.onTop ?? true,
   };
 }
