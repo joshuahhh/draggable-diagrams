@@ -1,5 +1,6 @@
 import { produce } from "immer";
 import _ from "lodash";
+import { amb, produceAmb } from "../amb";
 import { andThen, floating } from "../DragSpec";
 import { Manipulable } from "../manipulable";
 import { translate } from "../svgx/helpers";
@@ -132,28 +133,14 @@ export namespace ListOfLists {
                     ROW_PADDING
                   )}
                   data-on-drag={drag(() => {
-                    const draggedRowIdx = state.rows.findIndex((r) =>
-                      r.items.find((item) => item.id === p.id)
-                    );
-                    const draggedRow = state.rows[draggedRowIdx];
-                    const draggedColIdx = draggedRow.items.findIndex(
-                      (item) => item.id === p.id
-                    );
-
                     const stateWithout = produce(state, (draft) => {
-                      draft.rows[draggedRowIdx].items.splice(draggedColIdx, 1);
+                      draft.rows[rowIdx].items.splice(idx, 1);
                     });
-                    const statesWith: State[] = [];
-                    stateWithout.rows.forEach((row, rowIdx) => {
-                      for (const colIdx of _.range(row.items.length + 1)) {
-                        statesWith.push(
-                          produce(stateWithout, (draft) => {
-                            draft.rows[rowIdx].items.splice(colIdx, 0, p);
-                          })
-                        );
-                      }
+                    const statesWith = produceAmb(stateWithout, (draft) => {
+                      const newRow = amb(draft.rows);
+                      const newColIdx = amb(_.range(newRow.items.length + 1));
+                      newRow.items.splice(newColIdx, 0, p);
                     });
-
                     return floating(statesWith, {
                       backdrop: andThen(stateWithout, state),
                     });
