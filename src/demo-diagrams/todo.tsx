@@ -100,7 +100,7 @@ export namespace Todo {
                 10 - (isDragged && !config.useFloating ? 5 : 0),
                 80 + idx * TILE_SIZE
               ),
-              "data-z-index": isDragged ? 1 : 0,
+              "data-z-index": isDragged ? 1 : 0, // gotta leave this in for span mode
               opacity: 1,
               setState,
               "data-on-drag": drag(() => {

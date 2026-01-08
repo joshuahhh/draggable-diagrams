@@ -216,7 +216,7 @@ export function lerpSvgx(a: Svgx, b: Svgx, t: number): Svgx {
   for (const key of allPropKeys) {
     if (key === "children" || key === "transform") continue;
     // TODO: audit handling of data- props
-    if (key.startsWith("data-") && key !== "data-z-index") continue;
+    if (key.startsWith("data-")) continue;
     if (/^on[A-Z]/.test(key)) continue;
     if (NO_LERP_PROPS.has(key)) continue;
 

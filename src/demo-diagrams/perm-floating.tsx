@@ -14,22 +14,16 @@ export namespace PermFloating {
     perm: ["A", "B", "C", "D", "E"],
   };
 
-  export const manipulable: Manipulable<State> = ({
-    state,
-    drag,
-    draggedId,
-  }) => {
+  export const manipulable: Manipulable<State> = ({ state, drag }) => {
     const TILE_SIZE = 50;
 
     return (
       <g>
         {state.perm.map((p, idx) => {
-          const isDragged = p === draggedId;
           return (
             <g
               id={p}
               transform={translate(idx * TILE_SIZE, 0)}
-              data-z-index={isDragged ? 1 : 0}
               data-on-drag={drag(() => {
                 const draggedIdx = state.perm.indexOf(p);
                 const stateWithout = produce(state, (draft) => {

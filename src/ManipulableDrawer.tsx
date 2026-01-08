@@ -47,6 +47,7 @@ import {
   hoistedExtract,
   hoistedMerge,
   hoistedPrefixIds,
+  hoistedShiftZIndices,
   hoistedTransform,
 } from "./svgx/hoist";
 import { lerpHoisted, lerpHoisted3 } from "./svgx/lerp";
@@ -944,12 +945,15 @@ function updateDragState<T extends object>(
 
     const hoistedToRender = hoistedMerge(
       newBackgroundSpringState.cur,
-      hoistedPrefixIds(
-        hoistedTransform(
-          dragState.floatHoisted,
-          translate(pointer.sub(dragState.pointerStart))
-        ),
-        "floating-"
+      pipe(
+        dragState.floatHoisted,
+        (d) =>
+          hoistedTransform(d, translate(pointer.sub(dragState.pointerStart))),
+        (d) => hoistedPrefixIds(d, "floating-"),
+        dragState.dragSpec.onTop
+          ? // HACK: hierarchical z-indices would be cleaner
+            (d) => hoistedShiftZIndices(d, 1000000)
+          : (d) => d
       )
     );
 

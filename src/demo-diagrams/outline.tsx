@@ -237,9 +237,6 @@ export namespace Outline {
     elem: Svgx;
     h: number;
   } {
-    const isDragged = tree.id === draggedId;
-    const zIndex = isDragged ? 1 : 0;
-
     const block = (
       <g>
         <rect
@@ -270,7 +267,7 @@ export namespace Outline {
       elem: (
         <g
           id={tree.id}
-          data-z-index={zIndex}
+          data-z-index={tree.id === draggedId ? 1 : 0} // gotta leave this in for span mode
           data-on-drag={drag(() => {
             const stateWithout = structuredClone(rootState);
             // Remove the dragged node from its current location

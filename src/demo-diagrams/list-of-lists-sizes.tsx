@@ -47,35 +47,18 @@ export namespace ListOfListsSizes {
     ],
   };
 
-  export const manipulable: Manipulable<State> = ({
-    state,
-    drag,
-    draggedId,
-  }) => {
+  export const manipulable: Manipulable<State> = ({ state, drag }) => {
     const TILE_GAP = 8;
     const ROW_PADDING = 8;
     const ROW_GAP = 10;
     const GRIP_WIDTH = 16;
     const GRIP_PADDING = 2;
 
-    // the z-index plan...
-    // - when dragging a row:
-    //   - 0: non-dragged rows
-    //   - 1: non-dragged items
-    //   - 2: dragged row
-    //   - 3: items in dragged row
-    // - when dragging an item:
-    //   - 0: rows
-    //   - 1: non-dragged items
-    //   - 3: dragged item
-    // would be nice to not think about this so much
-
     let y = 0;
 
     return (
       <g>
         {state.rows.map((row, rowIdx) => {
-          const isDraggedRow = draggedId === `row-${row.id}`;
           const origY = y;
           const maxItemHeight = assertDefined(
             _.max(row.items.map((item) => item.h))
@@ -86,7 +69,6 @@ export namespace ListOfListsSizes {
             <g
               id={`row-${row.id}`}
               transform={translate(0, origY)}
-              data-z-index={isDraggedRow ? 2 : 0}
               data-on-drag={drag(() => {
                 const stateWithout = produce(state, (draft) => {
                   draft.rows.splice(rowIdx, 1);
@@ -132,7 +114,7 @@ export namespace ListOfListsSizes {
                 return (
                   <g
                     id={p.id}
-                    data-z-index={isDraggedRow ? 3 : 1}
+                    data-z-index={1}
                     transform={translate(
                       GRIP_WIDTH + GRIP_PADDING + origX + ROW_PADDING,
                       ROW_PADDING

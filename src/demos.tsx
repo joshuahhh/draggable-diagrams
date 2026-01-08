@@ -246,7 +246,7 @@ export const demos: SomeDemoData[] = [
   }),
   demoData({
     id: "tree-of-life",
-    title: "Tree of Life",
+    title: "Outline: Tree of Life",
     manipulable: Outline.manipulable,
     initialStates: [Outline.stateTreeOfLife],
     height: 1100,

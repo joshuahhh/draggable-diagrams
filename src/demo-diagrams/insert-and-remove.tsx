@@ -27,11 +27,7 @@ export namespace InsertAndRemove {
     ],
   };
 
-  export const manipulable: Manipulable<State> = ({
-    state,
-    drag,
-    draggedId,
-  }) => {
+  export const manipulable: Manipulable<State> = ({ state, drag }) => {
     const TILE_SIZE = 50;
 
     const drawTile = ({
@@ -44,14 +40,8 @@ export namespace InsertAndRemove {
       onDrag?: ReturnType<typeof drag>;
     }) => {
       const id = `tile-${tile.key}`;
-      const isDragged = draggedId === id;
       return (
-        <g
-          id={id}
-          transform={transform}
-          data-on-drag={onDrag}
-          data-z-index={isDragged ? 1 : 0}
-        >
+        <g id={id} transform={transform} data-on-drag={onDrag}>
           <rect
             x={0}
             y={0}

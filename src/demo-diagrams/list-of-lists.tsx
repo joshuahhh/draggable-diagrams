@@ -46,11 +46,7 @@ export namespace ListOfLists {
     ],
   };
 
-  export const manipulable: Manipulable<State> = ({
-    state,
-    drag,
-    draggedId,
-  }) => {
+  export const manipulable: Manipulable<State> = ({ state, drag }) => {
     const TILE_SIZE = 50;
     const TILE_GAP = 8;
     const ROW_PADDING = 8;
@@ -58,22 +54,9 @@ export namespace ListOfLists {
     const GRIP_WIDTH = 16;
     const GRIP_PADDING = 2;
 
-    // the z-index plan...
-    // - when dragging a row:
-    //   - 0: non-dragged rows
-    //   - 1: non-dragged items
-    //   - 2: dragged row
-    //   - 3: items in dragged row
-    // - when dragging an item:
-    //   - 0: rows
-    //   - 1: non-dragged items
-    //   - 3: dragged item
-    // would be nice to not think about this so much
-
     return (
       <g>
         {state.rows.map((row, rowIdx) => {
-          const isDraggedRow = draggedId === `row-${row.id}`;
           return (
             <g
               id={`row-${row.id}`}
@@ -81,7 +64,6 @@ export namespace ListOfLists {
                 0,
                 rowIdx * (TILE_SIZE + ROW_PADDING * 2 + ROW_GAP)
               )}
-              data-z-index={isDraggedRow ? 2 : 0}
               data-on-drag={drag(() => {
                 const stateWithout = produce(state, (draft) => {
                   draft.rows.splice(rowIdx, 1);
@@ -124,7 +106,7 @@ export namespace ListOfLists {
               {row.items.map((p, idx) => (
                 <g
                   id={p.id}
-                  data-z-index={isDraggedRow ? 3 : 1}
+                  data-z-index={1}
                   transform={translate(
                     GRIP_WIDTH +
                       GRIP_PADDING +
