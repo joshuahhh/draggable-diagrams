@@ -172,6 +172,10 @@ export function hasKey<K extends string | number | symbol>(
   return isObject(x) && key in x;
 }
 
+export function hasType(x: unknown, type: string): boolean {
+  return isObject(x) && hasKey(x, "type") && x.type === type;
+}
+
 export function emptyToUndefined<T>(arr: T[]): T[] | undefined {
   return arr.length === 0 ? undefined : arr;
 }

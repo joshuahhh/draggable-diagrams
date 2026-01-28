@@ -1,7 +1,6 @@
-import { isObject } from "lodash";
 import { SVGProps } from "react";
 import { PathIn } from "./paths";
-import { assert, hasKey, Many, manyToArray } from "./utils";
+import { assert, hasKey, hasType, isObject, Many, manyToArray } from "./utils";
 
 // # DragSpec
 
@@ -27,18 +26,22 @@ export type DragSpecManifold<T> =
       state: Exit<T>;
     };
 
-export type DragSpecParams<T> =
+export type DragSpecParams<T> = (
   | { type: "param-paths"; paramPaths: PathIn<T, number>[] }
   | {
       type: "params";
       initParams: number[];
       stateFromParams: (...params: number[]) => T;
-    };
+    }
+) & {
+  // Calling this `state` leads to type inference trouble
+  baseState?: T;
+};
 
 export type DragSpecFloating<T> = {
   type: "floating";
   states: Exit<T>[];
-  backdropExit: Exit<T> | undefined;
+  backdropExit: Exit<T> | DragSpecParams<T> | undefined;
   ghost: boolean | SVGProps<SVGElement>;
   onTop: boolean;
 };
@@ -48,6 +51,12 @@ export type DragSpecFree<T> = {
   states: Exit<T>[];
   animate: boolean;
 };
+
+export function isDragSpecParams<T>(
+  value: unknown
+): value is DragSpecParams<T> {
+  return hasType(value, "param-paths") || hasType(value, "params");
+}
 
 // # Exit
 
@@ -112,7 +121,7 @@ export function floating<T>(
      * If provided, drags to locations far from `states` will access
      * this state.
      */
-    backdrop?: ExitLike<T>;
+    backdrop?: ExitLike<T> | DragSpecParams<T>;
     /**
      * When a state from `states` is shown during the drag, the
      * dragged item is typically removed from the background, since
@@ -137,7 +146,11 @@ export function floating<T>(
   return {
     type: "floating",
     states: manyToArray(states).map(toExit),
-    backdropExit: options?.backdrop ? toExit(options.backdrop) : undefined,
+    backdropExit: options?.backdrop
+      ? isDragSpecParams<T>(options.backdrop)
+        ? options.backdrop
+        : toExit(options.backdrop)
+      : undefined,
     ghost: options?.ghost ?? false,
     onTop: options?.onTop ?? true,
   };
@@ -151,13 +164,17 @@ export function params<T>(
 }
 
 export function numsAtPaths<T>(
-  paramPaths: PathIn<T, number>[]
+  paramPaths: PathIn<T, number>[],
+  baseState?: T
 ): DragSpecParams<T> {
-  return { type: "param-paths", paramPaths };
+  return { type: "param-paths", paramPaths, baseState };
 }
 
-export function numAtPath<T>(paramPath: PathIn<T, number>): DragSpecParams<T> {
-  return { type: "param-paths", paramPaths: [paramPath] };
+export function numAtPath<T>(
+  paramPath: PathIn<T, number>,
+  baseState?: T
+): DragSpecParams<T> {
+  return { type: "param-paths", paramPaths: [paramPath], baseState };
 }
 
 export function andThen<T>(state: T, andThen: T): Exit<T> {

@@ -6,6 +6,7 @@ import { Bezier } from "./demo-diagrams/bezier";
 import { BluefishPerm } from "./demo-diagrams/bluefish-perm";
 import { BluefishStatic } from "./demo-diagrams/bluefish-static";
 import { Braid } from "./demo-diagrams/braid";
+import { CanvasOfLists } from "./demo-diagrams/canvas-of-lists";
 import { Carousel } from "./demo-diagrams/carousel";
 import { Clock } from "./demo-diagrams/clock";
 import { Dragon } from "./demo-diagrams/dragon";
@@ -192,6 +193,20 @@ export const demos: SomeDemoData[] = [
     initialStates: [ListOfListsSizes.state1],
     height: 360,
     sourceFile: "list-of-lists.tsx",
+  }),
+  demoData({
+    id: "canvas-of-lists",
+    title: "Canvas of lists",
+    notes: (
+      <>
+        Uses <span className="font-mono">floating</span>, with a{" "}
+        <span className="font-mono">numsAtPaths</span> backdrop.
+      </>
+    ),
+    manipulable: CanvasOfLists.manipulable,
+    initialStates: [CanvasOfLists.state1],
+    height: 360,
+    sourceFile: "canvas-of-lists.tsx",
   }),
   demoData({
     id: "inserting-removing-items",

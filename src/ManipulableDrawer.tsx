@@ -14,8 +14,10 @@ import {
   DragSpec,
   DragSpecFloating,
   DragSpecManifold,
+  DragSpecParams,
   Exit,
   ExitLike,
+  isDragSpecParams,
   span,
   toExit,
 } from "./DragSpec";
@@ -92,7 +94,11 @@ export function ManipulableDrawer<T extends object>({
     type: "idle",
     state: initialState,
   });
+  const dragStateRef = useRef(dragState);
+  dragStateRef.current = dragState;
   const [paused, setPaused] = useState(false);
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
   const pointerRef = useRef<Vec2 | undefined>(undefined);
 
   const drawerConfigWithDefaults = useMemo(
@@ -155,16 +161,18 @@ export function ManipulableDrawer<T extends object>({
 
   useAnimationLoop(
     useCallback(() => {
-      // These are the only two states that need updating over time
+      const ds = dragStateRef.current;
       if (
-        dragState.type === "animating" ||
-        dragState.type === "drag-floating"
+        ds.type === "animating" ||
+        ds.type === "drag-floating" ||
+        ds.type === "drag-manifolds" ||
+        ds.type === "drag-params"
       ) {
-        setDragState(
-          updateDragState(dragState, dragContext, pointerRef.current)
-        );
+        const newState = updateDragState(ds, dragContext, pointerRef.current);
+        dragStateRef.current = newState; // Update ref immediately, don't wait for React re-render
+        setDragState(newState);
       }
-    }, [dragContext, dragState, setDragState])
+    }, [dragContext, setDragState])
   );
 
   useEffect(() => {
@@ -190,15 +198,20 @@ export function ManipulableDrawer<T extends object>({
     }
 
     const onPointerMove = catchToRenderError((e: globalThis.PointerEvent) => {
-      if (paused) return;
-      const pointer = setPointerFromEvent(e);
-      setDragState(updateDragState(dragState, dragContext, pointer));
+      if (pausedRef.current) return;
+      // Just update the pointer position. The animation loop will
+      // pick it up via pointerRef and call updateDragState once per
+      // frame — avoids two competing updates per frame that produce
+      // erratic dt/dtPrev ratios in the spring.
+      setPointerFromEvent(e);
     });
 
     const onPointerUp = catchToRenderError((e: globalThis.PointerEvent) => {
-      if (paused) return;
+      if (pausedRef.current) return;
       const pointer = setPointerFromEvent(e);
-      setDragState(handlePointerUp(dragState, dragContext, pointer));
+      const newState = handlePointerUp(dragStateRef.current, dragContext, pointer);
+      dragStateRef.current = newState;
+      setDragState(newState);
     });
 
     const onPointerCancel = () => {
@@ -217,8 +230,7 @@ export function ManipulableDrawer<T extends object>({
   }, [
     catchToRenderError,
     dragContext,
-    dragState,
-    paused,
+    dragState.type,
     setDragState,
     setPointerFromEvent,
   ]);
@@ -313,9 +325,24 @@ export type DragState<T> =
        */
       exits: RenderedExitWithDragged<T>[];
       /**
-       * Rendered from spec.backdropExit
+       * Rendered from spec.backdropExit (if it was an Exit)
        */
       backdropExit: RenderedExit<T> | undefined;
+      /**
+       * Raw params spec for backdrop (if spec.backdropExit was a DragSpecParams).
+       * Used to dynamically compute backdrop state based on pointer position.
+       */
+      backdropParams: DragSpecParams<T> | undefined;
+      /**
+       * Current optimization params for backdrop params mode.
+       * Tracks the params found by `minimize` across frames.
+       */
+      curParams: number[] | undefined;
+      /**
+       * Timestamp when we entered params backdrop mode. Used to
+       * spring the background for a short period, then snap to exact.
+       */
+      paramsEnteredAt: number | undefined;
       /**
        * Rendered floating representation of the dragged element;
        * stays fixed during drag.
@@ -597,6 +624,38 @@ function dragStateFromSpec<T extends object>(
       postProcessExitForGhost
     );
 
+    // Handle backdrop - either a pre-rendered exit or params for dynamic computation
+    let backdropExit: RenderedExit<T> | undefined = undefined;
+    let backdropParams: DragSpecParams<T> | undefined = undefined;
+    const backdropSpec = dragSpec.backdropExit;
+    if (backdropSpec) {
+      if (isDragSpecParams(backdropSpec)) {
+        backdropParams = backdropSpec;
+      } else {
+        // Type guard doesn't narrow properly with generics, but we know it's ExitLike<T> here
+        backdropExit = renderExit({
+          exitLike: backdropSpec as ExitLike<T>,
+          manipulable,
+          draggedId,
+        });
+      }
+    }
+
+    // Build initial curParams from backdropParams spec
+    let initialCurParams: number[] | undefined = undefined;
+    if (backdropParams) {
+      // Cast needed: TS over-narrows the DragSpecParams union through isDragSpecParams
+      const bp = backdropParams as DragSpecParams<T>;
+      if (bp.type === "param-paths") {
+        const baseState = bp.baseState ?? prevState;
+        initialCurParams = bp.paramPaths.map((path) =>
+          getAtPath(baseState, path)
+        );
+      } else {
+        initialCurParams = bp.initParams;
+      }
+    }
+
     return {
       type: "drag-floating",
       dragSpec,
@@ -616,17 +675,14 @@ function dragStateFromSpec<T extends object>(
           })
         )
       ),
-      backdropExit: dragSpec.backdropExit
-        ? renderExit({
-            exitLike: dragSpec.backdropExit,
-            manipulable,
-            draggedId,
-          })
-        : undefined,
+      backdropExit,
+      backdropParams,
+      curParams: initialCurParams,
+      paramsEnteredAt: undefined,
       floatHoisted,
       backgroundSpringState: createLerpSpringState(
         startingExit.hoisted,
-        Date.now()
+        performance.now()
       ),
     };
   } else {
@@ -697,7 +753,7 @@ function updateDragState<T extends object>(
   if (dragState.type === "idle") {
     return dragState;
   } else if (dragState.type === "animating") {
-    const now = Date.now();
+    const now = performance.now();
     const elapsed = now - dragState.startTime;
     const progress = Math.min(elapsed / dragState.duration, 1);
     const easedProgress = dragState.easing(progress);
@@ -826,28 +882,123 @@ function updateDragState<T extends object>(
     )!;
     let exitPointless: RenderedExit<T> = closestPoint;
     // TODO: figure out how to control this radius (overlap?)
-    if (dragState.backdropExit && pointer.dist(pos(closestPoint)) > 50) {
+    const useBackdrop = pointer.dist(pos(closestPoint)) > 50;
+    // Both paths render in the same structure: spring on background
+    // (element extracted) + "floating-" prefixed dragged element on
+    // top. This keeps the hoisted trees structurally compatible so
+    // the spring lerps cleanly when transitioning between modes.
+    let backgroundTarget: HoistedSvgx;
+    let floatForFrame: HoistedSvgx;
+    let newCurParams: number[] | undefined = undefined;
+    let exit: Exit<T>;
+
+    if (useBackdrop && dragState.backdropExit) {
       exitPointless = dragState.backdropExit;
+      backgroundTarget = exitPointless.hoisted;
+      floatForFrame = hoistedTransform(
+        dragState.floatHoisted,
+        translate(pointer.sub(dragState.pointerStart))
+      );
+      exit = exitPointless;
+    } else if (useBackdrop && dragState.backdropParams) {
+      // Use minimize to find params that place the dragged element
+      // under the cursor, same pattern as drag-params mode.
+      const bParams = dragState.backdropParams;
+      const stateFromParams: (...params: number[]) => T =
+        bParams.type === "param-paths"
+          ? (...params: number[]) => {
+              let newState = (bParams.baseState ?? closestPoint.state) as T;
+              bParams.paramPaths.forEach((path, idx) => {
+                newState = setAtPath(newState, path, params[idx]);
+              });
+              return newState;
+            }
+          : bParams.stateFromParams;
+
+      const curParams = dragState.curParams!;
+
+      const objectiveFn = (params: number[]) => {
+        const candidateState = stateFromParams(...params);
+        const content = pipe(
+          ctx.manipulable({
+            state: candidateState,
+            drag: unsafeDrag,
+            draggedId: dragState.draggedId,
+            ghostId: null,
+            setState: throwError,
+          }),
+          assignPaths,
+          accumulateTransforms
+        );
+        const element = findByPath(dragState.draggedPath, content);
+        if (!element) return Infinity;
+        const accumulateTransform = getAccumulatedTransform(element);
+        const transforms = parseTransform(accumulateTransform || "");
+        const pos = localToGlobal(transforms, dragState.pointerLocal);
+        return pos.dist2(pointer);
+      };
+
+      const r = minimize(objectiveFn, curParams);
+      newCurParams = r.solution;
+
+      const computedState = stateFromParams(...newCurParams);
+      const paramsHoisted = renderManipulableReadOnly(ctx.manipulable, {
+        state: computedState,
+        draggedId: dragState.draggedId,
+        ghostId: null,
+      });
+
+      // Extract dragged element so the background is structurally
+      // compatible with the float+spring exits. The extracted
+      // element becomes the float for this frame.
+      const { extracted, remaining } = hoistedExtract(
+        paramsHoisted,
+        dragState.draggedId
+      );
+      backgroundTarget = remaining;
+      floatForFrame = extracted;
+      exit = { state: computedState, andThen: undefined };
+    } else {
+      backgroundTarget = closestPoint.hoisted;
+      floatForFrame = hoistedTransform(
+        dragState.floatHoisted,
+        translate(pointer.sub(dragState.pointerStart))
+      );
+      exit = closestPoint;
     }
 
-    // now animate background towards target
-    const newBackgroundSpringState = step(
-      dragState.backgroundSpringState,
-      {
-        omega: 0.03, // spring frequency (rad/ms)
-        gamma: 0.1, // damping rate (1/ms)
-      },
-      lerpHoisted,
-      Date.now(),
-      exitPointless.hoisted
-    );
+    // Track when we enter params mode. Spring the background for a
+    // short transition period, then snap to exact (no lag).
+    const isInParams = newCurParams !== undefined;
+    const now = performance.now();
+    let paramsEnteredAt = dragState.paramsEnteredAt;
+    if (isInParams && paramsEnteredAt === undefined) {
+      paramsEnteredAt = now; // just entered
+    } else if (!isInParams) {
+      paramsEnteredAt = undefined; // left params mode
+    }
+    const paramsTransitionMs = 200;
+    const paramsSettled =
+      isInParams && paramsEnteredAt !== undefined &&
+      now - paramsEnteredAt > paramsTransitionMs;
+
+    const newBackgroundSpringState = paramsSettled
+      ? createLerpSpringState(backgroundTarget, now)
+      : step(
+          dragState.backgroundSpringState,
+          {
+            omega: 0.03, // spring frequency (rad/ms)
+            gamma: 0.1, // damping rate (1/ms)
+          },
+          lerpHoisted,
+          now,
+          backgroundTarget
+        );
 
     const hoistedToRender = hoistedMerge(
       newBackgroundSpringState.cur,
       pipe(
-        dragState.floatHoisted,
-        (d) =>
-          hoistedTransform(d, translate(pointer.sub(dragState.pointerStart))),
+        floatForFrame,
         (d) => hoistedPrefixIds(d, "floating-"),
         dragState.dragSpec.onTop
           ? // HACK: hierarchical z-indices would be cleaner
@@ -858,9 +1009,11 @@ function updateDragState<T extends object>(
 
     return {
       ...dragState,
+      curParams: newCurParams ?? dragState.curParams,
+      paramsEnteredAt,
       backgroundSpringState: newBackgroundSpringState,
       byproducts: {
-        exit: exitPointless,
+        exit,
         hoistedToRender,
       },
     };
@@ -929,7 +1082,7 @@ function handlePointerUp<T extends object>(
           draggedId: null,
           ghostId: null,
         }),
-        startTime: Date.now(),
+        startTime: performance.now(),
         easing: d3Ease.easeElastic,
         duration: ctx.drawerConfig.animationDuration,
         nextDragState: { type: "idle", state: dragState.byproducts.newState },
@@ -970,7 +1123,7 @@ function handlePointerUp<T extends object>(
         type: "animating",
         startHoisted: dragState.byproducts.hoistedToRender,
         targetHoisted: hoistedToRenderAfter,
-        startTime: Date.now(),
+        startTime: performance.now(),
         easing: d3Ease.easeElastic,
         duration: ctx.drawerConfig.animationDuration,
         nextDragState: { type: "idle", state: targetState },
@@ -1037,7 +1190,7 @@ const DrawIdleMode = memoGeneric(
               draggedId: null,
               ghostId: null,
             }),
-            startTime: Date.now(),
+            startTime: performance.now(),
             easing,
             duration: seconds * 1000,
             nextDragState: { type: "idle", state: newState },
