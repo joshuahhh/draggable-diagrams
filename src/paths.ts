@@ -1,11 +1,16 @@
 // Path utilities for type-safe nested object access
 
 // PathIn<T, V> represents all valid paths through T that lead to a value of type V
-export type PathIn<T, V> = T extends V
-  ? []
-  : T extends object
+// Uses a depth counter (Depth tuple) to prevent infinite recursion with recursive types
+export type PathIn<T, V, Depth extends 0[] = []> = Depth["length"] extends 10
+  ? [] // Stop recursion at depth 10
+  : T extends V
+  ? [] | DeeperPaths<T, V, Depth>
+  : DeeperPaths<T, V, Depth>;
+
+type DeeperPaths<T, V, Depth extends 0[]> = T extends object
   ? {
-      [K in keyof T]-?: PathIn<T[K], V> extends infer P
+      [K in keyof T]-?: PathIn<T[K], V, [...Depth, 0]> extends infer P
         ? P extends []
           ? [K]
           : P extends [infer First, ...infer Rest]

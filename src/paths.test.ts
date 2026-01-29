@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { assertType, describe, expect, it } from "vitest";
 import { isVec2, Vec2 } from "./math/vec2";
 import { getAtPath, PathIn, setAtPath } from "./paths";
 
@@ -48,6 +48,24 @@ describe("PathIn type", () => {
 
     expect(pathToArray).toEqual(["items"]);
     expect(pathToElement).toEqual(["items", 0]);
+  });
+
+  it("handles recursive tree types (compile-time type test)", () => {
+    type Tree = {
+      value: number;
+      left?: Tree;
+      right?: Tree;
+    };
+
+    assertType<PathIn<Tree, number>>(["value"]);
+    assertType<PathIn<Tree, Tree | undefined>>(["left"]);
+    assertType<PathIn<Tree, Tree | undefined>>(["right"]);
+
+    // Note: PathIn allows paths through optional properties. These paths are
+    // only valid at runtime if the optional properties are present.
+    assertType<PathIn<Tree, number>>(["left", "value"]);
+    assertType<PathIn<Tree, number>>(["right", "left", "value"]);
+    assertType<PathIn<Tree, Tree | undefined>>(["left", "right", "left"]);
   });
 });
 
