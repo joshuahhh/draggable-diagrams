@@ -141,14 +141,9 @@ export namespace CanvasOfListsNested {
         });
 
         // Create backdrop state for floating mode
-        const stateWithNewRow = produce(stateWithout, (draft) => {
+        const stateWithTopRow = produce(stateWithout, (draft) => {
           if (item.type === "tile") {
-            // Tiles need a surrounding row
-            const existingIds = new Set(stateWithout.rows.map((r) => r.id));
-            const newRowId =
-              _.range(1, 100)
-                .map((i) => `row${i}`)
-                .find((id) => !existingIds.has(id)) ?? "row-new";
+            const newRowId = "row-" + Math.random().toString(36).slice(2);
             const newRowColor =
               colors[stateWithout.rows.length % colors.length];
             draft.rows.push({
@@ -168,10 +163,10 @@ export namespace CanvasOfListsNested {
         return floating(statesWith, {
           backdrop: numsAtPaths(
             [
-              ["rows", stateWithNewRow.rows.length - 1, "x"],
-              ["rows", stateWithNewRow.rows.length - 1, "y"],
+              ["rows", stateWithTopRow.rows.length - 1, "x"],
+              ["rows", stateWithTopRow.rows.length - 1, "y"],
             ],
-            stateWithNewRow
+            stateWithTopRow
           ),
         });
       });
