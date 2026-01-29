@@ -4,7 +4,7 @@ import { SVGProps } from "react";
 import { amb, produceAmb } from "../amb";
 import { floating, numsAtPaths } from "../DragSpec";
 import { Manipulable } from "../manipulable";
-import { getAtPath } from "../paths";
+import { getAtPath, PathIn } from "../paths";
 import { translate } from "../svgx/helpers";
 
 export namespace CanvasOfListsNested {
@@ -12,12 +12,8 @@ export namespace CanvasOfListsNested {
     rows: (Row & { x: number; y: number })[];
   };
 
-  type Tile = { id: string; label: string };
-  type Row = { id: string; items: (Tile | Row)[]; color: string };
-
-  function isTile(item: Tile | Row): item is Tile {
-    return "label" in item;
-  }
+  type Tile = { type: "tile"; id: string; label: string };
+  type Row = { type: "row"; id: string; items: (Tile | Row)[]; color: string };
 
   const colors = [
     "#c9e4f0", // soft blue
@@ -33,15 +29,17 @@ export namespace CanvasOfListsNested {
   export const state1: State = {
     rows: [
       {
+        type: "row",
         id: "row1",
         items: [
-          { id: "A1", label: "A1" },
-          { id: "B1", label: "B1" },
+          { type: "tile", id: "A1", label: "A1" },
+          { type: "tile", id: "B1", label: "B1" },
           {
+            type: "row",
             id: "row1-1",
             items: [
-              { id: "A1-1", label: "A1-1" },
-              { id: "B1-1", label: "B1-1" },
+              { type: "tile", id: "A1-1", label: "A1-1" },
+              { type: "tile", id: "B1-1", label: "B1-1" },
             ],
             color: colors[3],
           },
@@ -51,22 +49,24 @@ export namespace CanvasOfListsNested {
         y: 0,
       },
       {
+        type: "row",
         id: "row2",
         items: [
-          { id: "A2", label: "A2" },
-          { id: "B2", label: "B2" },
-          { id: "C2", label: "C2" },
+          { type: "tile", id: "A2", label: "A2" },
+          { type: "tile", id: "B2", label: "B2" },
+          { type: "tile", id: "C2", label: "C2" },
         ],
         color: colors[1],
         x: 20,
         y: 100,
       },
       {
+        type: "row",
         id: "row3",
         items: [
-          { id: "A3", label: "A3" },
-          { id: "B3", label: "B3" },
-          { id: "C3", label: "C3" },
+          { type: "tile", id: "A3", label: "A3" },
+          { type: "tile", id: "B3", label: "B3" },
+          { type: "tile", id: "C3", label: "C3" },
         ],
         color: colors[2],
         x: 100,
@@ -87,7 +87,7 @@ export namespace CanvasOfListsNested {
     const GRIP_PADDING = 2;
 
     function getItemWidth(item: Tile | Row): number {
-      if (isTile(item)) {
+      if (item.type === "tile") {
         return TILE_SIZE;
       } else {
         return getRowWidth(item);
@@ -106,31 +106,15 @@ export namespace CanvasOfListsNested {
       const maxItemHeight = Math.max(
         TILE_SIZE,
         ...row.items.map((item) =>
-          isTile(item) ? TILE_SIZE : getRowHeight(item)
+          item.type === "tile" ? TILE_SIZE : getRowHeight(item)
         )
       );
       return maxItemHeight + ROW_PADDING * 2;
     }
 
-    // Collect paths to all items arrays (for drop targets)
-    function collectItemsPaths(
-      row: Row,
-      rowPath: (string | number)[]
-    ): (string | number)[][] {
-      const result: (string | number)[][] = [[...rowPath, "items"]];
-      row.items.forEach((child, childIdx) => {
-        if (!isTile(child)) {
-          result.push(
-            ...collectItemsPaths(child, [...rowPath, "items", childIdx])
-          );
-        }
-      });
-      return result;
-    }
-
     function renderItem(
       item: Tile | Row,
-      itemsPath: (string | number)[],
+      itemsPath: PathIn<State, (Tile | Row)[]>,
       idx: number,
       zIndexBase: number,
       attrs?: SVGProps<SVGGElement>
@@ -140,35 +124,25 @@ export namespace CanvasOfListsNested {
       const onDrag = drag(() => {
         // Remove item from current location
         const stateWithout = produce(state, (draft) => {
-          const items = getAtPath<typeof draft, (Tile | Row)[]>(
-            draft,
-            itemsPath as any
-          );
+          const items = getAtPath<State, (Tile | Row)[]>(draft, itemsPath);
           items.splice(idx, 1);
         });
 
-        // Get all possible drop target paths from the state after removal
-        const dropTargetPaths = stateWithout.rows.flatMap((row, rowIdx) =>
-          collectItemsPaths(row, ["rows", rowIdx])
-        );
-
-        // Generate states for all possible placements in existing rows
-        const statesWith =
-          dropTargetPaths.length > 0
-            ? produceAmb(stateWithout, (draft) => {
-                const targetPath = amb(dropTargetPaths);
-                const targetItems = getAtPath<typeof draft, (Tile | Row)[]>(
-                  draft,
-                  targetPath as any
-                );
-                const insertIdx = amb(_.range(targetItems.length + 1));
-                targetItems.splice(insertIdx, 0, item);
-              })
-            : [];
+        // Generate states for all possible placements
+        // - TODO: use of amb here is elegant but not performant.
+        const statesWith = produceAmb(stateWithout, (draft) => {
+          let row: Row = amb(draft.rows);
+          while (true) {
+            if (amb([true, false])) break; // stop here, or...
+            row = amb(row.items.filter((i) => i.type === "row"));
+          }
+          const insertIdx = amb(_.range(row.items.length + 1));
+          row.items.splice(insertIdx, 0, item);
+        });
 
         // Create backdrop state for floating mode
         const stateWithNewRow = produce(stateWithout, (draft) => {
-          if (isTile(item)) {
+          if (item.type === "tile") {
             // Tiles need a surrounding row
             const existingIds = new Set(stateWithout.rows.map((r) => r.id));
             const newRowId =
@@ -178,6 +152,7 @@ export namespace CanvasOfListsNested {
             const newRowColor =
               colors[stateWithout.rows.length % colors.length];
             draft.rows.push({
+              type: "row",
               id: newRowId,
               items: [item],
               color: newRowColor,
@@ -203,7 +178,7 @@ export namespace CanvasOfListsNested {
 
       const effectiveZIndex = isDragged ? zIndexBase + 10 : zIndexBase;
 
-      if (isTile(item)) {
+      if (item.type === "tile") {
         return (
           <g
             id={item.id}
@@ -271,7 +246,8 @@ export namespace CanvasOfListsNested {
               xOffset += getItemWidth(child) + TILE_GAP;
               return renderItem(
                 child,
-                [...itemsPath, idx, "items"],
+                // alas, the depth protection means we have to assert here
+                [...itemsPath, idx, "items"] as PathIn<State, (Tile | Row)[]>,
                 childIdx,
                 effectiveZIndex + 1,
                 { transform: translate(childX, ROW_PADDING) }
