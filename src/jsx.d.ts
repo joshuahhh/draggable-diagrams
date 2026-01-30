@@ -10,7 +10,7 @@ declare module "react" {
      *
      * @example
      * // Dragging numeric state properties
-     * <circle data-on-drag={drag(numsAtPaths([["x"], ["y"]]))} />
+     * <circle data-on-drag={drag(vary(["x"], ["y"]))} />
      *
      * @example
      * // Dragging with custom drag spec function

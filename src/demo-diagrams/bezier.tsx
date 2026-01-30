@@ -1,4 +1,4 @@
-import { numsAtPaths } from "../DragSpec";
+import { vary } from "../DragSpec";
 import { Manipulable } from "../manipulable";
 import { translate } from "../svgx/helpers";
 
@@ -102,12 +102,7 @@ export namespace Bezier {
               r={isDragged ? 8 : 12}
               fill={isDragged ? "rgba(37, 99, 235, 0.3)" : "transparent"}
               data-on-drag={drag(
-                numsAtPaths([
-                  ["p1", "x"],
-                  ["p1", "y"],
-                  ["p2", "x"],
-                  ["p2", "y"],
-                ])
+                vary(["p1", "x"], ["p1", "y"], ["p2", "x"], ["p2", "y"])
               )}
             />
           );
@@ -122,12 +117,7 @@ export namespace Bezier {
           fill={draggedId === "control-p1" ? "#f59e0b" : "#fbbf24"}
           stroke="#92400e"
           strokeWidth={2}
-          data-on-drag={drag(
-            numsAtPaths([
-              ["p1", "x"],
-              ["p1", "y"],
-            ])
-          )}
+          data-on-drag={drag(vary(["p1", "x"], ["p1", "y"]))}
         />
 
         <circle
@@ -139,12 +129,7 @@ export namespace Bezier {
           fill={draggedId === "control-p2" ? "#f59e0b" : "#fbbf24"}
           stroke="#92400e"
           strokeWidth={2}
-          data-on-drag={drag(
-            numsAtPaths([
-              ["p2", "x"],
-              ["p2", "y"],
-            ])
-          )}
+          data-on-drag={drag(vary(["p2", "x"], ["p2", "y"]))}
         />
 
         <circle
@@ -156,12 +141,7 @@ export namespace Bezier {
           fill={draggedId === "endpoint-p0" ? "#dc2626" : "#ef4444"}
           stroke="#7f1d1d"
           strokeWidth={2}
-          data-on-drag={drag(
-            numsAtPaths([
-              ["p0", "x"],
-              ["p0", "y"],
-            ])
-          )}
+          data-on-drag={drag(vary(["p0", "x"], ["p0", "y"]))}
         />
 
         <circle
@@ -173,12 +153,7 @@ export namespace Bezier {
           fill={draggedId === "endpoint-p3" ? "#dc2626" : "#ef4444"}
           stroke="#7f1d1d"
           strokeWidth={2}
-          data-on-drag={drag(
-            numsAtPaths([
-              ["p3", "x"],
-              ["p3", "y"],
-            ])
-          )}
+          data-on-drag={drag(vary(["p3", "x"], ["p3", "y"]))}
         />
 
         <text

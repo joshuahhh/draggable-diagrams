@@ -1,4 +1,4 @@
-import { numAtPath } from "../DragSpec";
+import { vary } from "../DragSpec";
 import { Manipulable } from "../manipulable";
 import { rotateDeg, translate } from "../svgx/helpers";
 
@@ -34,7 +34,7 @@ export namespace Clock {
             cy={0}
             r={10}
             fill="black"
-            data-on-drag={drag(numAtPath(["hours"]))}
+            data-on-drag={drag(vary(["hours"]))}
           />
         </g>
       );

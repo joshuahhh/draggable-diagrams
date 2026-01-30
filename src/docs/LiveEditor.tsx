@@ -6,15 +6,7 @@ import _ from "lodash";
 import parserBabel from "prettier/parser-babel";
 import prettier from "prettier/standalone";
 import { createElement, useMemo, useState } from "react";
-import {
-  andThen,
-  floating,
-  numAtPath,
-  numsAtPaths,
-  params,
-  span,
-  straightTo,
-} from "../DragSpec";
+import { andThen, floating, params, span, straightTo, vary } from "../DragSpec";
 import { ErrorBoundary } from "../ErrorBoundary";
 import { Manipulable } from "../manipulable";
 import { ManipulableDrawer } from "../ManipulableDrawer";
@@ -31,10 +23,9 @@ const GLOBALS = {
   rotateRad,
   scale,
   path,
-  numsAtPaths,
+  vary,
   straightTo,
   span,
-  numAtPath,
   andThen,
   params,
   floating,

@@ -1,4 +1,4 @@
-import { numAtPath } from "../DragSpec";
+import { vary } from "../DragSpec";
 import { Manipulable } from "../manipulable";
 import { Vec2 } from "../math/vec2";
 import { translate } from "../svgx/helpers";
@@ -23,7 +23,7 @@ export namespace Angle {
           transform={translate(knobPos)}
           r={20}
           fill="black"
-          data-on-drag={drag(numAtPath(["angle"]))}
+          data-on-drag={drag(vary(["angle"]))}
         />
         <line
           {...center.xy1()}

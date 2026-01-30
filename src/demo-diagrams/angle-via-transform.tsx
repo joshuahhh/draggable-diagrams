@@ -1,4 +1,4 @@
-import { numAtPath } from "../DragSpec";
+import { vary } from "../DragSpec";
 import { Manipulable } from "../manipulable";
 import { rotateDeg, translate } from "../svgx/helpers";
 
@@ -31,7 +31,7 @@ export namespace AngleViaTransform {
             cy={0}
             r={20}
             fill="black"
-            data-on-drag={drag(numAtPath(["angle"]))}
+            data-on-drag={drag(vary(["angle"]))}
           />
         </g>
       </g>

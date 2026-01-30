@@ -2,7 +2,7 @@ import { produce } from "immer";
 import _ from "lodash";
 import { SVGProps } from "react";
 import { amb, produceAmb } from "../amb";
-import { floating, numsAtPaths } from "../DragSpec";
+import { floating, vary } from "../DragSpec";
 import { Manipulable } from "../manipulable";
 import { getAtPath, PathIn } from "../paths";
 import { translate } from "../svgx/helpers";
@@ -161,12 +161,10 @@ export namespace CanvasOfListsNested {
         });
 
         return floating(statesWith, {
-          backdrop: numsAtPaths(
-            [
-              ["rows", stateWithTopRow.rows.length - 1, "x"],
-              ["rows", stateWithTopRow.rows.length - 1, "y"],
-            ],
-            stateWithTopRow
+          backdrop: vary(
+            stateWithTopRow,
+            ["rows", stateWithTopRow.rows.length - 1, "x"],
+            ["rows", stateWithTopRow.rows.length - 1, "y"]
           ),
         });
       });

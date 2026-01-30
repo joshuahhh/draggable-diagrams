@@ -5,10 +5,10 @@ import {
   ConfigSelect,
 } from "../configurable";
 import { configurableManipulable } from "../demos";
-import { numsAtPaths } from "../DragSpec";
-import { translate } from "../svgx/helpers";
+import { vary } from "../DragSpec";
 import { Vec2 } from "../math/vec2";
 import { Svgx } from "../svgx";
+import { translate } from "../svgx/helpers";
 
 export namespace Dragon {
   export const state1 = {
@@ -45,11 +45,9 @@ export namespace Dragon {
               strokeWidth={4}
               strokeLinecap="round"
               data-on-drag={drag(
-                numsAtPaths(
-                  config.enableTilt
-                    ? [["squareness"], ["tilt"]]
-                    : [["squareness"]]
-                )
+                config.enableTilt
+                  ? vary(["squareness"], ["tilt"])
+                  : vary(["squareness"])
               )}
             />,
           ];
@@ -74,23 +72,13 @@ export namespace Dragon {
             transform={translate(state.from)}
             r={8}
             fill="red"
-            data-on-drag={drag(
-              numsAtPaths([
-                ["from", "x"],
-                ["from", "y"],
-              ])
-            )}
+            data-on-drag={drag(vary(["from", "x"], ["from", "y"]))}
           />
           <circle
             transform={translate(state.to)}
             r={8}
             fill="blue"
-            data-on-drag={drag(
-              numsAtPaths([
-                ["to", "x"],
-                ["to", "y"],
-              ])
-            )}
+            data-on-drag={drag(vary(["to", "x"], ["to", "y"]))}
           />
         </g>
       );

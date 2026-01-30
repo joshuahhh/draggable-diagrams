@@ -1,7 +1,7 @@
 import { produce } from "immer";
 import _ from "lodash";
 import { amb, produceAmb } from "../amb";
-import { floating, numsAtPaths } from "../DragSpec";
+import { floating, vary } from "../DragSpec";
 import { Manipulable } from "../manipulable";
 import { translate } from "../svgx/helpers";
 
@@ -85,10 +85,7 @@ export namespace CanvasOfLists {
               transform={translate(row.x, row.y)}
               data-z-index={isDragged ? 10 : 0}
               data-on-drag={drag(() =>
-                numsAtPaths([
-                  ["rows", rowId, "x"],
-                  ["rows", rowId, "y"],
-                ])
+                vary(["rows", rowId, "x"], ["rows", rowId, "y"])
               )}
             >
               <rect
@@ -156,12 +153,10 @@ export namespace CanvasOfLists {
                       };
                     });
                     return floating(statesWith, {
-                      backdrop: numsAtPaths(
-                        [
-                          ["rows", newRowId, "x"],
-                          ["rows", newRowId, "y"],
-                        ],
-                        stateWithNewRow
+                      backdrop: vary(
+                        stateWithNewRow,
+                        ["rows", newRowId, "x"],
+                        ["rows", newRowId, "y"]
                       ),
                     });
                   })}

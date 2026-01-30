@@ -139,6 +139,7 @@ With this knowledge we can take on a more involved example: reordering objects.
         })}
       </g>
     );
+
 `}
 />
 
@@ -186,7 +187,7 @@ The most novel part of Draggable Diagrams is the "drag between discrete states" 
             transform={translate(100, 0)}
             r={20}
             fill="black"
-            data-on-drag={drag(numAtPath(["angle"]))}
+            data-on-drag={drag(vary(["angle"]))}
           />
         </g>
       </g>
@@ -195,7 +196,7 @@ The most novel part of Draggable Diagrams is the "drag between discrete states" 
 `}
 />
 
-The new part here is `numAtPath` in the drag spec. This means "the drag should control a numeric value located at this path in the state object". Specifically, it will control the numeric value to try to make the dragged object as close to the dragged pointer as possible. (That's numeric minimization!)
+The new part here is `vary` in the drag spec. This means "the drag should vary a numeric value located at this path in the state object". Specifically, it will control the numeric value to try to make the dragged object as close to the dragged pointer as possible. (That's numeric minimization!) You can pass multiple paths to `vary` to control multiple numeric values at once, e.g. `vary(["x"], ["y"])`.
 
 A single diagram can have both discrete and continuous drags. Here, edges can be moved discretely between nodes, and nodes can be moved continuously on the canvas:
 

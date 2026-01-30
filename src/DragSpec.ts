@@ -163,18 +163,17 @@ export function params<T>(
   return { type: "params", initParams, stateFromParams };
 }
 
-export function numsAtPaths<T>(
-  paramPaths: PathIn<T, number>[],
-  baseState?: T
-): DragSpecParams<T> {
-  return { type: "param-paths", paramPaths, baseState };
-}
-
-export function numAtPath<T>(
-  paramPath: PathIn<T, number>,
-  baseState?: T
-): DragSpecParams<T> {
-  return { type: "param-paths", paramPaths: [paramPath], baseState };
+export function vary<T>(...paramPaths: PathIn<T, number>[]): DragSpecParams<T>;
+export function vary<T>(
+  baseState: T,
+  ...paramPaths: PathIn<T, number>[]
+): DragSpecParams<T>;
+export function vary(...args: unknown[]): DragSpecParams<any> {
+  if (args.length > 0 && !Array.isArray(args[0])) {
+    const [baseState, ...paramPaths] = args;
+    return { type: "param-paths", paramPaths: paramPaths as any, baseState };
+  }
+  return { type: "param-paths", paramPaths: args as any };
 }
 
 export function andThen<T>(state: T, andThen: T): Exit<T> {

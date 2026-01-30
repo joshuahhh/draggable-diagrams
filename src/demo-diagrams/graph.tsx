@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { amb, produceAmb, require } from "../amb";
 import { arrowhead } from "../arrows";
-import { numsAtPaths, span } from "../DragSpec";
+import { span, vary } from "../DragSpec";
 import { Manipulable } from "../manipulable";
 import { Vec2 } from "../math/vec2";
 import { translate } from "../svgx/helpers";
@@ -123,12 +123,7 @@ export namespace Graph {
             transform={translate(node.x, node.y)}
             r={NODE_R}
             fill="black"
-            data-on-drag={drag(
-              numsAtPaths([
-                ["nodes", key, "x"],
-                ["nodes", key, "y"],
-              ])
-            )}
+            data-on-drag={drag(vary(["nodes", key, "x"], ["nodes", key, "y"]))}
           />
         ))}
       </g>

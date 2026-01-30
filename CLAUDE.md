@@ -118,8 +118,8 @@ The Edit and Write tools require reading the file first. Always use Read tool be
 
 **For continuous state changes** (e.g., angles, positions):
 
-- Use `numAtPath(["path", "to", "number"])` to control a numeric value
-- Use `numsAtPaths([["x"], ["y"]])` for multiple values
+- Use `vary(["path", "to", "number"])` to control a numeric value
+- Use `vary(["x"], ["y"])` for multiple values
 
 **Floating pattern** (moving items between containers):
 

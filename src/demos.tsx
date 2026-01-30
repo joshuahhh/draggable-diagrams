@@ -33,7 +33,7 @@ import { Spinny } from "./demo-diagrams/spinny";
 import { Tiles } from "./demo-diagrams/tiles";
 import { Todo } from "./demo-diagrams/todo";
 import { Tromino } from "./demo-diagrams/tromino";
-import { numsAtPaths } from "./DragSpec";
+import { vary } from "./DragSpec";
 import { Manipulable } from "./manipulable";
 import { DrawerConfig } from "./ManipulableDrawer";
 import { rotateDeg, scale, translate } from "./svgx/helpers";
@@ -201,7 +201,7 @@ export const demos: SomeDemoData[] = [
     notes: (
       <>
         Uses <span className="font-mono">floating</span>, with a{" "}
-        <span className="font-mono">numsAtPaths</span> backdrop.
+        <span className="font-mono">vary</span> backdrop.
       </>
     ),
     manipulable: CanvasOfLists.manipulable,
@@ -443,7 +443,7 @@ export const demos: SomeDemoData[] = [
             cy={0}
             r={50}
             fill="lightblue"
-            data-on-drag={drag(numsAtPaths([["scaleX"], ["scaleY"]]))}
+            data-on-drag={drag(vary(["scaleX"], ["scaleY"]))}
           />
         }
         <ellipse
@@ -474,7 +474,7 @@ export const demos: SomeDemoData[] = [
         cy={0}
         r={50}
         fill="lightblue"
-        data-on-drag={drag(numsAtPaths([["angle"], ["scaleX"]]))}
+        data-on-drag={drag(vary(["angle"], ["scaleX"]))}
       />
     ),
     height: 200,
