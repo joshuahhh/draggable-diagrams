@@ -1,6 +1,7 @@
 import { Falsey } from "lodash";
 import "react";
 import type { OnDragPropValue } from "./manipulable";
+import type { OnDragPropValue as OnDragPropValueV2 } from "./manipulable2";
 
 declare module "react" {
   interface SVGAttributes<T> {
@@ -18,7 +19,7 @@ declare module "react" {
      *
      * @see ManipulableSvg for more details
      */
-    "data-on-drag"?: OnDragPropValue<any> | Falsey;
+    "data-on-drag"?: OnDragPropValue<any> | OnDragPropValueV2<any> | Falsey;
 
     "data-z-index"?: number;
   }
