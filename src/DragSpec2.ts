@@ -241,7 +241,7 @@ export function dragSpecToBehavior<T extends object>(
       return {
         rendered,
         dropState: newState,
-        distance: 0,
+        distance: Math.sqrt(r.f),
       };
     };
   } else {
