@@ -1,7 +1,8 @@
 import _ from "lodash";
 import { Manipulable, unsafeDrag } from "./manipulable2";
+import { minimize } from "./math/minimize";
 import { Vec2 } from "./math/vec2";
-import { PathIn } from "./paths";
+import { PathIn, getAtPath, setAtPath } from "./paths";
 import { translate } from "./svgx/helpers";
 import {
   HoistedSvgx,
@@ -15,8 +16,6 @@ import {
   hoistedShiftZIndices,
   hoistedTransform,
 } from "./svgx/hoist";
-import { minimize } from "./math/minimize";
-import { getAtPath, setAtPath } from "./paths";
 import { assignPaths, findByPath } from "./svgx/path";
 import { localToGlobal, parseTransform } from "./svgx/transform";
 import { assertNever, pipe, throwError } from "./utils";
@@ -35,7 +34,8 @@ export type DragSpec<T> =
   | DragSpecClosest<T>
   | DragSpecWithBackground<T>
   | DragSpecAndThen<T>
-  | DragSpecVary<T>;
+  | DragSpecVary<T>
+  | DragSpecWithDistance<T>;
 
 export type DragSpecFloating<T> = {
   type: "floating";
@@ -65,6 +65,12 @@ export type DragSpecVary<T> = {
   paramPaths: PathIn<T, number>[];
 };
 
+export type DragSpecWithDistance<T> = {
+  type: "with-distance";
+  spec: DragSpec<T>;
+  f: (distance: number) => number;
+};
+
 // ## Constructors
 
 export function floating<T>(state: T): DragSpec<T> {
@@ -91,6 +97,13 @@ export function vary<T>(
   ...paramPaths: PathIn<T, number>[]
 ): DragSpec<T> {
   return { type: "vary", state, paramPaths };
+}
+
+export function withDistance<T>(
+  spec: DragSpec<T>,
+  f: (distance: number) => number
+): DragSpec<T> {
+  return { type: "with-distance", spec, f };
 }
 
 // # Behavior
@@ -208,9 +221,7 @@ export function dragSpecToBehavior<T extends object>(
       // activePath passes through from child
     };
   } else if (spec.type === "vary") {
-    let curParams = spec.paramPaths.map((path) =>
-      getAtPath(spec.state, path)
-    );
+    let curParams = spec.paramPaths.map((path) => getAtPath(spec.state, path));
 
     const stateFromParams = (params: number[]): T => {
       let s = spec.state;
@@ -253,6 +264,13 @@ export function dragSpecToBehavior<T extends object>(
         distance: Math.sqrt(r.f),
         activePath: "vary",
       };
+    };
+  } else if (spec.type === "with-distance") {
+    const subBehavior = dragSpecToBehavior(spec.spec, ctx);
+    return (frame) => {
+      const result = subBehavior(frame);
+      const scaledDistance = spec.f(result.distance);
+      return { ...result, distance: scaledDistance };
     };
   } else {
     assertNever(spec);
