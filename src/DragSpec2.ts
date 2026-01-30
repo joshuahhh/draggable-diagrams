@@ -15,7 +15,9 @@ import {
   hoistedShiftZIndices,
   hoistedTransform,
 } from "./svgx/hoist";
-import { assignPaths } from "./svgx/path";
+import { minimize } from "./math/minimize";
+import { getAtPath, setAtPath } from "./paths";
+import { assignPaths, findByPath } from "./svgx/path";
 import { localToGlobal, parseTransform } from "./svgx/transform";
 import { assertNever, pipe, throwError } from "./utils";
 
@@ -32,8 +34,8 @@ export type DragSpec<T> =
   | DragSpecFloating<T>
   | DragSpecClosest<T>
   | DragSpecWithBackground<T>
-  | DragSpecAndThen<T>;
-// | DragSpecVary<T>;
+  | DragSpecAndThen<T>
+  | DragSpecVary<T>;
 
 export type DragSpecFloating<T> = {
   type: "floating";
@@ -57,18 +59,11 @@ export type DragSpecAndThen<T> = {
   andThen: T;
 };
 
-export type DragSpecVary<T> =
-  | {
-      type: "vary-paths";
-      baseState?: T;
-      paramPaths: PathIn<T, number>[];
-    }
-  | {
-      type: "vary-params";
-      baseState?: T;
-      initParams: number[];
-      stateFromParams: (...params: number[]) => T;
-    };
+export type DragSpecVary<T> = {
+  type: "vary";
+  state: T;
+  paramPaths: PathIn<T, number>[];
+};
 
 // ## Constructors
 
@@ -91,25 +86,12 @@ export function andThen<T>(spec: DragSpec<T>, andThen: T): DragSpec<T> {
   return { type: "and-then", spec, andThen };
 }
 
-// export function vary<T>(...paramPaths: PathIn<T, number>[]): DragSpec<T>;
-// export function vary<T>(
-//   baseState: T,
-//   ...paramPaths: PathIn<T, number>[]
-// ): DragSpec<T>;
-// export function vary(...args: unknown[]): DragSpec<any> {
-//   if (args.length > 0 && !Array.isArray(args[0])) {
-//     const [baseState, ...paramPaths] = args;
-//     return { type: "vary-paths", paramPaths: paramPaths as any, baseState };
-//   }
-//   return { type: "vary-paths", paramPaths: args as any };
-// }
-
-// export function params<T>(
-//   initParams: number[],
-//   stateFromParams: (...params: number[]) => T
-// ): DragSpec<T> {
-//   return { type: "vary-params", initParams, stateFromParams };
-// }
+export function vary<T>(
+  state: T,
+  ...paramPaths: PathIn<T, number>[]
+): DragSpec<T> {
+  return { type: "vary", state, paramPaths };
+}
 
 // # Behavior
 
@@ -215,6 +197,52 @@ export function dragSpecToBehavior<T extends object>(
     return (frame) => {
       const result = subBehavior(frame);
       return { ...result, dropState: spec.andThen };
+    };
+  } else if (spec.type === "vary") {
+    let curParams = spec.paramPaths.map((path) =>
+      getAtPath(spec.state, path)
+    );
+
+    const stateFromParams = (params: number[]): T => {
+      let s = spec.state;
+      for (let i = 0; i < spec.paramPaths.length; i++) {
+        s = setAtPath(s, spec.paramPaths[i], params[i]);
+      }
+      return s;
+    };
+
+    return (frame) => {
+      const objectiveFn = (params: number[]) => {
+        const candidateState = stateFromParams(params);
+        const content = pipe(
+          ctx.manipulable({
+            state: candidateState,
+            drag: unsafeDrag,
+            draggedId: ctx.draggedId,
+            ghostId: null,
+            setState: throwError,
+          }),
+          assignPaths,
+          accumulateTransforms
+        );
+        const element = findByPath(ctx.draggedPath, content);
+        if (!element) return Infinity;
+        const accTransform = getAccumulatedTransform(element);
+        const transforms = parseTransform(accTransform || "");
+        const pos = localToGlobal(transforms, ctx.pointerLocal);
+        return pos.dist2(frame.pointer);
+      };
+
+      const r = minimize(objectiveFn, curParams);
+      curParams = r.solution;
+
+      const newState = stateFromParams(curParams);
+      const rendered = renderStateReadOnly(ctx, newState);
+      return {
+        rendered,
+        dropState: newState,
+        distance: 0,
+      };
     };
   } else {
     assertNever(spec);
