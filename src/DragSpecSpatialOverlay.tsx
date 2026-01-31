@@ -10,8 +10,7 @@ import { Vec2 } from "./math/vec2";
 // # Types
 
 export type OverlayData = {
-  cells: { x: number; y: number; activePath: string }[];
-  cellSize: number;
+  regions: { activePath: string; svgPath: string; color: string }[];
   colorMap: Map<string, string>;
 };
 
@@ -39,39 +38,217 @@ function assignColors(paths: string[]): Map<string, string> {
   return map;
 }
 
-// # Computation
+// # Grid constants
 
-export function computeOverlay<T extends object>(
-  spec: DragSpec<T>,
-  behaviorCtx: BehaviorContext<T>,
-  width: number,
-  height: number,
-  pointerStart: Vec2,
-  cellSize: number = 30
-): OverlayData {
-  const samplingBehavior = dragSpecToBehavior(spec, behaviorCtx);
+const FINE_CELL = 8;
+const COARSE_FACTOR = 4; // coarse = 32px
 
-  const cols = Math.ceil(width / cellSize);
-  const rows = Math.ceil(height / cellSize);
-  const cells: { x: number; y: number; activePath: string }[] = [];
+// # Marching squares
 
-  // Scan in raster order for vary's curParams warm-starting
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < cols; col++) {
-      const x = (col + 0.5) * cellSize;
-      const y = (row + 0.5) * cellSize;
-      const frame: DragFrame = { pointer: Vec2(x, y), pointerStart };
-      try {
-        const result = samplingBehavior(frame);
-        cells.push({ x, y, activePath: result.activePath });
-      } catch {
-        cells.push({ x, y, activePath: "error" });
+// Lookup table: for each of the 16 cases, list of [entryEdge, exitEdge] segments.
+// Edges: 0=top, 1=right, 2=bottom, 3=left.
+// Corner bits: TL=8, TR=4, BR=2, BL=1.
+const MS_SEGMENTS: [number, number][][] = [
+  [],              // 0:  0000
+  [[3, 2]],        // 1:  0001
+  [[2, 1]],        // 2:  0010
+  [[3, 1]],        // 3:  0011
+  [[1, 0]],        // 4:  0100
+  [[3, 0], [1, 2]], // 5:  0101 (saddle)
+  [[2, 0]],        // 6:  0110
+  [[3, 0]],        // 7:  0111
+  [[0, 3]],        // 8:  1000
+  [[0, 2]],        // 9:  1001
+  [[0, 1], [2, 3]], // 10: 1010 (saddle)
+  [[0, 1]],        // 11: 1011
+  [[1, 3]],        // 12: 1100
+  [[1, 2]],        // 13: 1101
+  [[2, 3]],        // 14: 1110
+  [],              // 15: 1111
+];
+
+// For contour tracing: given a case and the edge we entered through,
+// what edge do we exit through?
+function buildExitMap(): Map<number, Map<number, number>> {
+  const map = new Map<number, Map<number, number>>();
+  for (let c = 0; c < 16; c++) {
+    const m = new Map<number, number>();
+    for (const [from, to] of MS_SEGMENTS[c]) {
+      m.set(from, to);
+      m.set(to, from);
+    }
+    map.set(c, m);
+  }
+  return map;
+}
+
+const EXIT_MAP = buildExitMap();
+
+function edgeMidpoint(
+  col: number,
+  row: number,
+  edge: number,
+  cellSize: number
+): Vec2 {
+  const x = col * cellSize;
+  const y = row * cellSize;
+  switch (edge) {
+    case 0:
+      return Vec2(x + cellSize / 2, y);
+    case 1:
+      return Vec2(x + cellSize, y + cellSize / 2);
+    case 2:
+      return Vec2(x + cellSize / 2, y + cellSize);
+    case 3:
+      return Vec2(x, y + cellSize / 2);
+    default:
+      throw new Error("invalid edge");
+  }
+}
+
+// Neighbor cell when exiting through an edge.
+// Returns [col, row, entryEdge] of the neighbor, or null if at grid boundary.
+function neighbor(
+  col: number,
+  row: number,
+  exitEdge: number,
+  minCol: number,
+  maxCol: number,
+  minRow: number,
+  maxRow: number
+): [number, number, number] | null {
+  switch (exitEdge) {
+    case 0:
+      return row - 1 >= minRow ? [col, row - 1, 2] : null;
+    case 1:
+      return col + 1 < maxCol ? [col + 1, row, 3] : null;
+    case 2:
+      return row + 1 < maxRow ? [col, row + 1, 0] : null;
+    case 3:
+      return col - 1 >= minCol ? [col - 1, row, 1] : null;
+    default:
+      return null;
+  }
+}
+
+/**
+ * Trace closed contour polygons for a single region using marching squares.
+ *
+ * Operates on a vertex grid of (fineRows+1)×(fineCols+1) values.
+ * Iterates over cells from (-1,-1) to (fineCols, fineRows) so that
+ * regions touching the SVG boundary produce closed contours (out-of-bounds
+ * vertices are treated as "not this region").
+ */
+function traceContours(
+  vertices: string[],
+  fineCols: number,
+  fineRows: number,
+  cellSize: number,
+  region: string
+): Vec2[][] {
+  const vi = (r: number, c: number) => r * (fineCols + 1) + c;
+
+  function isInside(r: number, c: number): boolean {
+    if (r < 0 || r > fineRows || c < 0 || c > fineCols) return false;
+    return vertices[vi(r, c)] === region;
+  }
+
+  function caseAt(cellRow: number, cellCol: number): number {
+    const tl = isInside(cellRow, cellCol) ? 8 : 0;
+    const tr = isInside(cellRow, cellCol + 1) ? 4 : 0;
+    const br = isInside(cellRow + 1, cellCol + 1) ? 2 : 0;
+    const bl = isInside(cellRow + 1, cellCol) ? 1 : 0;
+    return tl | tr | br | bl;
+  }
+
+  // Track traced edges to avoid duplicates. Key: "col,row,edge"
+  const traced = new Set<string>();
+  const ek = (c: number, r: number, e: number) => `${c},${r},${e}`;
+
+  const minCol = -1,
+    maxCol = fineCols + 1,
+    minRow = -1,
+    maxRow = fineRows + 1;
+
+  const polygons: Vec2[][] = [];
+
+  for (let r = minRow; r < maxRow; r++) {
+    for (let c = minCol; c < maxCol; c++) {
+      const ci = caseAt(r, c);
+      if (ci === 0 || ci === 15) continue;
+
+      for (const [entryEdge] of MS_SEGMENTS[ci]) {
+        if (traced.has(ek(c, r, entryEdge))) continue;
+
+        const polygon: Vec2[] = [];
+        let curCol = c,
+          curRow = r,
+          curEntry = entryEdge;
+
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const curCase = caseAt(curRow, curCol);
+          const curExits = EXIT_MAP.get(curCase)!;
+          const exitEdge = curExits.get(curEntry);
+          if (exitEdge === undefined) break;
+
+          traced.add(ek(curCol, curRow, curEntry));
+          polygon.push(edgeMidpoint(curCol, curRow, exitEdge, cellSize));
+
+          const nb = neighbor(
+            curCol,
+            curRow,
+            exitEdge,
+            minCol,
+            maxCol,
+            minRow,
+            maxRow
+          );
+          if (!nb) break;
+
+          const [nc, nr, ne] = nb;
+          // Check if we've returned to the start
+          if (nc === c && nr === r && ne === entryEdge) break;
+          curCol = nc;
+          curRow = nr;
+          curEntry = ne;
+        }
+
+        if (polygon.length >= 3) {
+          polygons.push(polygon);
+        }
       }
     }
   }
 
-  const colorMap = assignColors(cells.map((c) => c.activePath));
-  return { cells, cellSize, colorMap };
+  return polygons;
+}
+
+// # Smoothing (Chaikin's corner-cutting)
+
+function smoothPolygon(points: Vec2[], iterations: number = 2): Vec2[] {
+  let current = points;
+  for (let iter = 0; iter < iterations; iter++) {
+    const next: Vec2[] = [];
+    for (let i = 0; i < current.length; i++) {
+      const p0 = current[i];
+      const p1 = current[(i + 1) % current.length];
+      next.push(Vec2(0.75 * p0.x + 0.25 * p1.x, 0.75 * p0.y + 0.25 * p1.y));
+      next.push(Vec2(0.25 * p0.x + 0.75 * p1.x, 0.25 * p0.y + 0.75 * p1.y));
+    }
+    current = next;
+  }
+  return current;
+}
+
+function polygonToSvgPath(points: Vec2[]): string {
+  if (points.length === 0) return "";
+  const parts = [`M${points[0].x},${points[0].y}`];
+  for (let i = 1; i < points.length; i++) {
+    parts.push(`L${points[i].x},${points[i].y}`);
+  }
+  parts.push("Z");
+  return parts.join("");
 }
 
 // # Overlay SVG component
@@ -93,15 +270,8 @@ export function SpatialOverlaySvg({
       xmlns="http://www.w3.org/2000/svg"
     >
       <g opacity={0.35}>
-        {data.cells.map(({ x, y, activePath }, i) => (
-          <rect
-            key={i}
-            x={x - data.cellSize / 2}
-            y={y - data.cellSize / 2}
-            width={data.cellSize}
-            height={data.cellSize}
-            fill={data.colorMap.get(activePath) ?? "gray"}
-          />
+        {data.regions.map((r, i) => (
+          <path key={i} d={r.svgPath} fill={r.color} fillRule="evenodd" />
         ))}
       </g>
     </svg>
@@ -140,13 +310,10 @@ export function useOverlayData<T extends object>(
   behaviorCtx: BehaviorContext<T> | null,
   pointerStart: Vec2 | null,
   width: number,
-  height: number,
-  cellSize: number = 30
+  height: number
 ): OverlayData | null {
   const [data, setData] = useState<OverlayData | null>(null);
   const computeIdRef = useRef(0);
-
-  // Use a ref to the spec identity to detect new drags
   const specRef = useRef(spec);
 
   useEffect(() => {
@@ -162,42 +329,146 @@ export function useOverlayData<T extends object>(
     const id = ++computeIdRef.current;
     const ps = pointerStart; // narrow for closure
 
-    // Compute in batches to avoid blocking the main thread
+    // Create a separate behavior instance for sampling (doesn't interfere
+    // with the drag's own behavior's mutable curParams).
     const samplingBehavior = dragSpecToBehavior(spec, behaviorCtx);
-    const cols = Math.ceil(width / cellSize);
-    const rows = Math.ceil(height / cellSize);
-    const cells: { x: number; y: number; activePath: string }[] = [];
-    let row = 0;
-    const ROWS_PER_BATCH = 3;
+
+    function sample(x: number, y: number): string {
+      const frame: DragFrame = { pointer: Vec2(x, y), pointerStart: ps };
+      try {
+        return samplingBehavior(frame).activePath;
+      } catch {
+        return "error";
+      }
+    }
+
+    const fineCols = Math.ceil(width / FINE_CELL);
+    const fineRows = Math.ceil(height / FINE_CELL);
+    const coarseCols = Math.ceil(fineCols / COARSE_FACTOR);
+    const coarseRows = Math.ceil(fineRows / COARSE_FACTOR);
+
+    const totalV = (fineRows + 1) * (fineCols + 1);
+    const vertices: string[] = new Array(totalV).fill("");
+    const needsFine: boolean[] = new Array(totalV).fill(false);
+    const vi = (r: number, c: number) => r * (fineCols + 1) + c;
+
+    // --- Phase 1: Coarse sampling (synchronous) ---
+    // Sample at every COARSE_FACTOR-th fine vertex, in raster order
+    // for vary's warm-starting.
+    for (let cr = 0; cr <= coarseRows; cr++) {
+      const fr = Math.min(cr * COARSE_FACTOR, fineRows);
+      for (let cc = 0; cc <= coarseCols; cc++) {
+        const fc = Math.min(cc * COARSE_FACTOR, fineCols);
+        vertices[vi(fr, fc)] = sample(fc * FINE_CELL, fr * FINE_CELL);
+      }
+    }
+
+    if (id !== computeIdRef.current) return;
+
+    // --- Phase 2: Analyze coarse cells (synchronous) ---
+    // Uniform cells: fill fine vertices. Mixed cells: mark for fine sampling.
+    const mixed = new Set<number>();
+    for (let cr = 0; cr < coarseRows; cr++) {
+      for (let cc = 0; cc < coarseCols; cc++) {
+        const fr0 = cr * COARSE_FACTOR;
+        const fc0 = cc * COARSE_FACTOR;
+        const fr1 = Math.min((cr + 1) * COARSE_FACTOR, fineRows);
+        const fc1 = Math.min((cc + 1) * COARSE_FACTOR, fineCols);
+
+        const tl = vertices[vi(fr0, fc0)];
+        const tr = vertices[vi(fr0, fc1)];
+        const bl = vertices[vi(fr1, fc0)];
+        const br = vertices[vi(fr1, fc1)];
+
+        if (tl === tr && tr === bl && bl === br) {
+          // Uniform: propagate coarse value to all fine vertices
+          for (let fr = fr0; fr <= fr1; fr++)
+            for (let fc = fc0; fc <= fc1; fc++)
+              vertices[vi(fr, fc)] = tl;
+        } else {
+          mixed.add(cr * coarseCols + cc);
+        }
+      }
+    }
+
+    // Mark fine vertices in mixed coarse cells for sampling.
+    // We mark ALL vertices (even those already set by uniform neighbors)
+    // to ensure accurate boundaries.
+    for (const key of mixed) {
+      const cr = Math.floor(key / coarseCols);
+      const cc = key % coarseCols;
+      const fr0 = cr * COARSE_FACTOR;
+      const fc0 = cc * COARSE_FACTOR;
+      const fr1 = Math.min((cr + 1) * COARSE_FACTOR, fineRows);
+      const fc1 = Math.min((cc + 1) * COARSE_FACTOR, fineCols);
+
+      for (let fr = fr0; fr <= fr1; fr++)
+        for (let fc = fc0; fc <= fc1; fc++) needsFine[vi(fr, fc)] = true;
+    }
+
+    // --- Phase 3: Fine sampling (progressive, raster order) ---
+    let fineRow = 0;
+    const ROWS_PER_BATCH = 5;
 
     function processBatch() {
-      if (id !== computeIdRef.current) return; // cancelled
+      if (id !== computeIdRef.current) return;
 
-      const endRow = Math.min(row + ROWS_PER_BATCH, rows);
-      for (; row < endRow; row++) {
-        for (let col = 0; col < cols; col++) {
-          const x = (col + 0.5) * cellSize;
-          const y = (row + 0.5) * cellSize;
-          const frame: DragFrame = { pointer: Vec2(x, y), pointerStart: ps };
-          try {
-            const result = samplingBehavior(frame);
-            cells.push({ x, y, activePath: result.activePath });
-          } catch {
-            cells.push({ x, y, activePath: "error" });
+      const endRow = Math.min(fineRow + ROWS_PER_BATCH, fineRows + 1);
+      for (; fineRow < endRow; fineRow++) {
+        for (let fc = 0; fc <= fineCols; fc++) {
+          if (needsFine[vi(fineRow, fc)]) {
+            vertices[vi(fineRow, fc)] = sample(
+              fc * FINE_CELL,
+              fineRow * FINE_CELL
+            );
           }
         }
       }
 
-      if (row >= rows) {
-        const colorMap = assignColors(cells.map((c) => c.activePath));
-        setData({ cells, cellSize, colorMap });
+      if (fineRow > fineRows) {
+        finalize();
       } else {
         requestAnimationFrame(processBatch);
       }
     }
 
+    function finalize() {
+      if (id !== computeIdRef.current) return;
+
+      // Collect unique paths
+      const pathSet = new Set<string>();
+      for (const v of vertices) {
+        if (v) pathSet.add(v);
+      }
+
+      const colorMap = assignColors([...pathSet]);
+
+      // Marching squares + smoothing for each region
+      const regions: { activePath: string; svgPath: string; color: string }[] =
+        [];
+      for (const path of pathSet) {
+        const polygons = traceContours(
+          vertices,
+          fineCols,
+          fineRows,
+          FINE_CELL,
+          path
+        );
+        if (polygons.length === 0) continue;
+        const smoothed = polygons.map((p) => smoothPolygon(p));
+        const svgPath = smoothed.map(polygonToSvgPath).join(" ");
+        regions.push({
+          activePath: path,
+          color: colorMap.get(path)!,
+          svgPath,
+        });
+      }
+
+      setData({ regions, colorMap });
+    }
+
     requestAnimationFrame(processBatch);
-  }, [spec, behaviorCtx, pointerStart, width, height, cellSize]);
+  }, [spec, behaviorCtx, pointerStart, width, height]);
 
   return data;
 }
