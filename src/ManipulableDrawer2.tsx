@@ -53,11 +53,13 @@ type SpringState = {
   startTime: number;
 };
 
-type DragState<T> =
+type DragState<T extends object> =
   | { type: "idle"; state: T }
   | {
       type: "dragging";
       behavior: DragBehavior<T>;
+      spec: DragSpec<T>;
+      behaviorCtx: BehaviorContext<T>;
       pointerStart: Vec2;
       draggedId: string;
       result: DragResult<T>;
@@ -74,6 +76,19 @@ type DragState<T> =
       easedProgress: number;
     };
 
+// # Debug info
+
+export type DebugDragInfo<T extends object> =
+  | { type: "idle" }
+  | {
+      type: "dragging";
+      spec: DragSpec<T>;
+      behaviorCtx: BehaviorContext<T>;
+      activePath: string;
+      pointerStart: Vec2;
+      draggedId: string;
+    };
+
 // # Component
 
 interface ManipulableDrawerProps<T extends object> {
@@ -81,6 +96,7 @@ interface ManipulableDrawerProps<T extends object> {
   initialState: T;
   width?: number;
   height?: number;
+  onDebugDragInfo?: (info: DebugDragInfo<T>) => void;
 }
 
 export function ManipulableDrawer<T extends object>({
@@ -88,6 +104,7 @@ export function ManipulableDrawer<T extends object>({
   initialState,
   width,
   height,
+  onDebugDragInfo,
 }: ManipulableDrawerProps<T>) {
   const catchToRenderError = useCatchToRenderError();
 
@@ -98,6 +115,8 @@ export function ManipulableDrawer<T extends object>({
   const dragStateRef = useRef(dragState);
   dragStateRef.current = dragState;
   const pointerRef = useRef<Vec2 | undefined>(undefined);
+  const onDebugDragInfoRef = useRef(onDebugDragInfo);
+  onDebugDragInfoRef.current = onDebugDragInfo;
 
   const [svgElem, setSvgElem] = useState<SVGSVGElement | null>(null);
 
@@ -144,6 +163,14 @@ export function ManipulableDrawer<T extends object>({
         const newState: DragState<T> = { ...ds, result, spring };
         dragStateRef.current = newState;
         setDragState(newState);
+        onDebugDragInfoRef.current?.({
+          type: "dragging",
+          spec: ds.spec,
+          behaviorCtx: ds.behaviorCtx,
+          activePath: result.activePath,
+          pointerStart: ds.pointerStart,
+          draggedId: ds.draggedId,
+        });
       } else if (ds.type === "animating") {
         const now = performance.now();
         const elapsed = now - ds.startTime;
@@ -153,6 +180,7 @@ export function ManipulableDrawer<T extends object>({
           const newState: DragState<T> = { type: "idle", state: ds.nextState };
           dragStateRef.current = newState;
           setDragState(newState);
+          onDebugDragInfoRef.current?.({ type: "idle" });
         } else {
           const newState: DragState<T> = { ...ds, easedProgress };
           dragStateRef.current = newState;
@@ -233,6 +261,7 @@ export function ManipulableDrawer<T extends object>({
         dragStateRef.current = ds;
         setDragState(ds);
       },
+      onDebugDragInfoRef,
     }),
     [catchToRenderError, manipulable, setDragState, setPointerFromEvent]
   );
@@ -293,6 +322,9 @@ type RenderContext<T extends object> = {
   catchToRenderError: CatchToRenderError;
   setPointerFromEvent: (e: globalThis.PointerEvent) => Vec2;
   setDragState: (ds: DragState<T>) => void;
+  onDebugDragInfoRef: React.RefObject<
+    ((info: DebugDragInfo<T>) => void) | undefined
+  >;
 };
 
 function postProcessForInteraction<T extends object>(
@@ -351,10 +383,20 @@ function postProcessForInteraction<T extends object>(
               ctx.setDragState({
                 type: "dragging",
                 behavior,
+                spec: dragSpec,
+                behaviorCtx,
                 pointerStart: pointer,
                 draggedId,
                 result,
                 spring: null,
+              });
+              ctx.onDebugDragInfoRef.current?.({
+                type: "dragging",
+                spec: dragSpec,
+                behaviorCtx,
+                activePath: result.activePath,
+                pointerStart: pointer,
+                draggedId,
               });
             }
           ),
