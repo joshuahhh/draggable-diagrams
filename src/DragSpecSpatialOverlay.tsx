@@ -185,7 +185,6 @@ function traceContours(
           curRow = r,
           curEntry = entryEdge;
 
-        // eslint-disable-next-line no-constant-condition
         while (true) {
           const curCase = caseAt(curRow, curCol);
           const curExits = EXIT_MAP.get(curCase)!;
@@ -315,6 +314,8 @@ export function useOverlayData<T extends object>(
   const [data, setData] = useState<OverlayData | null>(null);
   const computeIdRef = useRef(0);
   const specRef = useRef(spec);
+  const dataRef = useRef(data);
+  dataRef.current = data;
 
   useEffect(() => {
     if (!spec || !behaviorCtx || !pointerStart) {
@@ -323,7 +324,7 @@ export function useOverlayData<T extends object>(
     }
 
     // Only recompute when spec identity changes (new drag)
-    if (spec === specRef.current && data !== null) return;
+    if (spec === specRef.current && dataRef.current !== null) return;
     specRef.current = spec;
 
     const id = ++computeIdRef.current;
