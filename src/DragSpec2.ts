@@ -51,6 +51,7 @@ export type DragSpecWithBackground<T> = {
   type: "with-background";
   foreground: DragSpec<T>;
   background: DragSpec<T>;
+  radius: number;
 };
 
 export type DragSpecAndThen<T> = {
@@ -83,9 +84,10 @@ export function closest<T>(specs: DragSpec<T>[]): DragSpec<T> {
 
 export function withBackground<T>(
   foreground: DragSpec<T>,
-  background: DragSpec<T>
+  background: DragSpec<T>,
+  { radius = 50 }: { radius?: number } = {}
 ): DragSpec<T> {
-  return { type: "with-background", foreground, background };
+  return { type: "with-background", foreground, background, radius };
 }
 
 export function andThen<T>(spec: DragSpec<T>, andThen: T): DragSpec<T> {
@@ -169,10 +171,7 @@ export function dragSpecToBehavior<T extends object>(
       draggedId !== null,
       "Floating drags require the dragged element to have an id"
     );
-    assert(
-      floatHoisted !== null,
-      "Floating drags require floatHoisted"
-    );
+    assert(floatHoisted !== null, "Floating drags require floatHoisted");
     const hoisted = renderStateReadOnly(ctx, spec.state);
     const elementPos = getElementPosition(ctx, hoisted);
     const hasElement = hoisted.byId.has(draggedId);
@@ -213,7 +212,7 @@ export function dragSpecToBehavior<T extends object>(
     const backdropBehavior = dragSpecToBehavior(spec.background, ctx);
     return (frame) => {
       const foregroundResult = foregroundBehavior(frame);
-      if (foregroundResult.distance > 50) {
+      if (foregroundResult.distance > spec.radius) {
         const bgResult = backdropBehavior(frame);
         return { ...bgResult, activePath: `bg/${bgResult.activePath}` };
       }
