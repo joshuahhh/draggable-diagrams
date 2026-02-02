@@ -132,8 +132,8 @@ export function ManipulableDrawer<T extends object>({
 
         // Detect activePath change → start new spring from current display
         if (result.activePath !== ds.result.activePath) {
-          const startHoisted = runSpring(springingFrom, ds.result.rendered);
-          springingFrom = { hoisted: startHoisted, time: performance.now() };
+          const hoisted = runSpring(springingFrom, ds.result.rendered);
+          springingFrom = { hoisted, time: performance.now() };
         }
 
         // Clear expired spring
@@ -268,6 +268,8 @@ export function ManipulableDrawer<T extends object>({
  * Blends a target render with a spring's startHoisted.
  * The target is used as the base (first arg to lerpHoisted) so its
  * non-interpolatable props (like event handlers) are preserved.
+ * Floating elements (prefixed "floating-") are never sprung — they
+ * always show the target's version so they track the cursor.
  */
 function runSpring(
   springingFrom: SpringingFrom | null,
@@ -276,7 +278,18 @@ function runSpring(
   if (!springingFrom) return target;
   const elapsed = performance.now() - springingFrom.time;
   const t = d3Ease.easeCubicOut(Math.min(elapsed / SPRING_DURATION, 1));
-  return lerpHoisted(target, springingFrom.hoisted, 1 - t);
+  const lerped = lerpHoisted(target, springingFrom.hoisted, 1 - t);
+  // Replace floating elements with the target's version so they
+  // track the cursor without spring lag.
+  for (const key of lerped.byId.keys()) {
+    if (key.startsWith("floating-")) {
+      const targetVal = target.byId.get(key);
+      if (targetVal) {
+        lerped.byId.set(key, targetVal);
+      }
+    }
+  }
+  return lerped;
 }
 
 function renderReadOnly<T extends object>(
