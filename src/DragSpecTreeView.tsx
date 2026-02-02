@@ -12,7 +12,12 @@ export function DragSpecTreeView<T>({
 }) {
   return (
     <div className="text-xs font-mono">
-      <SpecNode spec={spec} activePath={activePath} pathPrefix="" colorMap={colorMap ?? null} />
+      <SpecNode
+        spec={spec}
+        activePath={activePath}
+        pathPrefix=""
+        colorMap={colorMap ?? null}
+      />
     </div>
   );
 }
@@ -48,7 +53,9 @@ function SpecNode<T>({
   if (spec.type === "floating") {
     const active = activePath === "floating";
     const fullPath = pathPrefix + "floating";
-    return <Box label="floating" active={active} color={colorMap?.get(fullPath)} />;
+    return (
+      <Box label="floating" active={active} color={colorMap?.get(fullPath)} />
+    );
   } else if (spec.type === "vary") {
     const active = activePath === "vary";
     const fullPath = pathPrefix + "vary";
@@ -57,7 +64,11 @@ function SpecNode<T>({
       return typeof last === "string" ? last : String(last);
     });
     return (
-      <Box label={`vary [${paramNames.join(", ")}]`} active={active} color={colorMap?.get(fullPath)} />
+      <Box
+        label={`vary [${paramNames.join(", ")}]`}
+        active={active}
+        color={colorMap?.get(fullPath)}
+      />
     );
   } else if (spec.type === "closest") {
     let activeIdx: number | null = null;
@@ -73,10 +84,26 @@ function SpecNode<T>({
     const active = activeIdx !== null;
     return (
       <Box label="closest" active={active}>
-        <div style={{ display: "flex", flexDirection: "row", gap: 4, flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            gap: 4,
+            flexWrap: "wrap",
+          }}
+        >
           {spec.specs.map((child, i) => (
-            <div key={i} style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <div style={{ fontSize: 9, color: "rgb(148, 163, 184)", paddingLeft: 2 }}>
+            <div
+              key={i}
+              style={{ display: "flex", flexDirection: "column", gap: 1 }}
+            >
+              <div
+                style={{
+                  fontSize: 9,
+                  color: "rgb(148, 163, 184)",
+                  paddingLeft: 2,
+                }}
+              >
                 {i}
               </div>
               <SpecNode
@@ -95,17 +122,28 @@ function SpecNode<T>({
     let bgPath: string | null = null;
     if (activePath !== null) {
       if (activePath.startsWith("fg/")) fgPath = activePath.slice("fg/".length);
-      else if (activePath.startsWith("bg/")) bgPath = activePath.slice("bg/".length);
+      else if (activePath.startsWith("bg/"))
+        bgPath = activePath.slice("bg/".length);
     }
     const active = fgPath !== null || bgPath !== null;
     return (
       <Box label="withBackground" active={active}>
         <div style={{ display: "flex", flexDirection: "row", gap: 4 }}>
           <Slot label="fg">
-            <SpecNode spec={spec.foreground} activePath={fgPath} pathPrefix={pathPrefix + "fg/"} colorMap={colorMap} />
+            <SpecNode
+              spec={spec.foreground}
+              activePath={fgPath}
+              pathPrefix={pathPrefix + "fg/"}
+              colorMap={colorMap}
+            />
           </Slot>
           <Slot label="bg">
-            <SpecNode spec={spec.background} activePath={bgPath} pathPrefix={pathPrefix + "bg/"} colorMap={colorMap} />
+            <SpecNode
+              spec={spec.background}
+              activePath={bgPath}
+              pathPrefix={pathPrefix + "bg/"}
+              colorMap={colorMap}
+            />
           </Slot>
         </div>
       </Box>
@@ -113,13 +151,23 @@ function SpecNode<T>({
   } else if (spec.type === "and-then") {
     return (
       <Box label="andThen" active={activePath !== null}>
-        <SpecNode spec={spec.spec} activePath={activePath} pathPrefix={pathPrefix} colorMap={colorMap} />
+        <SpecNode
+          spec={spec.spec}
+          activePath={activePath}
+          pathPrefix={pathPrefix}
+          colorMap={colorMap}
+        />
       </Box>
     );
   } else if (spec.type === "with-distance") {
     return (
       <Box label="withDistance" active={activePath !== null}>
-        <SpecNode spec={spec.spec} activePath={activePath} pathPrefix={pathPrefix} colorMap={colorMap} />
+        <SpecNode
+          spec={spec.spec}
+          activePath={activePath}
+          pathPrefix={pathPrefix}
+          colorMap={colorMap}
+        />
       </Box>
     );
   } else {
@@ -145,13 +193,9 @@ function Box({
   const bg = color
     ? colorToAlpha(color, 0.25)
     : highlighted
-      ? ACTIVE_BG
-      : INACTIVE_BG;
-  const border = color
-    ? color
-    : highlighted
-      ? ACTIVE_BORDER
-      : INACTIVE_BORDER;
+    ? ACTIVE_BG
+    : INACTIVE_BG;
+  const border = color ? color : highlighted ? ACTIVE_BORDER : INACTIVE_BORDER;
   const borderWidth = highlighted ? 2 : 1;
 
   return (
@@ -179,7 +223,13 @@ function Box({
   );
 }
 
-function Slot({ label, children }: { label: string; children: React.ReactNode }) {
+function Slot({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
       <div style={{ fontSize: 9, color: "rgb(148, 163, 184)", paddingLeft: 2 }}>
