@@ -277,6 +277,22 @@ export function hoistedPrefixIds(
   return { byId: prefixedById, descendents: null };
 }
 
+export function hoistedStripIdPrefix(
+  hoisted: HoistedSvgx,
+  prefix: string
+): HoistedSvgx {
+  const strippedById = new Map<string, Svgx>();
+  for (const [key, element] of hoisted.byId.entries()) {
+    if (key.startsWith(prefix)) {
+      const newId = key.slice(prefix.length);
+      strippedById.set(newId, cloneElement(element, { id: newId }));
+    } else {
+      strippedById.set(key, element);
+    }
+  }
+  return { byId: strippedById, descendents: null };
+}
+
 export function hoistedShiftZIndices(
   hoisted: HoistedSvgx,
   shift: number

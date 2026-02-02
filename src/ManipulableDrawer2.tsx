@@ -31,9 +31,7 @@ import {
   getAccumulatedTransform,
   hoistSvg,
   hoistedExtract,
-  hoistedMerge,
-  hoistedPrefixIds,
-  hoistedShiftZIndices,
+  hoistedStripIdPrefix,
 } from "./svgx/hoist";
 import { lerpHoisted } from "./svgx/lerp";
 import { assignPaths, getPath } from "./svgx/path";
@@ -49,7 +47,7 @@ import {
 
 // # Engine state machine
 
-const SPRING_DURATION = 200; // ms
+const SPRING_DURATION = 300; // ms
 
 type SpringState = {
   snapshot: HoistedSvgx;
@@ -57,7 +55,7 @@ type SpringState = {
 };
 
 type DragState<T extends object> =
-  | { type: "idle"; state: T }
+  | { type: "idle"; state: T; spring: SpringState | null }
   | {
       type: "dragging";
       behavior: DragBehavior<T>;
@@ -67,16 +65,6 @@ type DragState<T extends object> =
       draggedId: string | null;
       result: DragResult<T>;
       spring: SpringState | null;
-    }
-  | {
-      type: "animating";
-      startHoisted: HoistedSvgx;
-      targetHoisted: HoistedSvgx;
-      easing: (t: number) => number;
-      startTime: number;
-      duration: number;
-      nextState: T;
-      easedProgress: number;
     };
 
 // # Debug info
@@ -114,6 +102,7 @@ export function ManipulableDrawer<T extends object>({
   const [dragState, setDragState] = useState<DragState<T>>({
     type: "idle",
     state: initialState,
+    spring: null,
   });
   const dragStateRef = useRef(dragState);
   dragStateRef.current = dragState;
@@ -134,7 +123,7 @@ export function ManipulableDrawer<T extends object>({
     [svgElem]
   );
 
-  // Animation loop: update dragging and animating states each frame
+  // Animation loop: update dragging states and spring decay each frame
   useAnimationLoop(
     useCallback(() => {
       const ds = dragStateRef.current;
@@ -174,18 +163,14 @@ export function ManipulableDrawer<T extends object>({
           pointerStart: ds.pointerStart,
           draggedId: ds.draggedId,
         });
-      } else if (ds.type === "animating") {
-        const now = performance.now();
-        const elapsed = now - ds.startTime;
-        const progress = Math.min(elapsed / ds.duration, 1);
-        const easedProgress = ds.easing(progress);
-        if (progress >= 1) {
-          const newState: DragState<T> = { type: "idle", state: ds.nextState };
+      } else if (ds.type === "idle" && ds.spring) {
+        if (performance.now() - ds.spring.startTime >= SPRING_DURATION) {
+          const newState: DragState<T> = { ...ds, spring: null };
           dragStateRef.current = newState;
           setDragState(newState);
-          onDebugDragInfoRef.current?.({ type: "idle" });
         } else {
-          const newState: DragState<T> = { ...ds, easedProgress };
+          // Force re-render so spring progress advances
+          const newState: DragState<T> = { ...ds };
           dragStateRef.current = newState;
           setDragState(newState);
         }
@@ -219,43 +204,24 @@ export function ManipulableDrawer<T extends object>({
         const result = ds.behavior(frame);
         const dropState = result.dropState;
 
-        // Animate from what's currently displayed (with spring blending)
-        const startHoisted = blendWithSpring(result.rendered, ds.spring);
-        let targetHoisted = renderReadOnly(manipulable, {
-          state: dropState,
-          draggedId: null,
-          ghostId: null,
-        });
+        // Capture the current display as the spring snapshot
+        const snapshot = blendWithSpring(result.rendered, ds.spring);
 
-        // If the dragged element has an id, re-prefix it with "floating-"
-        // in the target so that lerpHoisted can match ids and interpolate
-        // position instead of crossfading.
-        if (ds.draggedId && targetHoisted.byId.has(ds.draggedId)) {
-          const { extracted, remaining } = hoistedExtract(
-            targetHoisted,
-            ds.draggedId
-          );
-          targetHoisted = hoistedMerge(
-            remaining,
-            pipe(
-              extracted,
-              (h) => hoistedPrefixIds(h, "floating-"),
-              (h) => hoistedShiftZIndices(h, 1000000)
-            )
-          );
-        }
+        // Strip "floating-" prefix from ids so they match the idle render
+        // for positional interpolation (not crossfade).
+        const strippedSnapshot = hoistedStripIdPrefix(snapshot, "floating-");
+
         const newState: DragState<T> = {
-          type: "animating",
-          startHoisted,
-          targetHoisted,
-          easing: d3Ease.easeCubicInOut,
-          startTime: performance.now(),
-          duration: 300,
-          nextState: dropState,
-          easedProgress: 0,
+          type: "idle",
+          state: dropState,
+          spring: {
+            snapshot: strippedSnapshot,
+            startTime: performance.now(),
+          },
         };
         dragStateRef.current = newState;
         setDragState(newState);
+        onDebugDragInfoRef.current?.({ type: "idle" });
       }
     );
 
@@ -299,8 +265,6 @@ export function ManipulableDrawer<T extends object>({
         <DrawIdleMode dragState={dragState} ctx={renderCtx} />
       ) : dragState.type === "dragging" ? (
         <DrawDraggingMode dragState={dragState} />
-      ) : dragState.type === "animating" ? (
-        <DrawAnimatingMode dragState={dragState} />
       ) : (
         assertNever(dragState)
       )}
@@ -316,12 +280,18 @@ function springProgress(spring: SpringState): number {
   return d3Ease.easeCubicOut(t);
 }
 
+/**
+ * Blends a target render with a spring snapshot.
+ * The target is used as the base (first arg to lerpHoisted) so its
+ * non-interpolatable props (like event handlers) are preserved.
+ */
 function blendWithSpring(
-  rendered: HoistedSvgx,
+  target: HoistedSvgx,
   spring: SpringState | null
 ): HoistedSvgx {
-  if (!spring) return rendered;
-  return lerpHoisted(spring.snapshot, rendered, springProgress(spring));
+  if (!spring) return target;
+  const t = springProgress(spring);
+  return lerpHoisted(target, spring.snapshot, 1 - t);
 }
 
 function renderReadOnly<T extends object>(
@@ -454,36 +424,25 @@ const DrawIdleMode = memoGeneric(
               ? (newState as (prev: T) => T)(dragState.state)
               : newState;
           if (immediate) {
-            ctx.setDragState({ type: "idle", state: resolved });
+            ctx.setDragState({ type: "idle", state: resolved, spring: null });
           } else {
-            const startHoisted = renderReadOnly(ctx.manipulable, {
+            const snapshot = renderReadOnly(ctx.manipulable, {
               state: dragState.state,
               draggedId: null,
               ghostId: null,
             });
-            const targetHoisted = renderReadOnly(ctx.manipulable, {
-              state: resolved,
-              draggedId: null,
-              ghostId: null,
-            });
             ctx.setDragState({
-              type: "animating",
-              startHoisted,
-              targetHoisted,
-              easing: d3Ease.easeCubicInOut,
-              startTime: performance.now(),
-              duration: 300,
-              nextState: resolved,
-              easedProgress: 0,
+              type: "idle",
+              state: resolved,
+              spring: { snapshot, startTime: performance.now() },
             });
           }
         }
       ),
     });
 
-    return drawHoisted(
-      postProcessForInteraction(content, dragState.state, ctx)
-    );
+    const hoisted = postProcessForInteraction(content, dragState.state, ctx);
+    return drawHoisted(blendWithSpring(hoisted, dragState.spring));
   }
 );
 
@@ -498,21 +457,5 @@ const DrawDraggingMode = memoGeneric(
       dragState.spring
     );
     return drawHoisted(rendered);
-  }
-);
-
-const DrawAnimatingMode = memoGeneric(
-  <T extends object>({
-    dragState,
-  }: {
-    dragState: DragState<T> & { type: "animating" };
-  }) => {
-    return drawHoisted(
-      lerpHoisted(
-        dragState.startHoisted,
-        dragState.targetHoisted,
-        dragState.easedProgress
-      )
-    );
   }
 );
