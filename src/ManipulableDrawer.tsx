@@ -1,3 +1,4 @@
+import { PrettyPrint } from "@joshuahhh/pretty-print";
 import * as d3Ease from "d3-ease";
 import _ from "lodash";
 import React, {
@@ -36,7 +37,6 @@ import {
 import { minimize } from "./math/minimize";
 import { Vec2 } from "./math/vec2";
 import { getAtPath, setAtPath } from "./paths";
-import { PrettyPrint } from "@joshuahhh/pretty-print";
 import { Svgx, updatePropsDownTree } from "./svgx";
 import { path, translate } from "./svgx/helpers";
 import {
@@ -209,7 +209,11 @@ export function ManipulableDrawer<T extends object>({
     const onPointerUp = catchToRenderError((e: globalThis.PointerEvent) => {
       if (pausedRef.current) return;
       const pointer = setPointerFromEvent(e);
-      const newState = handlePointerUp(dragStateRef.current, dragContext, pointer);
+      const newState = handlePointerUp(
+        dragStateRef.current,
+        dragContext,
+        pointer
+      );
       dragStateRef.current = newState;
       setDragState(newState);
     });
@@ -882,8 +886,7 @@ function updateDragState<T extends object>(
     );
     let exitPointless: RenderedExit<T> | undefined = closestPoint;
     // TODO: figure out how to control this radius (overlap?)
-    const useBackdrop =
-      !closestPoint || pointer.dist(pos(closestPoint)) > 50;
+    const useBackdrop = !closestPoint || pointer.dist(pos(closestPoint)) > 50;
     // Both paths render in the same structure: spring on background
     // (element extracted) + "floating-" prefixed dragged element on
     // top. This keeps the hoisted trees structurally compatible so
@@ -980,7 +983,8 @@ function updateDragState<T extends object>(
     }
     const paramsTransitionMs = 200;
     const paramsSettled =
-      isInParams && paramsEnteredAt !== undefined &&
+      isInParams &&
+      paramsEnteredAt !== undefined &&
       now - paramsEnteredAt > paramsTransitionMs;
 
     const newBackgroundSpringState = paramsSettled

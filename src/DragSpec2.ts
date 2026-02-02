@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { SVGProps, cloneElement } from "react";
 import { Manipulable, unsafeDrag } from "./manipulable2";
 import { minimize } from "./math/minimize";
 import { Vec2 } from "./math/vec2";
@@ -40,6 +41,7 @@ export type DragSpec<T> =
 export type DragSpecFloating<T> = {
   type: "floating";
   state: T;
+  ghost: SVGProps<SVGElement> | undefined;
 };
 
 export type DragSpecClosest<T> = {
@@ -74,8 +76,18 @@ export type DragSpecWithDistance<T> = {
 
 // ## Constructors
 
-export function floating<T>(state: T): DragSpec<T> {
-  return { type: "floating", state };
+export function floating<T>(
+  state: T,
+  { ghost }: { ghost?: SVGProps<SVGElement> | undefined } = {}
+): DragSpec<T> {
+  return { type: "floating", state, ghost };
+}
+
+export function floatings<T>(
+  states: T[],
+  { ghost }: { ghost?: SVGProps<SVGElement> | undefined } = {}
+): DragSpec<T>[] {
+  return states.map((s) => floating(s, { ghost }));
 }
 
 export function closest<T>(specs: DragSpec<T>[]): DragSpec<T> {
@@ -175,9 +187,18 @@ export function dragSpecToBehavior<T extends object>(
     const hoisted = renderStateReadOnly(ctx, spec.state);
     const elementPos = getElementPosition(ctx, hoisted);
     const hasElement = hoisted.byId.has(draggedId);
-    const backdrop = hasElement
-      ? hoistedExtract(hoisted, draggedId).remaining
-      : hoisted;
+    let backdrop: HoistedSvgx;
+    if (!hasElement) {
+      backdrop = hoisted;
+    } else if (spec.ghost !== undefined) {
+      const ghost = cloneElement(hoisted.byId.get(draggedId)!, spec.ghost);
+      backdrop = {
+        byId: new Map(hoisted.byId).set(draggedId, ghost),
+        descendents: hoisted.descendents,
+      };
+    } else {
+      backdrop = hoistedExtract(hoisted, draggedId).remaining;
+    }
 
     return (frame) => {
       const floatPositioned = hoistedTransform(

@@ -102,7 +102,7 @@ export namespace InsertAndRemove {
               });
 
               return withBackground(
-                closest(statesWith.map(floating)),
+                closest(statesWith.map((s) => floating(s))),
                 floating(stateWithout)
               );
             }),
@@ -136,7 +136,8 @@ export namespace InsertAndRemove {
 
               return withBackground(
                 closest([
-                  ...rearrangeStates.map(floating),
+                  ...rearrangeStates.map((s) => floating(s)),
+                  // ...floatings(rearrangeStates),
                   andThen(floating(deleteState), postDeleteState),
                 ]),
                 floating(stateWithout)

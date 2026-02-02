@@ -34,7 +34,7 @@ export namespace PermFloating {
                   draft.perm.splice(idx, 0, p);
                 });
                 return withBackground(
-                  closest(statesWith.map(floating)),
+                  closest(statesWith.map((s) => floating(s))),
                   floating(stateWithout)
                 );
               })}

@@ -79,7 +79,7 @@ export namespace ListOfListsSizes {
                   })
                 );
                 return withBackground(
-                  closest(statesWith.map(floating)),
+                  closest(statesWith.map((s) => floating(s))),
                   floating(stateWithout)
                 );
               })}
@@ -132,7 +132,7 @@ export namespace ListOfListsSizes {
                         newRow.items.splice(newColIdx, 0, p);
                       });
                       return withBackground(
-                        closest(statesWith.map(floating)),
+                        closest(statesWith.map((s) => floating(s))),
                         andThen(floating(stateWithout), state)
                       );
                     })}

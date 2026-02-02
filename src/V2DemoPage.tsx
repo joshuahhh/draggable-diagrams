@@ -4,7 +4,10 @@ import { Angle } from "./demo-diagrams-2/angle";
 import { AngleViaTransform } from "./demo-diagrams-2/angle-via-transform";
 import { Bezier } from "./demo-diagrams-2/bezier";
 import { CanvasOfLists } from "./demo-diagrams-2/canvas-of-lists";
+import { CanvasOfListsNested } from "./demo-diagrams-2/canvas-of-lists-nested";
 import { Clock } from "./demo-diagrams-2/clock";
+import { Dragon } from "./demo-diagrams-2/dragon";
+import { Hanoi } from "./demo-diagrams-2/hanoi";
 import { InsertAndRemove } from "./demo-diagrams-2/insert-and-remove";
 import { ListOfLists } from "./demo-diagrams-2/list-of-lists";
 import { ListOfListsSizes } from "./demo-diagrams-2/list-of-lists-sizes";
@@ -67,6 +70,14 @@ export function V2DemoPage() {
         height={250}
       />
 
+      <h2 className="text-xl font-semibold mt-8 mb-2">dragon</h2>
+      <Drawer
+        manipulable={Dragon.manipulable}
+        initialState={Dragon.state1}
+        width={400}
+        height={250}
+      />
+
       {/* --- floating-based demos --- */}
 
       <h2 className="text-xl font-semibold mt-8 mb-2">perm-floating</h2>
@@ -99,6 +110,24 @@ export function V2DemoPage() {
         initialState={CanvasOfLists.state1}
         width={600}
         height={400}
+      />
+
+      <h2 className="text-xl font-semibold mt-8 mb-2">
+        canvas-of-lists-nested
+      </h2>
+      <Drawer
+        manipulable={CanvasOfListsNested.manipulable}
+        initialState={CanvasOfListsNested.state1}
+        width={600}
+        height={400}
+      />
+
+      <h2 className="text-xl font-semibold mt-8 mb-2">hanoi</h2>
+      <Drawer
+        manipulable={Hanoi.manipulable}
+        initialState={Hanoi.state3}
+        width={600}
+        height={200}
       />
 
       <h2 className="text-xl font-semibold mt-8 mb-2">insert-and-remove</h2>

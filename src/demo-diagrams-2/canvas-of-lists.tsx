@@ -155,7 +155,7 @@ export namespace CanvasOfLists {
                       };
                     });
                     return withBackground(
-                      closest(statesWith.map(floating)),
+                      closest(statesWith.map((s) => floating(s))),
                       vary(
                         stateWithNewRow,
                         ["rows", newRowId, "x"],
