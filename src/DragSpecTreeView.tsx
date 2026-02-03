@@ -64,10 +64,8 @@ function SpecNode<T>({
       />
     );
   } else if (spec.type === "closest") {
-    const active =
-      activePath !== null && activePath.startsWith(path + "closest/");
     return (
-      <Box label="closest" active={active}>
+      <Box label="closest">
         <div
           style={{
             display: "flex",
@@ -102,12 +100,8 @@ function SpecNode<T>({
       </Box>
     );
   } else if (spec.type === "with-background") {
-    const active =
-      activePath !== null &&
-      (activePath.startsWith(path + "fg/") ||
-        activePath.startsWith(path + "bg/"));
     return (
-      <Box label="withBackground" active={active}>
+      <Box label="withBackground">
         <div style={{ display: "flex", flexDirection: "row", gap: 4 }}>
           <Slot label="fg">
             <SpecNode
@@ -130,10 +124,7 @@ function SpecNode<T>({
     );
   } else if (spec.type === "and-then") {
     return (
-      <Box
-        label="andThen"
-        active={activePath !== null && activePath.startsWith(path)}
-      >
+      <Box label="andThen">
         <SpecNode
           spec={spec.spec}
           activePath={activePath}
@@ -144,10 +135,7 @@ function SpecNode<T>({
     );
   } else if (spec.type === "with-distance") {
     return (
-      <Box
-        label="withDistance"
-        active={activePath !== null && activePath.startsWith(path)}
-      >
+      <Box label="withDistance">
         <SpecNode
           spec={spec.spec}
           activePath={activePath}
@@ -168,21 +156,18 @@ function Box({
   children,
 }: {
   label: string;
-  active: boolean;
+  active?: boolean;
   color?: string;
   children?: React.ReactNode;
 }) {
-  const isLeaf = !children;
-  const highlighted = active && isLeaf;
-
   // If a color from the spatial overlay is provided, use it for the leaf
   const bg = color
     ? colorToAlpha(color, 0.25)
-    : highlighted
+    : active
     ? ACTIVE_BG
     : INACTIVE_BG;
-  const border = color ? color : highlighted ? ACTIVE_BORDER : INACTIVE_BORDER;
-  const borderWidth = highlighted ? 2 : 1;
+  const border = color ? color : active ? ACTIVE_BORDER : INACTIVE_BORDER;
+  const borderWidth = active ? 2 : 1;
 
   return (
     <div
@@ -196,8 +181,8 @@ function Box({
     >
       <div
         style={{
-          color: highlighted ? "rgb(161, 98, 7)" : "rgb(100, 116, 139)",
-          fontWeight: highlighted ? 600 : 400,
+          color: active ? "rgb(161, 98, 7)" : "rgb(100, 116, 139)",
+          fontWeight: active ? 600 : 400,
           marginBottom: children ? 3 : 0,
           fontSize: 10,
         }}
