@@ -279,10 +279,10 @@ function runSpring(
   const elapsed = performance.now() - springingFrom.time;
   const t = d3Ease.easeCubicOut(Math.min(elapsed / SPRING_DURATION, 1));
   const lerped = lerpHoisted(target, springingFrom.hoisted, 1 - t);
-  // Replace floating elements with the target's version so they
+  // Replace non-transitioning elements with the target's version so they
   // track the cursor without spring lag.
-  for (const key of lerped.byId.keys()) {
-    if (key.startsWith("floating-")) {
+  for (const [key, element] of lerped.byId.entries()) {
+    if (element.props["data-transition"] === false) {
       const targetVal = target.byId.get(key);
       if (targetVal) {
         lerped.byId.set(key, targetVal);

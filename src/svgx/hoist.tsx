@@ -1,4 +1,4 @@
-import { cloneElement, Fragment } from "react";
+import React, { cloneElement, Fragment } from "react";
 import { Svgx, updateElement, updatePropsDownTree } from ".";
 import { assert } from "../utils";
 import { findByPath } from "./path";
@@ -308,6 +308,17 @@ export function hoistedShiftZIndices(
     shiftedById.set(key, shiftedElement);
   }
   return { ...hoisted, byId: shiftedById };
+}
+
+export function hoistedSetAttributes(
+  hoisted: HoistedSvgx,
+  attrs: Partial<React.SVGProps<SVGElement>>
+): HoistedSvgx {
+  const newById = new Map<string, Svgx>();
+  for (const [key, element] of hoisted.byId.entries()) {
+    newById.set(key, cloneElement(element, attrs));
+  }
+  return { ...hoisted, byId: newById };
 }
 
 export function findByPathInHoisted(

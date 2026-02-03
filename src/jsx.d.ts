@@ -22,5 +22,6 @@ declare module "react" {
     "data-on-drag"?: OnDragPropValue<any> | OnDragPropValueV2<any> | Falsey;
 
     "data-z-index"?: number;
+    "data-transition"?: boolean;
   }
 }

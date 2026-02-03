@@ -14,6 +14,7 @@ import {
   hoistedExtract,
   hoistedMerge,
   hoistedPrefixIds,
+  hoistedSetAttributes,
   hoistedShiftZIndices,
   hoistedTransform,
 } from "./svgx/hoist";
@@ -229,6 +230,7 @@ export function dragSpecToBehavior<T extends object>(
         pipe(
           floatPositioned,
           (h) => hoistedPrefixIds(h, "floating-"),
+          (h) => hoistedSetAttributes(h, { "data-transition": false }),
           (h) => hoistedShiftZIndices(h, 1000000)
         )
       );
