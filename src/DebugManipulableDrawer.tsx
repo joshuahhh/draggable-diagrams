@@ -13,15 +13,16 @@ export function DebugManipulableDrawer<T extends object>({
   initialState,
   width,
   height,
+  showTree,
+  showOverlay,
 }: {
   manipulable: Manipulable<T>;
   initialState: T;
   width: number;
   height: number;
+  showTree: boolean;
+  showOverlay: boolean;
 }) {
-  const [showTree, setShowTree] = useState(true);
-  const [showOverlay, setShowOverlay] = useState(true);
-
   const [debugInfo, setDebugInfo] = useState<DebugDragInfo<T>>({
     type: "idle",
   });
@@ -40,24 +41,6 @@ export function DebugManipulableDrawer<T extends object>({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex gap-3 text-xs text-slate-600 select-none">
-        <label className="flex items-center gap-1 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showTree}
-            onChange={(e) => setShowTree(e.target.checked)}
-          />
-          Spec tree
-        </label>
-        <label className="flex items-center gap-1 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showOverlay}
-            onChange={(e) => setShowOverlay(e.target.checked)}
-          />
-          Spatial overlay
-        </label>
-      </div>
       <div className="flex gap-4 items-start">
         <div className="relative">
           <ManipulableDrawer
