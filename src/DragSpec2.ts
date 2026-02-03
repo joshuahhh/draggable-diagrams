@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { SVGProps, cloneElement } from "react";
 import { Manipulable, unsafeDrag } from "./manipulable2";
+import { Delaunay } from "./math/delaunay";
 import { minimize } from "./math/minimize";
 import { Vec2 } from "./math/vec2";
 import { PathIn, getAtPath, setAtPath } from "./paths";
@@ -17,6 +18,7 @@ import {
   hoistedShiftZIndices,
   hoistedTransform,
 } from "./svgx/hoist";
+import { lerpHoisted, lerpHoisted3 } from "./svgx/lerp";
 import { assignPaths, findByPath } from "./svgx/path";
 import { localToGlobal, parseTransform } from "./svgx/transform";
 import { assert, assertNever, pipe, throwError } from "./utils";
@@ -26,7 +28,7 @@ import { assert, assertNever, pipe, throwError } from "./utils";
 // v2 drag spec: a composable algebra for floating + params drags.
 // Plain data, no classes. Combinators are functions that produce new specs.
 //
-// Not in scope (yet): span/manifold stuff.
+// Now includes span/manifold support.
 
 // ## Data representation
 
@@ -37,7 +39,8 @@ export type DragSpec<T> =
   | DragSpecWithBackground<T>
   | DragSpecAndThen<T>
   | DragSpecVary<T>
-  | DragSpecWithDistance<T>;
+  | DragSpecWithDistance<T>
+  | DragSpecSpan<T>;
 
 export type DragSpecJust<T> = {
   type: "just";
@@ -78,6 +81,11 @@ export type DragSpecWithDistance<T> = {
   type: "with-distance";
   spec: DragSpec<T>;
   f: (distance: number) => number;
+};
+
+export type DragSpecSpan<T> = {
+  type: "span";
+  states: T[];
 };
 
 // ## Constructors
@@ -128,6 +136,11 @@ export function withDistance<T>(
   f: (distance: number) => number
 ): DragSpec<T> {
   return { type: "with-distance", spec, f };
+}
+
+export function span<T>(states: T[]): DragSpec<T> {
+  assert(states.length > 0, "span requires at least one state");
+  return { type: "span", states };
 }
 
 // # Behavior
@@ -323,6 +336,53 @@ export function dragSpecToBehavior<T extends object>(
       const result = subBehavior(frame);
       const scaledDistance = spec.f(result.distance);
       return { ...result, distance: scaledDistance };
+    };
+  } else if (spec.type === "span") {
+    const renderedStates = spec.states.map((state) => ({
+      state,
+      hoisted: renderStateReadOnly(ctx, state),
+    }));
+    const positions = renderedStates.map((rs) =>
+      getElementPosition(ctx, rs.hoisted)
+    );
+    const delaunay = new Delaunay(positions);
+
+    return (frame) => {
+      const projection = delaunay.projectOntoConvexHull(frame.pointer);
+
+      let rendered: HoistedSvgx;
+      if (projection.type === "vertex") {
+        rendered = renderedStates[projection.ptIdx].hoisted;
+      } else if (projection.type === "edge") {
+        rendered = lerpHoisted(
+          renderedStates[projection.ptIdx0].hoisted,
+          renderedStates[projection.ptIdx1].hoisted,
+          projection.t
+        );
+      } else {
+        rendered = lerpHoisted3(
+          renderedStates[projection.ptIdx0].hoisted,
+          renderedStates[projection.ptIdx1].hoisted,
+          renderedStates[projection.ptIdx2].hoisted,
+          projection.barycentric
+        );
+      }
+
+      // Drop state: closest rendered state by pointer distance
+      const closestIdx = positions.reduce(
+        (bestIdx, pos, idx) =>
+          pos.dist(frame.pointer) < positions[bestIdx].dist(frame.pointer)
+            ? idx
+            : bestIdx,
+        0
+      );
+
+      return {
+        rendered,
+        dropState: renderedStates[closestIdx].state,
+        distance: projection.dist,
+        activePath: "span",
+      };
     };
   } else {
     assertNever(spec);

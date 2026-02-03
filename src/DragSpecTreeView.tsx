@@ -148,6 +148,16 @@ function SpecNode<T>({
         />
       </Box>
     );
+  } else if (spec.type === "span") {
+    const fullPath = path + "span";
+    const active = activePath === fullPath;
+    return (
+      <Box
+        label={`span [${spec.states.length}]`}
+        active={active}
+        color={colorMap?.get(fullPath)}
+      />
+    );
   } else {
     assertNever(spec);
   }
