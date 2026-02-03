@@ -160,14 +160,13 @@ function Box({
   color?: string;
   children?: React.ReactNode;
 }) {
-  // If a color from the spatial overlay is provided, use it for the leaf
   const bg = color
-    ? colorToAlpha(color, 0.25)
+    ? colorToAlpha(color, 0.15)
     : active
     ? ACTIVE_BG
     : INACTIVE_BG;
   const border = color ? color : active ? ACTIVE_BORDER : INACTIVE_BORDER;
-  const borderWidth = active ? 2 : 1;
+  const borderWidth = active && !color ? 2 : 1;
 
   return (
     <div
@@ -177,11 +176,14 @@ function Box({
         borderRadius: 6,
         padding: "4px 6px",
         transition: "background 150ms, border-color 150ms",
+        ...(active && color
+          ? { outline: `2px solid black`, outlineOffset: 1 }
+          : {}),
       }}
     >
       <div
         style={{
-          color: active ? "rgb(161, 98, 7)" : "rgb(100, 116, 139)",
+          color: active && !color ? "rgb(161, 98, 7)" : "rgb(100, 116, 139)",
           fontWeight: active ? 600 : 400,
           marginBottom: children ? 3 : 0,
           fontSize: 10,

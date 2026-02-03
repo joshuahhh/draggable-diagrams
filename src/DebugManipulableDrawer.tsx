@@ -1,12 +1,12 @@
 import { useState } from "react";
+import {
+  OverlayLegend,
+  SpatialOverlaySvg,
+  useOverlayData,
+} from "./DragSpecSpatialOverlay";
+import { DragSpecTreeView } from "./DragSpecTreeView";
 import { DebugDragInfo, ManipulableDrawer } from "./ManipulableDrawer2";
 import { Manipulable } from "./manipulable2";
-import { DragSpecTreeView } from "./DragSpecTreeView";
-import {
-  useOverlayData,
-  SpatialOverlaySvg,
-  OverlayLegend,
-} from "./DragSpecSpatialOverlay";
 
 export function DebugManipulableDrawer<T extends object>({
   manipulable,
@@ -29,7 +29,9 @@ export function DebugManipulableDrawer<T extends object>({
   const overlayData = useOverlayData(
     showOverlay && debugInfo.type === "dragging" ? debugInfo.spec : null,
     showOverlay && debugInfo.type === "dragging" ? debugInfo.behaviorCtx : null,
-    showOverlay && debugInfo.type === "dragging" ? debugInfo.pointerStart : null,
+    showOverlay && debugInfo.type === "dragging"
+      ? debugInfo.pointerStart
+      : null,
     width,
     height
   );
@@ -94,7 +96,9 @@ export function DebugManipulableDrawer<T extends object>({
           </div>
         )}
       </div>
-      {showOverlay && overlayData && <OverlayLegend data={overlayData} />}
+      {showOverlay && !showTree && overlayData && (
+        <OverlayLegend data={overlayData} />
+      )}
     </div>
   );
 }
