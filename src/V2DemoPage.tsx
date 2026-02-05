@@ -14,6 +14,7 @@ import { Dragon } from "./demo-diagrams-2/dragon";
 import { GridPoly } from "./demo-diagrams-2/grid-poly";
 import { Hanoi } from "./demo-diagrams-2/hanoi";
 import { InsertAndRemove } from "./demo-diagrams-2/insert-and-remove";
+import { Tiles } from "./demo-diagrams-2/tiles";
 import { ListOfLists } from "./demo-diagrams-2/list-of-lists";
 import { ListOfListsSizes } from "./demo-diagrams-2/list-of-lists-sizes";
 import { MultiCirclePoints } from "./demo-diagrams-2/multi-circle-points";
@@ -179,6 +180,14 @@ export function V2DemoPage() {
         initialState={InsertAndRemove.state1}
         width={400}
         height={200}
+      />
+
+      <h2 className="text-xl font-semibold mt-8 mb-2">tiles</h2>
+      <Drawer
+        manipulable={Tiles.manipulable}
+        initialState={Tiles.stateLonely}
+        width={300}
+        height={300}
       />
 
       <h2 className="text-xl font-semibold mt-8 mb-2">grid-poly</h2>

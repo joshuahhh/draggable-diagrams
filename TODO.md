@@ -10,6 +10,8 @@
 - add cutesy "just return states" thing?
 - memoize a lot of rendering of states? (but only if it's actually a problem; no premature stuff!)
 
+- tiles: fix the thing where it transitions back home cuz there are multiple spans meeting there
+
 - names...
   - background "radius" -> "threshold"?
   - withBackground -> withDefault?

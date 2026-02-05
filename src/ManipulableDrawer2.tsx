@@ -271,7 +271,7 @@ function runSpring(
 ): LayeredSvgx {
   if (!springingFrom) return target;
   const elapsed = performance.now() - springingFrom.time;
-  const t = d3Ease.easeElasticOut(Math.min(elapsed / SPRING_DURATION, 1));
+  const t = d3Ease.easeCubicOut(Math.min(elapsed / SPRING_DURATION, 1));
   const lerped = lerpLayered(target, springingFrom.layered, 1 - t);
   // Replace non-transitioning elements with the target's version so they
   // track the cursor without spring lag.

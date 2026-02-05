@@ -127,8 +127,8 @@ export function floatings<T>(
   return states.map((s) => floating(s, { ghost }));
 }
 
-export function closest<T>(specs: DragSpec<T>[]): DragSpec<T> {
-  return { type: "closest", specs };
+export function closest<T>(specs: Many<DragSpec<T>>): DragSpec<T> {
+  return { type: "closest", specs: manyToArray(specs) };
 }
 
 // Two type params so specs with different narrow types can combine into a union.
