@@ -311,7 +311,6 @@ export function V2DemoPage() {
         width={300}
         height={300}
       />
-
     </div>
   );
 }

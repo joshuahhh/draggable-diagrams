@@ -1,4 +1,4 @@
-import { vary } from "../DragSpec2";
+import { lessThan, vary } from "../DragSpec2";
 import { Manipulable } from "../manipulable2";
 import { Vec2 } from "../math/vec2";
 import { translate } from "../svgx/helpers";
@@ -37,8 +37,7 @@ export namespace ConstrainedPoint {
           fill="black"
           data-on-drag={drag(
             vary(state, ["x"], ["y"], {
-              constraint: (s) =>
-                (s.x - center.x) ** 2 + (s.y - center.y) ** 2 <= radius ** 2,
+              constraint: (s) => lessThan(center.dist2(s), radius ** 2),
             })
           )}
         />

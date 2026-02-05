@@ -21,7 +21,7 @@ import {
 import { lerpLayered, lerpLayered3 } from "./svgx/lerp";
 import { assignPaths, findByPath } from "./svgx/path";
 import { localToGlobal, parseTransform } from "./svgx/transform";
-import { assert, assertNever, pipe, throwError } from "./utils";
+import { Many, assert, assertNever, manyToArray, pipe, throwError } from "./utils";
 
 // # DragSpec
 //
@@ -75,7 +75,7 @@ export type DragSpecVary<T> = {
   type: "vary";
   state: T;
   paramPaths: PathIn<T, number>[];
-  constraint?: (state: T) => boolean;
+  constraint?: (state: T) => Many<number>;
 };
 
 export type DragSpecWithDistance<T> = {
@@ -126,7 +126,7 @@ export function andThen<T>(spec: DragSpec<T>, andThen: T): DragSpec<T> {
 }
 
 export type VaryOptions<T> = {
-  constraint?: (state: T) => boolean;
+  constraint?: (state: T) => Many<number>;
 };
 
 export function vary<T>(
@@ -166,6 +166,11 @@ export function withDistance<T>(
 export function span<T>(states: T[]): DragSpec<T> {
   assert(states.length > 0, "span requires at least one state");
   return { type: "span", states };
+}
+
+/** Constraint helper: returns a - b, so a < b when result ≤ 0 */
+export function lessThan(a: number, b: number): number {
+  return a - b;
 }
 
 // # Behavior
@@ -321,55 +326,58 @@ export function dragSpecToBehavior<T extends object>(
       return s;
     };
 
+    // Compute the element position for a given set of params
+    const getElementPos = (params: number[]): Vec2 => {
+      const candidateState = stateFromParams(params);
+      const content = pipe(
+        ctx.manipulable({
+          state: candidateState,
+          drag: unsafeDrag,
+          draggedId: ctx.draggedId,
+          ghostId: null,
+          setState: throwError,
+        }),
+        assignPaths,
+        accumulateTransforms
+      );
+      const element = findByPath(ctx.draggedPath, content);
+      if (!element) return Vec2(Infinity, Infinity);
+      const accTransform = getAccumulatedTransform(element);
+      const transforms = parseTransform(accTransform || "");
+      return localToGlobal(transforms, ctx.pointerLocal);
+    };
+
     return (frame) => {
       const baseObjectiveFn = (params: number[]) => {
-        const candidateState = stateFromParams(params);
-        const content = pipe(
-          ctx.manipulable({
-            state: candidateState,
-            drag: unsafeDrag,
-            draggedId: ctx.draggedId,
-            ghostId: null,
-            setState: throwError,
-          }),
-          assignPaths,
-          accumulateTransforms
-        );
-        const element = findByPath(ctx.draggedPath, content);
-        if (!element) return Infinity;
-        const accTransform = getAccumulatedTransform(element);
-        const transforms = parseTransform(accTransform || "");
-        const pos = localToGlobal(transforms, ctx.pointerLocal);
+        const pos = getElementPos(params);
         return pos.dist2(frame.pointer);
       };
 
       const r = minimize(baseObjectiveFn, curParams);
       let resultParams = r.solution;
 
-      // If the unconstrained optimum violates the constraint,
-      // binary-search along the step from curParams to find the boundary.
-      const isFeasible = (params: number[]) => {
-        if (!spec.constraint) return true;
-        return spec.constraint(stateFromParams(params));
+      // Evaluate constraint: flatten Many<number> to array, take max (most violated)
+      const evalConstraint = (params: number[]): number => {
+        const gs = manyToArray(spec.constraint!(stateFromParams(params)));
+        return gs.length === 0 ? -Infinity : Math.max(...gs);
       };
 
-      if (!isFeasible(resultParams)) {
-        let lo = 0,
-          hi = 1;
-        for (let i = 0; i < 20; i++) {
-          const mid = (lo + hi) / 2;
-          const midParams = curParams.map(
-            (c, j) => c + mid * (r.solution[j] - c)
-          );
-          if (isFeasible(midParams)) {
-            lo = mid;
-          } else {
-            hi = mid;
-          }
-        }
-        resultParams = curParams.map(
-          (c, j) => c + lo * (r.solution[j] - c)
-        );
+      // If the unconstrained optimum violates the constraint (g > 0),
+      // do a second optimization to find the closest feasible point.
+      // Objective: max(0, g(x)) + ε·dist²(pos, pos₀) in diagram space
+      // The max(0,g) term dominates until we reach g≤0, then the
+      // distance term finds the closest feasible point to pos₀.
+      if (spec.constraint && evalConstraint(resultParams) > 0) {
+        const pos0 = getElementPos(resultParams);
+        const pullbackFn = (params: number[]) => {
+          const g = evalConstraint(params);
+          const penalty = g > 0 ? g : 0;
+          const pos = getElementPos(params);
+          const dist2 = pos.dist2(pos0);
+          return penalty + 1e-4 * dist2;
+        };
+        const r2 = minimize(pullbackFn, resultParams);
+        resultParams = r2.solution;
       }
 
       curParams = resultParams;

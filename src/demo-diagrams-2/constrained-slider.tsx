@@ -1,4 +1,4 @@
-import { vary } from "../DragSpec2";
+import { lessThan, vary } from "../DragSpec2";
 import { Manipulable } from "../manipulable2";
 import { Vec2 } from "../math/vec2";
 import { translate } from "../svgx/helpers";
@@ -42,16 +42,40 @@ export namespace ConstrainedSlider {
           strokeLinecap="round"
         />
         {/* labels */}
-        <text x={trackLeft} y={trackY + 25} textAnchor="middle" fontSize={12} fill="#999">
+        <text
+          x={trackLeft}
+          y={trackY + 25}
+          textAnchor="middle"
+          fontSize={12}
+          fill="#999"
+        >
           0
         </text>
-        <text x={trackRight} y={trackY + 25} textAnchor="middle" fontSize={12} fill="#999">
+        <text
+          x={trackRight}
+          y={trackY + 25}
+          textAnchor="middle"
+          fontSize={12}
+          fill="#999"
+        >
           100
         </text>
-        <text x={trackLeft + 0.2 * (trackRight - trackLeft)} y={trackY - 15} textAnchor="middle" fontSize={11} fill="#4a9">
+        <text
+          x={trackLeft + 0.2 * (trackRight - trackLeft)}
+          y={trackY - 15}
+          textAnchor="middle"
+          fontSize={11}
+          fill="#4a9"
+        >
           20
         </text>
-        <text x={trackLeft + 0.8 * (trackRight - trackLeft)} y={trackY - 15} textAnchor="middle" fontSize={11} fill="#4a9">
+        <text
+          x={trackLeft + 0.8 * (trackRight - trackLeft)}
+          y={trackY - 15}
+          textAnchor="middle"
+          fontSize={11}
+          fill="#4a9"
+        >
           80
         </text>
         {/* knob */}
@@ -62,12 +86,18 @@ export namespace ConstrainedSlider {
           fill="black"
           data-on-drag={drag(
             vary(state, ["value"], {
-              constraint: (s) => s.value >= 20 && s.value <= 80,
+              constraint: (s) => [lessThan(20, s.value), lessThan(s.value, 80)],
             })
           )}
         />
         {/* value display */}
-        <text x={knobX} y={trackY + 40} textAnchor="middle" fontSize={13} fill="black">
+        <text
+          x={knobX}
+          y={trackY + 40}
+          textAnchor="middle"
+          fontSize={13}
+          fill="black"
+        >
           {Math.round(state.value)}
         </text>
       </g>
