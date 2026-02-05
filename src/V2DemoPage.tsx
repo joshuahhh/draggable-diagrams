@@ -16,6 +16,7 @@ import { Hanoi } from "./demo-diagrams-2/hanoi";
 import { InsertAndRemove } from "./demo-diagrams-2/insert-and-remove";
 import { ListOfLists } from "./demo-diagrams-2/list-of-lists";
 import { ListOfListsSizes } from "./demo-diagrams-2/list-of-lists-sizes";
+import { MultiCirclePoints } from "./demo-diagrams-2/multi-circle-points";
 import { NoolTree } from "./demo-diagrams-2/nool-tree";
 import { OrbitingPlanet } from "./demo-diagrams-2/orbiting-planet";
 import { OrbitingPlanetWithBackground } from "./demo-diagrams-2/orbiting-planet-with-background";
@@ -310,6 +311,14 @@ export function V2DemoPage() {
         initialState={ConstrainedPoint.state1}
         width={300}
         height={300}
+      />
+
+      <h2 className="text-xl font-semibold mt-8 mb-2">multi-circle-points</h2>
+      <Drawer
+        manipulable={MultiCirclePoints.manipulable}
+        initialState={MultiCirclePoints.state1}
+        width={400}
+        height={350}
       />
     </div>
   );

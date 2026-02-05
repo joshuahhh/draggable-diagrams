@@ -76,6 +76,7 @@ export type DragSpecVary<T> = {
   state: T;
   paramPaths: PathIn<T, number>[];
   constraint?: (state: T) => Many<number>;
+  constrainByParams?: boolean;
 };
 
 export type DragSpecWithDistance<T> = {
@@ -127,6 +128,8 @@ export function andThen<T>(spec: DragSpec<T>, andThen: T): DragSpec<T> {
 
 export type VaryOptions<T> = {
   constraint?: (state: T) => Many<number>;
+  /** Use parameter-space distance in pullback (faster, but less accurate) */
+  constrainByParams?: boolean;
 };
 
 export function vary<T>(
@@ -145,12 +148,13 @@ export function vary(state: unknown, ...args: unknown[]): DragSpec<any> {
     !Array.isArray(last) &&
     typeof last === "object"
   ) {
-    const { constraint } = last as VaryOptions<any>;
+    const { constraint, constrainByParams } = last as VaryOptions<any>;
     return {
       type: "vary",
       state,
       paramPaths: args.slice(0, -1) as any,
       constraint,
+      constrainByParams,
     };
   }
   return { type: "vary", state, paramPaths: args as any };
@@ -364,16 +368,27 @@ export function dragSpecToBehavior<T extends object>(
 
       // If the unconstrained optimum violates the constraint (g > 0),
       // do a second optimization to find the closest feasible point.
-      // Objective: max(0, g(x)) + ε·dist²(pos, pos₀) in diagram space
+      // Objective: max(0, g(x)) + ε·dist²
       // The max(0,g) term dominates until we reach g≤0, then the
-      // distance term finds the closest feasible point to pos₀.
+      // distance term finds the closest feasible point to the optimum.
       if (spec.constraint && evalConstraint(resultParams) > 0) {
-        const pos0 = getElementPos(resultParams);
+        const x0 = resultParams.slice();
+        const pos0 = spec.constrainByParams ? null : getElementPos(resultParams);
         const pullbackFn = (params: number[]) => {
           const g = evalConstraint(params);
           const penalty = g > 0 ? g : 0;
-          const pos = getElementPos(params);
-          const dist2 = pos.dist2(pos0);
+          let dist2: number;
+          if (spec.constrainByParams) {
+            // Parameter-space distance (faster)
+            dist2 = 0;
+            for (let i = 0; i < params.length; i++) {
+              dist2 += (params[i] - x0[i]) ** 2;
+            }
+          } else {
+            // Diagram-space distance (more accurate)
+            const pos = getElementPos(params);
+            dist2 = pos.dist2(pos0!);
+          }
           return penalty + 1e-4 * dist2;
         };
         const r2 = minimize(pullbackFn, resultParams);
