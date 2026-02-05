@@ -432,14 +432,11 @@ export function dragSpecToBehavior<T extends object>(
       return { ...result, distance: scaledDistance };
     };
   } else if (spec.type === "span") {
-    const renderedStates = spec.states.map((state) => ({
-      state,
-      layered: renderStateReadOnly(ctx, state),
-    }));
-    const positions = renderedStates.map((rs) =>
-      getElementPosition(ctx, rs.layered)
-    );
-    const delaunay = new Delaunay(positions);
+    const renderedStates = spec.states.map((state) => {
+      const layered = renderStateReadOnly(ctx, state);
+      return { state, layered, position: getElementPosition(ctx, layered) };
+    });
+    const delaunay = new Delaunay(renderedStates.map((rs) => rs.position));
 
     return (frame) => {
       const projection = delaunay.projectOntoConvexHull(frame.pointer);
@@ -463,17 +460,13 @@ export function dragSpecToBehavior<T extends object>(
       }
 
       // Drop state: closest rendered state by pointer distance
-      const closestIdx = positions.reduce(
-        (bestIdx, pos, idx) =>
-          pos.dist(frame.pointer) < positions[bestIdx].dist(frame.pointer)
-            ? idx
-            : bestIdx,
-        0
-      );
+      const closest = _.minBy(renderedStates, (rs) =>
+        rs.position.dist(frame.pointer)
+      )!;
 
       return {
         rendered,
-        dropState: renderedStates[closestIdx].state,
+        dropState: closest.state,
         distance: projection.dist,
         activePath: "span",
       };
