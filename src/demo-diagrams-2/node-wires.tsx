@@ -1,5 +1,6 @@
 import { produce } from "immer";
 import {
+  andThen,
   closest,
   just,
   transitionToAndThen,
@@ -110,18 +111,7 @@ export namespace NodeWires {
     draggedId,
   }) => {
     function endDragSpec(wireId: string, endKey: "from" | "to") {
-      const [px, py] = endPos(state.nodes, state.wires[wireId][endKey]);
-
-      const freeState = produce(state, (d) => {
-        d.wires[wireId][endKey] = { type: "free", x: px, y: py };
-      });
-
-      const varySpec = vary(
-        freeState,
-        ["wires", wireId, endKey, "x"],
-        ["wires", wireId, endKey, "y"]
-      );
-
+      // ways to snap it
       const side = endKey === "to" ? "in" : "out";
       const snapSpecs = allPorts(side).map(({ nodeId, port }) =>
         just(
@@ -131,10 +121,30 @@ export namespace NodeWires {
         )
       );
 
-      if (snapSpecs.length > 0) {
-        return withBackground(closest(snapSpecs), varySpec, { radius: 20 });
+      // ways to leave it danglin'
+      const [px, py] = endPos(state.nodes, state.wires[wireId][endKey]);
+      const freeState = produce(state, (d) => {
+        d.wires[wireId][endKey] = { type: "free", x: px, y: py };
+      });
+      let varySpec = vary(
+        freeState,
+        ["wires", wireId, endKey, "x"],
+        ["wires", wireId, endKey, "y"]
+      );
+      if (
+        freeState.wires[wireId].from.type === "free" &&
+        freeState.wires[wireId].to.type === "free"
+      ) {
+        varySpec = andThen(
+          varySpec,
+          produce(freeState, (d) => {
+            delete d.wires[wireId];
+          })
+        );
       }
-      return varySpec;
+
+      // put 'em together
+      return withBackground(closest(snapSpecs), varySpec, { radius: 20 });
     }
 
     return (

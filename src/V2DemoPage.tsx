@@ -332,20 +332,20 @@ export function V2DemoPage() {
         height={300}
       />
 
-      <h2 className="text-xl font-semibold mt-8 mb-2">node-wires</h2>
-      <Drawer
-        manipulable={NodeWires.manipulable}
-        initialState={NodeWires.state1}
-        width={500}
-        height={200}
-      />
-
       <h2 className="text-xl font-semibold mt-8 mb-2">multi-circle-points</h2>
       <Drawer
         manipulable={MultiCirclePoints.manipulable}
         initialState={MultiCirclePoints.state1}
         width={400}
         height={350}
+      />
+
+      <h2 className="text-xl font-semibold mt-8 mb-2">node-wires</h2>
+      <Drawer
+        manipulable={NodeWires.manipulable}
+        initialState={NodeWires.state1}
+        width={500}
+        height={200}
       />
     </div>
   );
