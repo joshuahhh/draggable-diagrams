@@ -59,7 +59,7 @@ function walkAndAccumulateTransforms(
  * - Recurses into nodes with IDs to find deeper IDs
  */
 export function layerSvg(element: Svgx): LayeredSvgx {
-  const byId = new Map<string, Svgx>();
+  let byId = new Map<string, Svgx>();
   const descendents = new Map<string, Set<string>>();
   const rootWithExtractedRemoved = extractIdNodes(
     element,
@@ -68,7 +68,8 @@ export function layerSvg(element: Svgx): LayeredSvgx {
     null
   );
   if (rootWithExtractedRemoved) {
-    byId.set("", rootWithExtractedRemoved);
+    // we gotta put the root at the beginning of the map
+    byId = new Map([["", rootWithExtractedRemoved], ...byId]);
   }
   return { byId, descendents };
 }
