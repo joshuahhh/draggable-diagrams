@@ -38,7 +38,7 @@
     "vitest": "^4.0.6"
   },
   "dependencies": {
-    "@joshuahhh/pretty-print": "^0.0.1",
+    "@joshuahhh/pretty-print": "^0.0.2",
     "@babel/standalone": "^7.28.5",
     "@codemirror/lang-javascript": "^6.2.4",
     "@codemirror/language": "^6.11.3",

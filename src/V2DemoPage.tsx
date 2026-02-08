@@ -36,10 +36,12 @@ import { SimplestJust } from "./demo-diagrams-2/simplest-just";
 import { Spinny } from "./demo-diagrams-2/spinny";
 import { Tiles } from "./demo-diagrams-2/tiles";
 import { Manipulable } from "./manipulable2";
+import { tree3, tree7 } from "./trees";
 export function V2DemoPage() {
   const [showTreeView, setShowTreeView] = useState(false);
   const [showDropZones, setShowDropZones] = useState(false);
   const [showDebugOverlay, setShowDebugOverlay] = useState(false);
+  const [showStateViewer, setShowStateViewer] = useState(false);
 
   function Drawer<T extends object>(props: {
     manipulable: Manipulable<T>;
@@ -53,6 +55,7 @@ export function V2DemoPage() {
         showTreeView={showTreeView}
         showDropZones={showDropZones}
         showDebugOverlay={showDebugOverlay}
+        showStateViewer={showStateViewer}
       />
     );
   }
@@ -85,6 +88,14 @@ export function V2DemoPage() {
             onChange={(e) => setShowDebugOverlay(e.target.checked)}
           />
           Debug overlay
+        </label>
+        <label className="flex items-center gap-1.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showStateViewer}
+            onChange={(e) => setShowStateViewer(e.target.checked)}
+          />
+          State viewer
         </label>
       </div>
 
@@ -124,9 +135,9 @@ export function V2DemoPage() {
         order-preserving (3→3)
       </h2>
       <Drawer
-        manipulable={OrderPreserving.manipulable}
-        initialState={OrderPreserving.state3To3}
-        width={600}
+        manipulable={OrderPreserving.manipulableFactory(tree3, tree3)}
+        initialState={OrderPreserving.initialStateFactory(tree3, tree3)}
+        width={300}
         height={400}
       />
 
@@ -134,9 +145,9 @@ export function V2DemoPage() {
         order-preserving (7→7)
       </h2>
       <Drawer
-        manipulable={OrderPreserving.manipulable}
-        initialState={OrderPreserving.state7To7}
-        width={800}
+        manipulable={OrderPreserving.manipulableFactory(tree7, tree7)}
+        initialState={OrderPreserving.initialStateFactory(tree7, tree7)}
+        width={400}
         height={600}
       />
 

@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   addParents,
   buildHasseDiagram,
-  codomainTree,
   covers,
-  domainTree,
   getAllMorphs,
   layoutHasse,
+  testCodomainTree,
+  testDomainTree,
   testMorphs,
 } from "./trees";
 
@@ -60,7 +60,7 @@ describe("getAllMorphs", () => {
   });
 
   it("verifies testMorphs are all valid", () => {
-    const allValidMorphs = getAllMorphs(domainTree, codomainTree);
+    const allValidMorphs = getAllMorphs(testDomainTree, testCodomainTree);
 
     for (const testMorph of testMorphs) {
       const isValid = allValidMorphs.some(

@@ -65,7 +65,7 @@ type DragState<T extends object> = { springingFrom: SpringingFrom | null } & (
 // # Debug info
 
 export type DebugDragInfo<T extends object> =
-  | { type: "idle" }
+  | { type: "idle"; state: T }
   | {
       type: "dragging";
       spec: DragSpec<T>;
@@ -73,6 +73,7 @@ export type DebugDragInfo<T extends object> =
       activePath: string;
       pointerStart: Vec2;
       draggedId: string | null;
+      dropState: T;
     };
 
 // # Component
@@ -227,6 +228,7 @@ export function ManipulableDrawer<T extends object>({
           activePath: result.activePath,
           pointerStart: ds.pointerStart,
           draggedId: ds.draggedId,
+          dropState: result.dropState,
         });
       } else if (ds.type === "idle" && ds.springingFrom) {
         if (performance.now() - ds.springingFrom.time >= SPRING_DURATION) {
@@ -276,7 +278,7 @@ export function ManipulableDrawer<T extends object>({
       };
       dragStateRef.current = newState;
       setDragState(newState);
-      onDebugDragInfoRef.current?.({ type: "idle" });
+      onDebugDragInfoRef.current?.({ type: "idle", state: dropState });
     });
 
     document.addEventListener("pointermove", onPointerMove);
@@ -414,6 +416,7 @@ function initDrag<T extends object>(
       activePath: result.activePath,
       pointerStart,
       draggedId,
+      dropState: result.dropState,
     },
   };
 }

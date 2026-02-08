@@ -1,4 +1,6 @@
+import { PrettyPrint } from "@joshuahhh/pretty-print";
 import { useState } from "react";
+import { ErrorBoundary } from "./ErrorBoundary";
 import {
   OverlayLegend,
   SpatialOverlaySvg,
@@ -16,6 +18,7 @@ export function DebugManipulableDrawer<T extends object>({
   showTreeView,
   showDropZones,
   showDebugOverlay,
+  showStateViewer,
 }: {
   manipulable: Manipulable<T>;
   initialState: T;
@@ -24,9 +27,11 @@ export function DebugManipulableDrawer<T extends object>({
   showTreeView: boolean;
   showDropZones: boolean;
   showDebugOverlay: boolean;
+  showStateViewer: boolean;
 }) {
   const [debugInfo, setDebugInfo] = useState<DebugDragInfo<T>>({
     type: "idle",
+    state: initialState,
   });
 
   const { data: overlayData, computing: overlayComputing } = useOverlayData(
@@ -88,23 +93,35 @@ export function DebugManipulableDrawer<T extends object>({
             </svg>
           )}
         </div>
-        {showTreeView && (
-          <div className="w-72 shrink-0">
-            {dragging ? (
-              <div className="flex flex-col gap-2">
-                <div className="text-xs text-slate-500 font-mono">
-                  activePath: {dragging.activePath}
-                </div>
-                <DragSpecTreeView
-                  spec={dragging.spec}
-                  activePath={dragging.activePath}
-                  colorMap={overlayData?.colorMap}
+        {(showTreeView || showStateViewer) && (
+          <div className="w-72 shrink-0 flex flex-col gap-2">
+            {showTreeView && (
+              <>
+                {dragging ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="text-xs text-slate-500 font-mono">
+                      activePath: {dragging.activePath}
+                    </div>
+                    <DragSpecTreeView
+                      spec={dragging.spec}
+                      activePath={dragging.activePath}
+                      colorMap={overlayData?.colorMap}
+                    />
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-400 italic">
+                    Drag an element to see its tree view
+                  </div>
+                )}
+              </>
+            )}
+            {showStateViewer && (
+              <ErrorBoundary>
+                <PrettyPrint
+                  value={debugInfo.type === "dragging" ? debugInfo.dropState : debugInfo.state}
+                  style={{ fontSize: "11px" }}
                 />
-              </div>
-            ) : (
-              <div className="text-xs text-slate-400 italic">
-                Drag an element to see its tree view
-              </div>
+              </ErrorBoundary>
             )}
           </div>
         )}

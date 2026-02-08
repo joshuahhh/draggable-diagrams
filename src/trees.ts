@@ -133,7 +133,7 @@ export function getNodeById(tree: TreeNode, id: string) {
 // # Example data
 
 // Domain tree (parent with two children)
-export const domainTree = addParents({
+export const testDomainTree = addParents({
   id: "d0",
   children: [
     { id: "d1", children: [] },
@@ -142,7 +142,7 @@ export const domainTree = addParents({
 });
 
 // Codomain tree (3 layers)
-export const codomainTree = addParents({
+export const testCodomainTree = addParents({
   id: "root",
   children: [
     {

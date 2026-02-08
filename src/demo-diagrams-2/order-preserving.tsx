@@ -1,5 +1,5 @@
 import { curveCardinal, line } from "d3-shape";
-import _ from "lodash";
+import _, { identity } from "lodash";
 import { span, withSnapRadius } from "../DragSpec2";
 import { overlapIntervals } from "../layout";
 import { Drag, Manipulable } from "../manipulable2";
@@ -7,14 +7,7 @@ import { Vec2 } from "../math/vec2";
 import { Svgx } from "../svgx";
 import { Finalizers, pointRef, PointRef } from "../svgx/finalizers";
 import { translate } from "../svgx/helpers";
-import {
-  getAllMorphs,
-  getNodeById,
-  tree3,
-  tree7,
-  TreeMorph,
-  TreeNode,
-} from "../trees";
+import { getAllMorphs, getNodeById, TreeMorph, TreeNode } from "../trees";
 
 // returns the path from `node` to another node `n` such that `pred(n)==true`.
 function traverseUntilPred<T>(
@@ -46,56 +39,55 @@ const nodeDist = (a: TreeNode, b: TreeNode) =>
 
 export namespace OrderPreserving {
   export type State = {
-    domainTree: TreeNode;
-    codomainTree: TreeNode;
     morph: TreeMorph;
+  };
+
+  export const initialStateFactory = (
+    domainTree: TreeNode,
+    codomainTree: TreeNode
+  ): State => ({
+    morph: getAllMorphs(domainTree, codomainTree)[0],
+  });
+
+  export const manipulableFactory = (
+    domainTree: TreeNode,
+    codomainTree: TreeNode
+  ) => {
+    const allMorphs = getAllMorphs(domainTree, codomainTree);
+
+    return identity<Manipulable<State>>(({ state, drag }) => {
+      const finalizers = new Finalizers();
+      const ctx: Ctx = {
+        finalizers,
+        morph: state.morph,
+        drag,
+        allMorphs,
+        codomainTree,
+      };
+
+      const r = drawBgTree(codomainTree, domainTree, ctx);
+
+      const mainTree = <g>{r.element}</g>;
+      return <g>{[mainTree, ...finalizers.run(mainTree)]}</g>;
+    });
+  };
+
+  type Ctx = {
+    finalizers: Finalizers;
+    morph: TreeMorph;
+    drag: Drag<State>;
     allMorphs: TreeMorph[];
-  };
-
-  const allMorphs3To3 = getAllMorphs(tree3, tree3);
-  export const state3To3: State = {
-    domainTree: tree3,
-    codomainTree: tree3,
-    morph: allMorphs3To3[0],
-    allMorphs: allMorphs3To3,
-  };
-
-  const allMorphs7To7 = getAllMorphs(tree7, tree7);
-  export const state7To7: State = {
-    domainTree: tree7,
-    codomainTree: tree7,
-    morph: allMorphs7To7[0],
-    allMorphs: allMorphs7To7,
-  };
-
-  export const manipulable: Manipulable<State> = ({ state, drag }) => {
-    const { morph } = state;
-    const elements: Svgx[] = [];
-    const finalizers = new Finalizers();
-
-    const r = drawBgTree(
-      state.codomainTree,
-      state.domainTree,
-      morph,
-      finalizers,
-      state,
-      drag
-    );
-    elements.push(r.element);
-
-    const mainTree = <g>{elements}</g>;
-    return <g>{[mainTree, ...finalizers.run(mainTree)]}</g>;
+    codomainTree: TreeNode;
   };
 
   // # Drag spec
 
-  function dragSpec(draggedNodeId: string, state: State) {
-    const { morph, allMorphs, codomainTree } = state;
-    const domainIds = Object.keys(morph);
+  function dragSpec(draggedNodeId: string, ctx: Ctx) {
+    const domainIds = Object.keys(ctx.morph);
 
     // Group morphisms by where they send draggedNodeId
     const morphsByDragTarget = _.groupBy(
-      allMorphs,
+      ctx.allMorphs,
       (targetMorph) => targetMorph[draggedNodeId]
     );
 
@@ -106,19 +98,17 @@ export namespace OrderPreserving {
           _.sum(
             domainIds.map((nodeId) =>
               nodeDist(
-                getNodeById(codomainTree, morph[nodeId])!,
-                getNodeById(codomainTree, newMorph[nodeId])!
+                getNodeById(ctx.codomainTree, ctx.morph[nodeId])!,
+                getNodeById(ctx.codomainTree, newMorph[nodeId])!
               )
             )
           )
         )!
     );
 
-    return withSnapRadius(
-      span(newMorphs.map((morph) => ({ ...state, morph }))),
-      20,
-      { transition: true }
-    );
+    return withSnapRadius(span(newMorphs.map((morph) => ({ morph }))), 20, {
+      transition: true,
+    });
   }
 
   // # Drawing constants
@@ -133,19 +123,9 @@ export namespace OrderPreserving {
   function drawBgTree(
     bgNode: TreeNode,
     fgNode: TreeNode,
-    morph: TreeMorph,
-    finalizers: Finalizers,
-    state: State,
-    drag: Drag<State>
+    ctx: Ctx
   ): { element: Svgx; w: number; h: number } {
-    const result = drawBgSubtree(
-      bgNode,
-      [fgNode],
-      morph,
-      finalizers,
-      state,
-      drag
-    );
+    const result = drawBgSubtree(bgNode, [fgNode], ctx);
     return {
       element: result.element,
       w: result.w,
@@ -156,10 +136,7 @@ export namespace OrderPreserving {
   function drawBgSubtree(
     bgNode: TreeNode,
     fgNodes: TreeNode[],
-    morph: TreeMorph,
-    finalizers: Finalizers,
-    state: State,
-    drag: Drag<State>
+    ctx: Ctx
   ): {
     element: Svgx;
     w: number;
@@ -170,17 +147,10 @@ export namespace OrderPreserving {
 
     const [fgNodesHere, fgNodesBelow] = _.partition(
       fgNodes,
-      (n) => morph[n.id] === bgNode.id
+      (n) => ctx.morph[n.id] === bgNode.id
     );
 
-    const bgNodeR = drawBgNodeWithFgNodesInside(
-      morph,
-      bgNode,
-      fgNodesHere,
-      finalizers,
-      state,
-      drag
-    );
+    const bgNodeR = drawBgNodeWithFgNodesInside(bgNode, fgNodesHere, ctx);
 
     fgNodesBelow.push(...bgNodeR.fgNodesBelow);
 
@@ -194,7 +164,7 @@ export namespace OrderPreserving {
     }
 
     const childRs = bgNode.children.map((child) =>
-      drawBgSubtree(child, fgNodesBelow, morph, finalizers, state, drag)
+      drawBgSubtree(child, fgNodesBelow, ctx)
     );
 
     const childrenWidth =
@@ -236,7 +206,7 @@ export namespace OrderPreserving {
       const bgRootCenter = bgNodeR.rootCenter;
       const childRootCenter = childR.rootCenter;
 
-      finalizers.push((resolve) => {
+      ctx.finalizers.push((resolve) => {
         const from = resolve(bgRootCenter);
         const to = resolve(childRootCenter);
         return (
@@ -263,12 +233,9 @@ export namespace OrderPreserving {
   }
 
   function drawBgNodeWithFgNodesInside(
-    morph: TreeMorph,
     bgNode: TreeNode,
     fgNodesHere: TreeNode[],
-    finalizers: Finalizers,
-    state: State,
-    drag: Drag<State>
+    ctx: Ctx
   ): {
     element: Svgx;
     w: number;
@@ -285,14 +252,7 @@ export namespace OrderPreserving {
     const fgNodesBelow: TreeNode[] = [];
 
     for (const fgNode of fgNodesHere) {
-      const r = drawFgSubtreeInBgNode(
-        fgNode,
-        bgNode.id,
-        morph,
-        finalizers,
-        state,
-        drag
-      );
+      const r = drawFgSubtreeInBgNode(fgNode, bgNode.id, ctx);
       elementsInRect.push(
         <g
           id={`fg-in-bg-${bgNode.id}-${fgNode.id}`}
@@ -343,10 +303,7 @@ export namespace OrderPreserving {
   function drawFgSubtreeInBgNode(
     fgNode: TreeNode,
     bgNodeId: string,
-    morph: TreeMorph,
-    finalizers: Finalizers,
-    state: State,
-    drag: Drag<State>
+    ctx: Ctx
   ): {
     element: Svgx;
     fgNodesBelow: TreeNode[];
@@ -366,15 +323,8 @@ export namespace OrderPreserving {
 
       const edgeId = `fg-edge-${fgNode.id}-${child.id}`;
 
-      if (morph[child.id] === bgNodeId) {
-        const r = drawFgSubtreeInBgNode(
-          child,
-          bgNodeId,
-          morph,
-          finalizers,
-          state,
-          drag
-        );
+      if (ctx.morph[child.id] === bgNodeId) {
+        const r = drawFgSubtreeInBgNode(child, bgNodeId, ctx);
         childrenElements.push(
           <g
             id={`fg-child-${fgNode.id}-${child.id}`}
@@ -387,7 +337,7 @@ export namespace OrderPreserving {
         childrenX += r.w;
         childrenMaxH = Math.max(childrenMaxH, r.h);
 
-        finalizers.push((resolve) => {
+        ctx.finalizers.push((resolve) => {
           const from = resolve(pointRef(fgNode.id, Vec2(0)));
           const to = resolve(pointRef(child.id, Vec2(0)));
           return (
@@ -411,7 +361,7 @@ export namespace OrderPreserving {
         fgNodesBelow.push(child);
 
         const intermediateRef = pointRef(childrenId, Vec2(childrenX, 0));
-        finalizers.push((resolve) => {
+        ctx.finalizers.push((resolve) => {
           const myCenter = resolve(pointRef(fgNode.id, Vec2(0)));
           const intermediate = resolve(intermediateRef);
           const childCenter = resolve(pointRef(child.id, Vec2(0)));
@@ -465,7 +415,7 @@ export namespace OrderPreserving {
             cy={0}
             r={FG_NODE_SIZE / 2}
             fill="black"
-            data-on-drag={drag(() => dragSpec(fgNode.id, state))}
+            data-on-drag={ctx.drag(() => dragSpec(fgNode.id, ctx))}
           />
           {childrenContainer}
         </g>
