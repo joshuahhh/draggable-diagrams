@@ -267,7 +267,7 @@ export const Sokoban = () => {
   const manipulable = useMemo(() => manipulableFactory(config), [config]);
 
   return (
-    <div className="flex gap-4 items-start">
+    <div className="flex flex-col md:flex-row gap-4 items-start">
       <DemoDrawer
         manipulable={manipulable}
         initialState={initialState}

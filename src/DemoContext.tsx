@@ -14,39 +14,41 @@ const defaultSettings: DemoSettings = {
   showStateViewer: false,
 };
 
-const DemoContext = createContext<DemoSettings>(defaultSettings);
+const DemoContext = createContext<{
+  settings: DemoSettings;
+  setSettings: React.Dispatch<React.SetStateAction<DemoSettings>>;
+}>({
+  settings: defaultSettings,
+  setSettings: () => {},
+});
 
-export const DemoProvider = DemoContext.Provider;
-export const useDemoSettings = () => useContext(DemoContext);
+export const useDemoSettings = () => useContext(DemoContext).settings;
 
 export function DemoSettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<DemoSettings>(defaultSettings);
   return (
-    <DemoProvider value={settings}>
-      <SettingsPanel settings={settings} setSettings={setSettings} />
+    <DemoContext.Provider value={{ settings, setSettings }}>
       {children}
-    </DemoProvider>
+    </DemoContext.Provider>
   );
 }
 
-function SettingsPanel({
-  settings,
-  setSettings,
-}: {
-  settings: DemoSettings;
-  setSettings: React.Dispatch<React.SetStateAction<DemoSettings>>;
-}) {
+const settingsEntries = [
+  { key: "showTreeView", label: "Tree view", mobileHidden: true },
+  { key: "showDropZones", label: "Drop zones", mobileHidden: false },
+  { key: "showDebugOverlay", label: "Debug overlay", mobileHidden: false },
+  { key: "showStateViewer", label: "State viewer", mobileHidden: true },
+] as const;
+
+export function DemoSettingsBar() {
+  const { settings, setSettings } = useContext(DemoContext);
   return (
-    <div className="fixed top-4 right-4 z-50 bg-white border border-slate-200 rounded-lg shadow-lg px-4 py-3 flex flex-col gap-2 text-sm text-slate-600 select-none">
-      {(
-        [
-          ["showTreeView", "Tree view"],
-          ["showDropZones", "Drop zones"],
-          ["showDebugOverlay", "Debug overlay"],
-          ["showStateViewer", "State viewer"],
-        ] as const
-      ).map(([key, label]) => (
-        <label key={key} className="flex items-center gap-1.5 cursor-pointer">
+    <div className="sticky bottom-0 bg-white/95 py-3 px-5 border-t border-gray-200 flex gap-5 items-center justify-center shadow-[0_-2px_4px_rgba(0,0,0,0.1)]">
+      {settingsEntries.map(({ key, label, mobileHidden }) => (
+        <label
+          key={key}
+          className={`${mobileHidden ? "hidden md:flex" : "flex"} items-center gap-1.5 cursor-pointer text-sm text-slate-600 select-none`}
+        >
           <input
             type="checkbox"
             checked={settings[key]}

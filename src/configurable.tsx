@@ -52,7 +52,7 @@ export function ConfigCheckbox({
 }
 
 export function DemoNotes({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm text-gray-600 mb-2">{children}</p>;
+  return <p className="text-sm text-gray-600 mb-4">{children}</p>;
 }
 
 export function ConfigPanel({
@@ -63,7 +63,7 @@ export function ConfigPanel({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-gray-50 rounded p-3 shrink-0 sticky top-4">
+    <div className="bg-gray-50 rounded p-3 shrink-0 md:ml-auto md:sticky md:top-4">
       <div className="text-xs font-medium text-gray-700 mb-2">{title}</div>
       {children}
     </div>

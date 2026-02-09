@@ -204,7 +204,7 @@ export const Tromino = () => {
   const manipulable = useMemo(() => manipulableFactory(config), [config]);
 
   return (
-    <div className="flex gap-4 items-start">
+    <div className="flex flex-col md:flex-row gap-4 items-start">
       <div>
         <div className="mt-2 mb-4 text-sm text-gray-600">
           snappy+maze mode still isn't working?

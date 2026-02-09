@@ -320,7 +320,7 @@ export const Outline = () => {
   const manipulable = useMemo(() => manipulableFactory(config), [config]);
 
   return (
-    <div className="flex gap-4 items-start">
+    <div className="flex flex-col md:flex-row gap-4 items-start">
       <div>
         <h3 className="text-md font-medium italic mt-6 mb-1">simple</h3>
         <DemoDrawer
