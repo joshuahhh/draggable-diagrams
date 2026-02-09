@@ -24,6 +24,7 @@ import { MultiCirclePoints } from "./demo-diagrams-2/multi-circle-points";
 import { NodeWires } from "./demo-diagrams-2/node-wires";
 import { NoolTree } from "./demo-diagrams-2/nool-tree";
 import { OrbitingPlanet } from "./demo-diagrams-2/orbiting-planet";
+import { Outline } from "./demo-diagrams-2/outline";
 import { OrbitingPlanetWithBackground } from "./demo-diagrams-2/orbiting-planet-with-background";
 import { OrderPreserving } from "./demo-diagrams-2/order-preserving";
 import { Perm } from "./demo-diagrams-2/perm";
@@ -81,4 +82,5 @@ export const v2Demos: V2Demo[] = [
   { id: "multi-circle-points", Component: MultiCirclePoints },
   { id: "node-wires", Component: NodeWires },
   { id: "simplest-just", Component: SimplestJust },
+  { id: "outline", Component: Outline },
 ];
