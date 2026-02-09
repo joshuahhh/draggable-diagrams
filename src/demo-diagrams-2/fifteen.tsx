@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { DemoNotes } from "../configurable";
 import { DemoDrawer } from "../DemoDrawer";
 import { closest, span, withSnapRadius } from "../DragSpec2";
 import { Manipulable } from "../manipulable2";
@@ -115,10 +116,15 @@ const manipulable: Manipulable<State> = ({ state, drag }) => {
 };
 
 export const Fifteen = () => (
-  <DemoDrawer
-    manipulable={manipulable}
-    initialState={initialState}
-    width={250}
-    height={250}
-  />
+  <div>
+    <DemoNotes>
+      Weird experiment: I made the blank draggable
+    </DemoNotes>
+    <DemoDrawer
+      manipulable={manipulable}
+      initialState={initialState}
+      width={250}
+      height={250}
+    />
+  </div>
 );

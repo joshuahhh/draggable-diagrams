@@ -1,4 +1,5 @@
 import { produce } from "immer";
+import { DemoNotes } from "../configurable";
 import { DemoDrawer } from "../DemoDrawer";
 import { closest, span, withSnapRadius } from "../DragSpec2";
 import { Manipulable } from "../manipulable2";
@@ -77,10 +78,15 @@ const manipulable: Manipulable<State> = ({ state, drag }) => (
 );
 
 export const Spinny = () => (
-  <DemoDrawer
-    manipulable={manipulable}
-    initialState={initialState}
-    width={260}
-    height={260}
-  />
+  <div>
+    <DemoNotes>
+      Tests interpolation of rotations.
+    </DemoNotes>
+    <DemoDrawer
+      manipulable={manipulable}
+      initialState={initialState}
+      width={260}
+      height={260}
+    />
+  </div>
 );

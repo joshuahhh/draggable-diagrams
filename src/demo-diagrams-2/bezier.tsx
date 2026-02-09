@@ -1,3 +1,4 @@
+import { DemoNotes } from "../configurable";
 import { DemoDrawer } from "../DemoDrawer";
 import { vary } from "../DragSpec2";
 import { Manipulable } from "../manipulable2";
@@ -186,10 +187,22 @@ const manipulable: Manipulable<State> = ({ state, drag, draggedId }) => {
 };
 
 export const Bezier = () => (
-  <DemoDrawer
-    manipulable={manipulable}
-    initialState={state2}
-    width={400}
-    height={250}
-  />
+  <div>
+    <DemoNotes>
+      Drag the endpoints (red) or control points (yellow) orrrrr the curve
+      (??).{" – "}
+      <a
+        href="https://www.orionreed.com/"
+        className="hover:text-gray-700 hover:underline"
+      >
+        Orion Reed
+      </a>
+    </DemoNotes>
+    <DemoDrawer
+      manipulable={manipulable}
+      initialState={state2}
+      width={400}
+      height={250}
+    />
+  </div>
 );

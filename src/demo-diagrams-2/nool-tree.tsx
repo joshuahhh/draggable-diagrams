@@ -8,7 +8,7 @@ import {
   Rewrite,
   Tree,
 } from "../asts";
-import { ConfigCheckbox } from "../configurable";
+import { ConfigCheckbox, ConfigPanel } from "../configurable";
 import { DemoDrawer } from "../DemoDrawer";
 import { closest, span } from "../DragSpec2";
 import { Drag, Manipulable } from "../manipulable2";
@@ -323,7 +323,7 @@ const drawPattern = (
 
 // # Config panel
 
-function ConfigPanel({
+function RewriteRuleCheckboxes({
   activeRewriteSets,
   setActiveRewriteSets,
 }: {
@@ -396,15 +396,12 @@ export const NoolTree = () => {
           height={300}
         />
       </div>
-      <div className="bg-gray-50 rounded p-3 shrink-0 sticky top-4">
-        <div className="text-xs font-medium text-gray-700 mb-2">
-          Active rewrite rules
-        </div>
-        <ConfigPanel
+      <ConfigPanel title="Active rewrite rules">
+        <RewriteRuleCheckboxes
           activeRewriteSets={activeRewriteSets}
           setActiveRewriteSets={setActiveRewriteSets}
         />
-      </div>
+      </ConfigPanel>
     </div>
   );
 };

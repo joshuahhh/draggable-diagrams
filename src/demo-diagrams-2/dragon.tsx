@@ -1,3 +1,4 @@
+import { DemoNotes } from "../configurable";
 import { DemoDrawer } from "../DemoDrawer";
 import { vary } from "../DragSpec2";
 import { Manipulable } from "../manipulable2";
@@ -68,10 +69,22 @@ const manipulable: Manipulable<State> = ({ state, drag }) => {
 };
 
 export const Dragon = () => (
-  <DemoDrawer
-    manipulable={manipulable}
-    initialState={initialState}
-    width={400}
-    height={280}
-  />
+  <div>
+    <DemoNotes>
+      Adapted from{" "}
+      <a
+        href="https://omrelli.ug/g9/"
+        className="hover:text-gray-700 hover:underline"
+      >
+        g9's famous example
+      </a>
+      . Nice performance stress test (which we are failing; try larger "Levels").
+    </DemoNotes>
+    <DemoDrawer
+      manipulable={manipulable}
+      initialState={initialState}
+      width={400}
+      height={280}
+    />
+  </div>
 );

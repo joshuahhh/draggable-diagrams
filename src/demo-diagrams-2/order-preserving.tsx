@@ -2,7 +2,7 @@ import { curveCardinal, line } from "d3-shape";
 import _ from "lodash";
 import { useMemo, useState } from "react";
 import { arrowhead } from "../arrows";
-import { ConfigCheckbox } from "../configurable";
+import { ConfigCheckbox, ConfigPanel, DemoNotes } from "../configurable";
 import { DemoDrawer } from "../DemoDrawer";
 import { span, withSnapRadius } from "../DragSpec2";
 import { overlapIntervals } from "../layout";
@@ -631,9 +631,20 @@ export const OrderPreserving = () => {
   );
 
   return (
-    <div className="flex gap-4 items-start">
-      <div>
-        <h3 className="text-md font-medium italic mt-6 mb-1">3→3</h3>
+    <div>
+      <DemoNotes>
+        Featuring multi-drag from{" "}
+        <a
+          href="https://elliot.website/"
+          className="hover:text-gray-700 hover:underline"
+        >
+          Elliot Evans
+        </a>
+        .
+      </DemoNotes>
+      <div className="flex gap-4 items-start">
+        <div>
+          <h3 className="text-md font-medium italic mt-6 mb-1">3→3</h3>
         <DemoDrawer
           manipulable={manipulable3}
           initialState={initialState3}
@@ -648,8 +659,7 @@ export const OrderPreserving = () => {
           height={config.showTradRep ? 1100 : 600}
         />
       </div>
-      <div className="bg-gray-50 rounded p-3 shrink-0 sticky top-4">
-        <div className="text-xs font-medium text-gray-700 mb-2">Options</div>
+      <ConfigPanel>
         <div className="flex flex-col gap-1">
           <ConfigCheckbox
             value={config.oneNodeAtATime}
@@ -664,6 +674,7 @@ export const OrderPreserving = () => {
             Show traditional representation
           </ConfigCheckbox>
         </div>
+      </ConfigPanel>
       </div>
     </div>
   );

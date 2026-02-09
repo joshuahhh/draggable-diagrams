@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { useMemo, useState } from "react";
 import { amb, produceAmb } from "../amb";
-import { ConfigCheckbox } from "../configurable";
+import { ConfigCheckbox, ConfigPanel } from "../configurable";
 import { DemoDrawer } from "../DemoDrawer";
 import { closest, floating, span, withSnapRadius } from "../DragSpec2";
 import { Manipulable } from "../manipulable2";
@@ -216,8 +216,7 @@ export const Tromino = () => {
           height={370}
         />
       </div>
-      <div className="bg-gray-50 rounded p-3 shrink-0 sticky top-4">
-        <div className="text-xs font-medium text-gray-700 mb-2">Options</div>
+      <ConfigPanel>
         <div className="flex flex-col gap-1">
           <ConfigCheckbox
             value={config.snappyMode}
@@ -232,7 +231,7 @@ export const Tromino = () => {
             Maze mode
           </ConfigCheckbox>
         </div>
-      </div>
+      </ConfigPanel>
     </div>
   );
 };

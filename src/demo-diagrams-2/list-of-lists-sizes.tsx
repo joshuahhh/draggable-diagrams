@@ -1,6 +1,7 @@
 import { produce } from "immer";
 import _ from "lodash";
 import { amb, produceAmb } from "../amb";
+import { DemoNotes } from "../configurable";
 import { DemoDrawer } from "../DemoDrawer";
 import { andThen, closest, floating, withBackground } from "../DragSpec2";
 import { Manipulable } from "../manipulable2";
@@ -169,10 +170,15 @@ const manipulable: Manipulable<State> = ({ state, drag }) => {
 };
 
 export const ListOfListsSizes = () => (
-  <DemoDrawer
-    manipulable={manipulable}
-    initialState={initialState}
-    width={600}
-    height={450}
-  />
+  <div>
+    <DemoNotes>
+      Uses <span className="font-mono">floating</span>.
+    </DemoNotes>
+    <DemoDrawer
+      manipulable={manipulable}
+      initialState={initialState}
+      width={600}
+      height={450}
+    />
+  </div>
 );

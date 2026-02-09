@@ -1,5 +1,6 @@
 import { produce } from "immer";
 import { amb, produceAmb, require } from "../amb";
+import { DemoNotes } from "../configurable";
 import { DemoDrawer } from "../DemoDrawer";
 import { closest, floating } from "../DragSpec2";
 import { Manipulable } from "../manipulable2";
@@ -13,6 +14,11 @@ type State = {
 const state3: State = {
   pegs: [[1, 2, 3], [], []],
   numDisks: 3,
+};
+
+const state4: State = {
+  pegs: [[1, 2, 3, 4], [], []],
+  numDisks: 4,
 };
 
 const PEG_WIDTH = 10;
@@ -135,10 +141,24 @@ const manipulable: Manipulable<State> = ({ state, drag }) => {
 };
 
 export const Hanoi = () => (
-  <DemoDrawer
-    manipulable={manipulable}
-    initialState={state3}
-    width={500}
-    height={200}
-  />
+  <div>
+    <DemoNotes>
+      Uses <span className="font-mono">floating</span>. Only top disks can be
+      dragged.
+    </DemoNotes>
+    <h3 className="text-md font-medium italic mt-6 mb-1">3 disks</h3>
+    <DemoDrawer
+      manipulable={manipulable}
+      initialState={state3}
+      width={500}
+      height={200}
+    />
+    <h3 className="text-md font-medium italic mt-6 mb-1">4 disks</h3>
+    <DemoDrawer
+      manipulable={manipulable}
+      initialState={state4}
+      width={600}
+      height={200}
+    />
+  </div>
 );

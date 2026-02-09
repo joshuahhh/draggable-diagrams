@@ -1,7 +1,7 @@
 import { produce } from "immer";
 import _ from "lodash";
 import { useMemo, useState } from "react";
-import { ConfigCheckbox } from "../configurable";
+import { ConfigCheckbox, ConfigPanel } from "../configurable";
 import { DemoDrawer } from "../DemoDrawer";
 import { closest, floating, span, withBackground } from "../DragSpec2";
 import { Manipulable, SetState } from "../manipulable2";
@@ -193,15 +193,14 @@ export const Todo = () => {
           height={450}
         />
       </div>
-      <div className="bg-gray-50 rounded p-3 shrink-0 sticky top-4">
-        <div className="text-xs font-medium text-gray-700 mb-2">Options</div>
+      <ConfigPanel>
         <ConfigCheckbox
           value={config.useFloating}
           onChange={(v) => setConfig((c) => ({ ...c, useFloating: v }))}
         >
           Use <span className="font-mono">floating</span>
         </ConfigCheckbox>
-      </div>
+      </ConfigPanel>
     </div>
   );
 };

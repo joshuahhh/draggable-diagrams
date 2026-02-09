@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ConfigCheckbox } from "../configurable";
+import { ConfigCheckbox, ConfigPanel } from "../configurable";
 import { DemoDrawer } from "../DemoDrawer";
 import { closest, floating, just, span, withBackground } from "../DragSpec2";
 import { Drag, Manipulable } from "../manipulable2";
@@ -344,15 +344,14 @@ export const Outline = () => {
           height={1100}
         />
       </div>
-      <div className="bg-gray-50 rounded p-3 shrink-0 sticky top-4">
-        <div className="text-xs font-medium text-gray-700 mb-2">Options</div>
+      <ConfigPanel>
         <ConfigCheckbox
           value={config.useFloating}
           onChange={(v) => setConfig((c) => ({ ...c, useFloating: v }))}
         >
           Use <span className="font-mono">floating</span>
         </ConfigCheckbox>
-      </div>
+      </ConfigPanel>
     </div>
   );
 };

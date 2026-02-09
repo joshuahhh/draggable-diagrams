@@ -1,6 +1,7 @@
 import { produce } from "immer";
 import _ from "lodash";
 import { amb, produceAmb } from "../amb";
+import { DemoNotes } from "../configurable";
 import { DemoDrawer } from "../DemoDrawer";
 import { andThen, closest, floating, withBackground } from "../DragSpec2";
 import { Manipulable } from "../manipulable2";
@@ -182,10 +183,16 @@ const manipulable: Manipulable<State> = ({ state, drag }) => {
 };
 
 export const InsertAndRemove = () => (
-  <DemoDrawer
-    manipulable={manipulable}
-    initialState={initialState}
-    width={400}
-    height={200}
-  />
+  <div>
+    <DemoNotes>
+      This shows kinda-hacky ways to insert and remove items from a draggable
+      diagram. Much to consider.
+    </DemoNotes>
+    <DemoDrawer
+      manipulable={manipulable}
+      initialState={initialState}
+      width={400}
+      height={200}
+    />
+  </div>
 );

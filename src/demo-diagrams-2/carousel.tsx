@@ -1,3 +1,4 @@
+import { DemoNotes } from "../configurable";
 import { DemoDrawer } from "../DemoDrawer";
 import { closest, span } from "../DragSpec2";
 import { Manipulable } from "../manipulable2";
@@ -145,10 +146,16 @@ const manipulable: Manipulable<State> = ({ state, drag, setState }) => (
 );
 
 export const Carousel = () => (
-  <DemoDrawer
-    manipulable={manipulable}
-    initialState={initialState}
-    width={450}
-    height={300}
-  />
+  <div>
+    <DemoNotes>
+      Partially-AI-generated carousel with swipe navigation, interactive dots,
+      and arrow buttons. Ought to use clipPaths but those don't work yet.
+    </DemoNotes>
+    <DemoDrawer
+      manipulable={manipulable}
+      initialState={initialState}
+      width={450}
+      height={300}
+    />
+  </div>
 );

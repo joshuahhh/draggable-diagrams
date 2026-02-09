@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { DemoNotes } from "../configurable";
 import { DemoDrawer } from "../DemoDrawer";
 import { closest, span, withSnapRadius } from "../DragSpec2";
 import { Manipulable } from "../manipulable2";
@@ -103,6 +104,11 @@ const manipulable: Manipulable<State> = ({ state, drag }) => {
 
 export const Tiles = () => (
   <div>
+    <DemoNotes>
+      I'm trying to make dragging feel right here. Goal is for the tile to only
+      drag orthogonally, AND to not jump discontinuously. This seems to require
+      'Relative Pointer Motion' mode (or divergent approaches).
+    </DemoNotes>
     <h3 className="text-md font-medium italic mt-6 mb-1">lonely</h3>
     <DemoDrawer
       manipulable={manipulable}

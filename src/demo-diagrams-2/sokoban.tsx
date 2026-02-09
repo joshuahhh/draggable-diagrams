@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { useMemo, useState } from "react";
-import { ConfigCheckbox } from "../configurable";
+import { ConfigCheckbox, ConfigPanel } from "../configurable";
 import { DemoDrawer } from "../DemoDrawer";
 import { closest, span, withSnapRadius } from "../DragSpec2";
 import { Manipulable } from "../manipulable2";
@@ -274,15 +274,14 @@ export const Sokoban = () => {
         width={500}
         height={500}
       />
-      <div className="bg-gray-50 rounded p-3 shrink-0 sticky top-4">
-        <div className="text-xs font-medium text-gray-700 mb-2">Options</div>
+      <ConfigPanel>
         <ConfigCheckbox
           value={config.levelEditable}
           onChange={(v) => setConfig((c) => ({ ...c, levelEditable: v }))}
         >
           Make level editable
         </ConfigCheckbox>
-      </div>
+      </ConfigPanel>
     </div>
   );
 };

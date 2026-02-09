@@ -1,6 +1,7 @@
 import { produce } from "immer";
 import _ from "lodash";
 import { amb, produceAmb } from "../amb";
+import { DemoNotes } from "../configurable";
 import { DemoDrawer } from "../DemoDrawer";
 import { closest, floating, vary, withBackground } from "../DragSpec2";
 import { Manipulable } from "../manipulable2";
@@ -190,10 +191,16 @@ const manipulable: Manipulable<State> = ({ state, drag, draggedId }) => {
 };
 
 export const CanvasOfLists = () => (
-  <DemoDrawer
-    manipulable={manipulable}
-    initialState={initialState}
-    width={600}
-    height={400}
-  />
+  <div>
+    <DemoNotes>
+      Uses <span className="font-mono">floating</span>, with a{" "}
+      <span className="font-mono">vary</span> backdrop.
+    </DemoNotes>
+    <DemoDrawer
+      manipulable={manipulable}
+      initialState={initialState}
+      width={600}
+      height={400}
+    />
+  </div>
 );
