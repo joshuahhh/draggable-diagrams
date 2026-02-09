@@ -2,6 +2,8 @@ import { ComponentType } from "react";
 import { Angle } from "./demo-diagrams-2/angle";
 import { AngleViaTransform } from "./demo-diagrams-2/angle-via-transform";
 import { Bezier } from "./demo-diagrams-2/bezier";
+import { BluefishPerm } from "./demo-diagrams-2/bluefish-perm";
+import { BluefishStatic } from "./demo-diagrams-2/bluefish-static";
 import { Braid } from "./demo-diagrams-2/braid";
 import { CanvasOfLists } from "./demo-diagrams-2/canvas-of-lists";
 import { CanvasOfListsNested } from "./demo-diagrams-2/canvas-of-lists-nested";
@@ -34,7 +36,10 @@ import { RushHour } from "./demo-diagrams-2/rush-hour";
 import { SimpleTriangle } from "./demo-diagrams-2/simple-triangle";
 import { SimplestClicker } from "./demo-diagrams-2/simplest-clicker";
 import { SimplestJust } from "./demo-diagrams-2/simplest-just";
+import { Sokoban } from "./demo-diagrams-2/sokoban";
 import { Spinny } from "./demo-diagrams-2/spinny";
+import { StretchyRot } from "./demo-diagrams-2/stretchy-rot";
+import { StretchyXY } from "./demo-diagrams-2/stretchy-xy";
 import { Tiles } from "./demo-diagrams-2/tiles";
 import { Todo } from "./demo-diagrams-2/todo";
 
@@ -62,17 +67,20 @@ export const v2Demos: V2Demo[] = [
   { id: "nool-tree", Component: NoolTree },
   { id: "outline", Component: Outline },
   { id: "braid", Component: Braid },
+  { id: "todo", Component: Todo },
   { id: "carousel", Component: Carousel },
   { id: "rush-hour", Component: RushHour },
   { id: "fifteen", Component: Fifteen },
+  { id: "sokoban", Component: Sokoban },
   { id: "hanoi", Component: Hanoi },
   { id: "kanban", Component: Kanban },
-  { id: "todo", Component: Todo },
   { id: "spinny", Component: Spinny },
   { id: "graph", Component: Graph },
   { id: "angle", Component: Angle },
   { id: "angle-via-transform", Component: AngleViaTransform },
   { id: "bezier", Component: Bezier },
+  { id: "stretchy-xy", Component: StretchyXY },
+  { id: "stretchy-rot", Component: StretchyRot },
   { id: "clock", Component: Clock },
   { id: "dragon", Component: Dragon },
   { id: "orbiting-planet", Component: OrbitingPlanet },
@@ -85,4 +93,6 @@ export const v2Demos: V2Demo[] = [
   { id: "multi-circle-points", Component: MultiCirclePoints },
   { id: "node-wires", Component: NodeWires },
   { id: "simplest-just", Component: SimplestJust },
+  { id: "bluefish-static", Component: BluefishStatic },
+  { id: "bluefish-perm", Component: BluefishPerm },
 ];

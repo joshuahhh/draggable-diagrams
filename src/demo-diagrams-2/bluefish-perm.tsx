@@ -1,0 +1,80 @@
+import { Align, createName, Group, Rect, Ref, StackH, Text } from "bluefish-js";
+import { produce } from "immer";
+import { bluefishWithAttach } from "../bluefish";
+import { DemoDrawer } from "../DemoDrawer";
+import { span } from "../DragSpec2";
+import { Manipulable } from "../manipulable2";
+
+type State = {
+  perm: string[];
+};
+
+const initialState: State = {
+  perm: ["A", "B", "C", "D", "E"],
+};
+
+const TILE_SIZE = 50;
+
+const manipulable: Manipulable<State> = ({ state, drag, draggedId }) =>
+  bluefishWithAttach((attach) =>
+    StackH({ spacing: 0 }, [
+      ...state.perm.map((p) => {
+        const backgroundName = createName("background");
+        const boxName = createName("box");
+        const labelName = createName("label");
+
+        attach(p, {
+          "data-on-drag": drag(() =>
+            span(
+              state.perm.map((_, idx) =>
+                produce(state, (draft) => {
+                  const draggedIdx = draft.perm.indexOf(p);
+                  draft.perm.splice(draggedIdx, 1);
+                  draft.perm.splice(idx, 0, p);
+                })
+              )
+            )
+          ),
+          "data-z-index": p === draggedId ? 1 : 0,
+        });
+
+        return Group({ id: p }, [
+          Rect({
+            name: backgroundName,
+            width: TILE_SIZE,
+            height: TILE_SIZE + 5,
+            fill: "none",
+          }),
+          Rect({
+            name: boxName,
+            width: TILE_SIZE,
+            height: TILE_SIZE,
+            stroke: "black",
+            "stroke-width": 2,
+            fill: "white",
+          }),
+          Text(
+            { name: labelName, "font-size": "20px", "font-weight": "normal" },
+            p
+          ),
+          Align({ alignment: "center" }, [
+            Ref({ select: labelName }),
+            Ref({ select: boxName }),
+          ]),
+          Align(
+            { alignment: draggedId === p ? "topCenter" : "bottomCenter" },
+            [Ref({ select: labelName }), Ref({ select: backgroundName })]
+          ),
+        ]);
+      }),
+    ])
+  );
+
+export const BluefishPerm = () => (
+  <DemoDrawer
+    manipulable={manipulable}
+    initialState={initialState}
+    width={300}
+    height={120}
+  />
+);
