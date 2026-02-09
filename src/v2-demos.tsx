@@ -35,6 +35,7 @@ import { SimplestClicker } from "./demo-diagrams-2/simplest-clicker";
 import { SimplestJust } from "./demo-diagrams-2/simplest-just";
 import { Spinny } from "./demo-diagrams-2/spinny";
 import { Tiles } from "./demo-diagrams-2/tiles";
+import { Todo } from "./demo-diagrams-2/todo";
 
 export type V2Demo = {
   id: string;
@@ -64,6 +65,7 @@ export const v2Demos: V2Demo[] = [
   { id: "fifteen", Component: Fifteen },
   { id: "hanoi", Component: Hanoi },
   { id: "kanban", Component: Kanban },
+  { id: "todo", Component: Todo },
   { id: "spinny", Component: Spinny },
   { id: "graph", Component: Graph },
   { id: "angle", Component: Angle },
