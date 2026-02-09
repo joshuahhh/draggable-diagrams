@@ -1,5 +1,14 @@
 import _ from "lodash";
-import { allPossibleRewrites, rewr, Rewrite, Tree } from "../asts";
+import { ReactNode, useMemo, useState } from "react";
+import {
+  allPossibleRewrites,
+  isWildcard,
+  Pattern,
+  rewr,
+  Rewrite,
+  Tree,
+} from "../asts";
+import { ConfigCheckbox } from "../configurable";
 import { closest, span } from "../DragSpec2";
 import { Drag, Manipulable } from "../manipulable2";
 import { Svgx } from "../svgx";
@@ -79,31 +88,99 @@ const initialState2: State = {
   ],
 };
 
-// Default-enabled rewrite sets from the v1 config
-const rewrites: Rewrite[] = [
-  // Commutativity
-  rewr("(+ #A #B)", "(+ B A)"),
-  rewr("(× #A #B)", "(× B A)"),
-  // Associativity: Pull up operand
-  rewr("(+2 (+1 #A B) C)", "(+1 A (+2 B C))"),
-  rewr("(+1 A (+2 #B C))", "(+2 (+1 A B) C)"),
-  rewr("(×2 (×1 #A B) C)", "(×1 A (×2 B C))"),
-  rewr("(×1 A (×2 #B C))", "(×2 (×1 A B) C)"),
-  // Associativity: Pull down operand
-  rewr("(+1 #A (+2 B C))", "(+2 (+1 A B) C)"),
-  rewr("(+2 (+1 A B) #C)", "(+1 A (+2 B C))"),
-  rewr("(×1 #A (×2 B C))", "(×2 (×1 A B) C)"),
-  rewr("(×2 (×1 A B) #C)", "(×1 A (×2 B C))"),
+type RewriteSet = {
+  rewrites: Rewrite[];
+  title: ReactNode;
+  subtitle?: ReactNode;
+  defaultEnabled?: boolean;
+};
+
+const rewriteSets: RewriteSet[] = [
+  {
+    title: <>Commutativity</>,
+    rewrites: [
+      rewr("(+ #A #B)", "(+ B A)"),
+      rewr("(× #A #B)", "(× B A)"),
+    ],
+    defaultEnabled: true,
+  },
+  {
+    title: <>Associativity</>,
+    subtitle: <>Pull up op</>,
+    rewrites: [
+      rewr("(+2 #(+1 A B) C)", "(+1 A (+2 B C))"),
+      rewr("(+1 A #(+2 B C))", "(+2 (+1 A B) C)"),
+      rewr("(×2 #(×1 A B) C)", "(×1 A (×2 B C))"),
+      rewr("(×1 A #(×2 B C))", "(×2 (×1 A B) C)"),
+    ],
+  },
+  {
+    title: <>Associativity</>,
+    subtitle: <>Pull down op</>,
+    rewrites: [
+      rewr("#(+1 A (+2 B C))", "(+2 (+1 A B) C)"),
+      rewr("#(+2 (+1 A B) C)", "(+1 A (+2 B C))"),
+      rewr("#(×1 A (×2 B C))", "(×2 (×1 A B) C)"),
+      rewr("#(×2 (×1 A B) C)", "(×1 A (×2 B C))"),
+    ],
+  },
+  {
+    title: <>Associativity</>,
+    subtitle: <>Pull up operand</>,
+    rewrites: [
+      rewr("(+2 (+1 #A B) C)", "(+1 A (+2 B C))"),
+      rewr("(+1 A (+2 #B C))", "(+2 (+1 A B) C)"),
+      rewr("(×2 (×1 #A B) C)", "(×1 A (×2 B C))"),
+      rewr("(×1 A (×2 #B C))", "(×2 (×1 A B) C)"),
+    ],
+    defaultEnabled: true,
+  },
+  {
+    title: <>Associativity</>,
+    subtitle: <>Pull down operand</>,
+    rewrites: [
+      rewr("(+1 #A (+2 B C))", "(+2 (+1 A B) C)"),
+      rewr("(+2 (+1 A B) #C)", "(+1 A (+2 B C))"),
+      rewr("(×1 #A (×2 B C))", "(×2 (×1 A B) C)"),
+      rewr("(×2 (×1 A B) #C)", "(×1 A (×2 B C))"),
+    ],
+    defaultEnabled: true,
+  },
+  {
+    title: <>Associativity</>,
+    subtitle: (
+      <>
+        Pull op sideways
+        <br />
+        <span className="italic text-red-500">
+          (Conflicts with commutativity!)
+        </span>
+      </>
+    ),
+    rewrites: [
+      rewr("(+2 #(+1 A B) C)", "(+2 A #(+1 B C))"),
+      rewr("(+1 A #(+2 B C))", "(+1 #(+2 A B) C)"),
+      rewr("(×2 #(×1 A B) C)", "(×2 A #(×1 B C))"),
+      rewr("(×1 A #(×2 B C))", "(×1 #(×2 A B) C)"),
+    ],
+  },
 ];
 
-const manipulable: Manipulable<State> = ({ state, drag }) => {
-  return renderTree(state, state, drag).element;
-};
+const defaultActiveRewriteSets = rewriteSets.map(
+  (rs) => rs.defaultEnabled ?? false
+);
+
+function manipulableFactory(activeRewrites: Rewrite[]): Manipulable<State> {
+  return ({ state, drag }) => {
+    return renderTree(state, state, drag, activeRewrites).element;
+  };
+}
 
 function renderTree(
   state: State,
   tree: Tree,
-  drag: Drag<State>
+  drag: Drag<State>,
+  activeRewrites: Rewrite[]
 ): {
   element: Svgx;
   w: number;
@@ -116,7 +193,7 @@ function renderTree(
   const LABEL_MIN_HEIGHT = 20;
 
   const renderedChildren = tree.children.map((child) =>
-    renderTree(state, child, drag)
+    renderTree(state, child, drag, activeRewrites)
   );
 
   const renderedChildrenElements: Svgx[] = [];
@@ -157,7 +234,9 @@ function renderTree(
         textAnchor="middle"
         fontSize={20}
         fill="black"
-        data-on-drag={drag(() => dragTargets(state, tree.id))}
+        data-on-drag={drag(() =>
+          dragTargets(state, tree.id, activeRewrites)
+        )}
       >
         {tree.label}
       </text>
@@ -177,27 +256,159 @@ function renderTree(
   };
 }
 
-function dragTargets(state: State, draggedKey: string) {
-  const newTrees = allPossibleRewrites(state, rewrites, draggedKey);
+function dragTargets(
+  state: State,
+  draggedKey: string,
+  activeRewrites: Rewrite[]
+) {
+  const newTrees = allPossibleRewrites(state, activeRewrites, draggedKey);
   if (newTrees.length === 0) return span([state]);
   return closest(newTrees.map((newTree) => span([state, newTree])));
 }
 
-export const NoolTree = () => (
-  <div>
-    <h3 className="text-md font-medium italic mt-6 mb-1">state 1</h3>
-    <DemoDrawer
-      manipulable={manipulable}
-      initialState={initialState1}
-      width={600}
-      height={350}
-    />
-    <h3 className="text-md font-medium italic mt-6 mb-1">state 2</h3>
-    <DemoDrawer
-      manipulable={manipulable}
-      initialState={initialState2}
-      width={600}
-      height={350}
-    />
-  </div>
-);
+// # Rewrite rule display
+
+const drawRewrite = (rewrite: Rewrite) => {
+  function findFirstTriggerId(pattern: Pattern): string | null {
+    if (pattern.isTrigger) {
+      return pattern.id;
+    }
+    if (!isWildcard(pattern)) {
+      for (const child of pattern.children) {
+        const result = findFirstTriggerId(child);
+        if (result !== null) {
+          return result;
+        }
+      }
+    }
+    return null;
+  }
+  const firstTriggerId = findFirstTriggerId(rewrite.from);
+  return (
+    <>
+      {drawPattern(rewrite.from, true, firstTriggerId)} →{" "}
+      {drawPattern(rewrite.to, true, firstTriggerId)}
+    </>
+  );
+};
+
+const drawPattern = (
+  pattern: Pattern,
+  topLevel: boolean,
+  firstTriggerId: string | null
+): ReactNode => {
+  let contents;
+  if (isWildcard(pattern)) {
+    contents = pattern.id;
+  } else {
+    const opById: Record<string, ReactNode> = {
+      "+": <span className="text-red-600 font-bold">+</span>,
+      "+1": <span className="text-red-600 font-bold">+</span>,
+      "+2": <span className="text-green-600 font-bold">+</span>,
+    };
+    contents = (
+      <>
+        {topLevel ? "" : "("}
+        {pattern.children.length > 0 &&
+          pattern.children.map((child, i) => [
+            i > 0 && <> {opById[pattern.id]} </>,
+            drawPattern(child, false, firstTriggerId),
+          ])}
+        {topLevel ? "" : ")"}
+      </>
+    );
+  }
+
+  if (pattern.id === firstTriggerId) {
+    return <span className="bg-amber-200 rounded-sm p-0.5">{contents}</span>;
+  } else {
+    return contents;
+  }
+};
+
+// # Config panel
+
+function ConfigPanel({
+  activeRewriteSets,
+  setActiveRewriteSets,
+}: {
+  activeRewriteSets: boolean[];
+  setActiveRewriteSets: (v: boolean[]) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      {rewriteSets.map((rewriteSet, i) => (
+        <ConfigCheckbox
+          key={i}
+          value={activeRewriteSets[i]}
+          onChange={(v) => {
+            const newActive = [...activeRewriteSets];
+            newActive[i] = v;
+            setActiveRewriteSets(newActive);
+          }}
+        >
+          <b>{rewriteSet.title}</b>
+          {rewriteSet.subtitle && (
+            <>
+              <br />
+              {rewriteSet.subtitle}
+            </>
+          )}
+          <br />
+          {rewriteSet.rewrites.length > 0 && drawRewrite(rewriteSet.rewrites[0])}
+        </ConfigCheckbox>
+      ))}
+    </div>
+  );
+}
+
+// # Component
+
+export const NoolTree = () => {
+  const [activeRewriteSets, setActiveRewriteSets] = useState(
+    defaultActiveRewriteSets
+  );
+
+  const activeRewrites = useMemo(
+    () =>
+      _.zip(rewriteSets, activeRewriteSets).flatMap(([set, enabled]) =>
+        enabled ? set!.rewrites : []
+      ),
+    [activeRewriteSets]
+  );
+
+  const manipulable = useMemo(
+    () => manipulableFactory(activeRewrites),
+    [activeRewrites]
+  );
+
+  return (
+    <div className="flex gap-4 items-start">
+      <div>
+        <h3 className="text-md font-medium italic mt-6 mb-1">state 1</h3>
+        <DemoDrawer
+          manipulable={manipulable}
+          initialState={initialState1}
+          width={600}
+          height={350}
+        />
+        <h3 className="text-md font-medium italic mt-6 mb-1">state 2</h3>
+        <DemoDrawer
+          manipulable={manipulable}
+          initialState={initialState2}
+          width={600}
+          height={350}
+        />
+      </div>
+      <div className="bg-gray-50 rounded p-3 shrink-0 sticky top-4">
+        <div className="text-xs font-medium text-gray-700 mb-2">
+          Active rewrite rules
+        </div>
+        <ConfigPanel
+          activeRewriteSets={activeRewriteSets}
+          setActiveRewriteSets={setActiveRewriteSets}
+        />
+      </div>
+    </div>
+  );
+};
