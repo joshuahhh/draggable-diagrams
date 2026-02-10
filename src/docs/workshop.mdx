@@ -47,12 +47,12 @@ But this draggable doesn't actually do anything. Let's fix that. For a diagram t
 
     const initialState = { status: "off" };
 
-    const draggable = ({ state, drag }) => (
+    const draggable = ({ state, d }) => (
       <circle
         transform={translate(state.status === "off" ? [100, 100] : [200, 100])}
         r={50}
         fill="blue"
-        data-on-drag={drag(span([{status: "off"}, {status: "on"}]))}
+        data-on-drag={() => d.span([{status: "off"}, {status: "on"}])}
       />
     );
 
@@ -75,9 +75,9 @@ Now we're ready for the biggest bit: dragging! Dragging is what lets us move int
 
 Pieces of this puzzle:
 
-- Every use of `data-on-drag` should look like `data-on-drag={drag(...)}`, using the `drag` function provided as an argument to the draggable. The `drag` function provides type assistance, and DD will throw an error if you don't use it.
+- `data-on-drag` takes a callback that returns a drag spec. The drag spec constructors come from `d`, which is provided as an argument to the draggable.
 
-- The argument to `drag` can be a lot of different things. For one, it can be a callback that generates a drag spec lazily. That might be smart for performance, but we don't do that here – we just provide a pre-computed `span` object. That means "I want to be able to drag back and forth between all the states in this list". [TODO: revise this.] The main alternative to `span` is `straightTo`. That means "I want to drag straight from my starting state to this other state" – you can return an array of `straightTo`s to tell DD you want a couple disjoint tracks from the starting state to the targets.
+- Here we use `d.span`, which means "I want to be able to drag back and forth between all the states in this list". There are many alternatives, most prominently `d.floating`, which means the dragged element entirely detaches from the diagram.
 
 With this knowledge we can take on a more involved example: reordering objects.
 
@@ -96,6 +96,7 @@ With this knowledge we can take on a more involved example: reordering objects.
     const draggable: Draggable<State> = ({
       state,
       drag,
+      d,
       draggedId,
     }) => (
       <g transform={translate(50, 50)}>
@@ -106,8 +107,8 @@ With this knowledge we can take on a more involved example: reordering objects.
               id={p}
               transform={translate(idx * TILE_SIZE, isDragged ? -10 : 0)}
               data-z-index={isDragged ? 1 : 0}
-              data-on-drag={drag(() =>
-                span(
+              data-on-drag={() =>
+                d.span(
                   _.range(state.perm.length).map((newIdx) => {
                     const draft = structuredClone(state);
                     draft.perm.splice(idx, 1);
@@ -115,7 +116,7 @@ With this knowledge we can take on a more involved example: reordering objects.
                     return draft;
                   }),
                 )
-              )}
+              }
             >
               <rect
                 width={TILE_SIZE}
@@ -175,7 +176,7 @@ The most novel part of Draggable Diagrams is the "drag between discrete states" 
 
     const initialState = { angle: 0 };
 
-    const draggable = ({ state, drag }) => (
+    const draggable = ({ state, d }) => (
       <g transform={translate(150, 150)}>
         <g transform={rotateDeg(state.angle)}>
           <line
@@ -187,7 +188,7 @@ The most novel part of Draggable Diagrams is the "drag between discrete states" 
             transform={translate(100, 0)}
             r={20}
             fill="black"
-            data-on-drag={drag(vary(state, ["angle"]))}
+            data-on-drag={() => d.vary(state, ["angle"])}
           />
         </g>
       </g>
@@ -196,7 +197,7 @@ The most novel part of Draggable Diagrams is the "drag between discrete states" 
 `}
 />
 
-The new part here is `vary` in the drag spec. This means "the drag should vary a numeric value located at this path in the state object". Specifically, it will control the numeric value to try to make the dragged object as close to the dragged pointer as possible. (That's numeric minimization!) You can pass multiple paths to `vary` to control multiple numeric values at once, e.g. `vary(["x"], ["y"])`.
+The new part here is `d.vary` in the drag spec. This means "the drag should vary a numeric value located at this path in the state object". Specifically, it will control the numeric value to try to make the dragged object as close to the dragged pointer as possible. (That's numeric minimization!) You can pass multiple paths to `d.vary` to control multiple numeric values at once, e.g. `d.vary(state, ["x"], ["y"])`.
 
 A single diagram can have both discrete and continuous drags. Here, edges can be moved discretely between nodes, and nodes can be moved continuously on the canvas:
 

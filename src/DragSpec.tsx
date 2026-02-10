@@ -196,7 +196,7 @@ function closest<T>(specs: Many<DragSpec<T>>): DragSpec<T> {
 }
 
 // Two type params so specs with different narrow types can combine into a union.
-export function withBackground<F, B>(
+function withBackground<F, B>(
   foreground: DragSpec<F>,
   background: DragSpec<B>,
   { radius = 50 }: { radius?: number } = {},
@@ -209,7 +209,7 @@ export function withBackground<F, B>(
   } as DragSpecData<F | B>);
 }
 
-export function andThen<T>(spec: DragSpec<T>, state: T): DragSpec<T> {
+function andThen<T>(spec: DragSpec<T>, state: T): DragSpec<T> {
   return withMethods({ type: "and-then", spec, andThenState: state });
 }
 
@@ -251,14 +251,14 @@ function vary<T>(state: T, ...args: VaryArgs<T>): DragSpec<T> {
   return withMethods({ type: "vary", state, paramPaths, ...options });
 }
 
-export function withDistance<T>(
+function withDistance<T>(
   spec: DragSpec<T>,
   f: (distance: number) => number,
 ): DragSpec<T> {
   return withMethods({ type: "with-distance", spec, f });
 }
 
-export function withSnapRadius<T>(
+function withSnapRadius<T>(
   spec: DragSpec<T>,
   radius: number,
   options: { transition?: boolean; chain?: boolean } = {},
@@ -272,7 +272,7 @@ export function withSnapRadius<T>(
   });
 }
 
-export function withDropTransition<T>(
+function withDropTransition<T>(
   spec: DragSpec<T>,
   transition: TransitionLike = true,
 ): DragSpec<T> {
@@ -288,7 +288,7 @@ function span<T>(states: T[]): DragSpec<T> {
   return withMethods({ type: "span", states });
 }
 
-export function transitionToAndThen<T>(
+function transitionToAndThen<T>(
   state: T,
   draggedId: string,
 ): DragSpec<T> {
@@ -309,6 +309,7 @@ export type DragSpecBuilders<T> = {
     state: T,
     ...args: [...PathIn<T, number>[], VaryOptions<T>]
   ): DragSpec<T>;
+  transitionToAndThen(state: T, draggedId: string): DragSpec<T>;
 };
 
 // Single shared instance — safe because generics are erased at runtime.
@@ -318,6 +319,7 @@ export const dragSpecBuilders: DragSpecBuilders<any> = {
   span,
   closest,
   vary,
+  transitionToAndThen,
 };
 
 /** Constraint helper: returns a - b, so a < b when result ≤ 0 */

@@ -8,16 +8,12 @@ import prettier from "prettier/standalone";
 import { createElement, useEffect, useMemo, useState } from "react";
 import { Draggable } from "../draggable";
 import { DraggableRenderer } from "../DraggableRenderer";
-import { andThen, dragSpecBuilders, withSnapRadius } from "../DragSpec";
 import { ErrorBoundary } from "../ErrorBoundary";
 import { normalizeIndent } from "../normalizeIndent";
 import { path, rotateDeg, rotateRad, scale, translate } from "../svgx/helpers";
 import { numberScrubber } from "./numberScrubber";
 
-const { closest, floating, just, span, vary } = dragSpecBuilders;
-
 // Globals available in LiveEditor code
-// Note: `straightTo` and `params` are v1 aliases kept for docs compatibility
 const GLOBALS = {
   _,
   produce,
@@ -26,15 +22,6 @@ const GLOBALS = {
   rotateRad,
   scale,
   path,
-  vary,
-  just,
-  straightTo: just,
-  span,
-  params: span,
-  closest,
-  andThen,
-  floating,
-  withSnapRadius,
 } as const;
 
 interface LiveEditorProps {

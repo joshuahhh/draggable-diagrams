@@ -1,7 +1,7 @@
 import { produce } from "immer";
 import { DemoDraggable } from "../demo-ui";
 import { Draggable } from "../draggable";
-import { transitionToAndThen } from "../DragSpec";
+
 import { translate } from "../svgx/helpers";
 
 const NODE_W = 90;
@@ -262,7 +262,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                                   },
                                 };
                         });
-                        return transitionToAndThen(
+                        return d.transitionToAndThen(
                           newState,
                           `wire-${wid}-${endKey}`,
                         );
