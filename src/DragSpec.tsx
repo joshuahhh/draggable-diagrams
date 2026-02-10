@@ -405,11 +405,6 @@ export function dragSpecToBehavior<T extends object>(
         activePath: "just",
         debugOverlay: () => (
           <g opacity={0.8}>
-            <DistanceLine
-              from={elementPos}
-              to={frame.pointer}
-              distance={distance}
-            />
             <circle
               cx={elementPos.x}
               cy={elementPos.y}
@@ -417,6 +412,11 @@ export function dragSpecToBehavior<T extends object>(
               fill="none"
               stroke="magenta"
               strokeWidth={1.5}
+            />
+            <DistanceLine
+              from={elementPos}
+              to={frame.pointer}
+              distance={distance}
             />
           </g>
         ),
@@ -470,12 +470,12 @@ export function dragSpecToBehavior<T extends object>(
         activePath: "floating",
         debugOverlay: () => (
           <g opacity={0.8}>
+            <circle cx={elementPos.x} cy={elementPos.y} r={5} fill="magenta" />
             <DistanceLine
               from={elementPos}
               to={frame.pointer}
               distance={distance}
             />
-            <circle cx={elementPos.x} cy={elementPos.y} r={5} fill="magenta" />
           </g>
         ),
       };
@@ -629,12 +629,12 @@ export function dragSpecToBehavior<T extends object>(
         activePath: "vary",
         debugOverlay: () => (
           <g opacity={0.8}>
+            <circle {...achievedPos.cxy()} r={5} fill="magenta" />
             <DistanceLine
               from={achievedPos}
               to={frame.pointer}
               distance={distance}
             />
-            <circle {...achievedPos.cxy()} r={5} fill="magenta" />
           </g>
         ),
       };
