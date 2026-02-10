@@ -59,7 +59,7 @@ export function MDXPage({ children: Content, components = {} }: MDXPageProps) {
       ),
       ...components,
     }),
-    [components]
+    [components],
   );
 
   return (

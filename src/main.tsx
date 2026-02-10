@@ -24,5 +24,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         {autoRoute("/bluefish", BluefishDemo)}
       </Routes>
     </HashRouter>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

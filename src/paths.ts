@@ -5,8 +5,8 @@
 export type PathIn<T, V, Depth extends 0[] = []> = Depth["length"] extends 10
   ? [] // Stop recursion at depth 10
   : T extends V
-  ? [] | DeeperPaths<T, V, Depth>
-  : DeeperPaths<T, V, Depth>;
+    ? [] | DeeperPaths<T, V, Depth>
+    : DeeperPaths<T, V, Depth>;
 
 type DeeperPaths<T, V, Depth extends 0[]> = T extends object
   ? {
@@ -14,8 +14,8 @@ type DeeperPaths<T, V, Depth extends 0[]> = T extends object
         ? P extends []
           ? [K]
           : P extends [infer First, ...infer Rest]
-          ? [K, First, ...Rest]
-          : never
+            ? [K, First, ...Rest]
+            : never
         : never;
     }[keyof T]
   : never;
@@ -47,7 +47,7 @@ export function setAtPath<T, V>(obj: T, path: PathIn<T, V>, value: V): T {
     newArr[first as number] = setAtPath(
       obj[first as number],
       rest as any,
-      value
+      value,
     );
     return newArr as T;
   }
@@ -55,14 +55,14 @@ export function setAtPath<T, V>(obj: T, path: PathIn<T, V>, value: V): T {
   return objCloneAndSet(
     obj,
     first,
-    setAtPath((obj as any)[first], rest as any, value)
+    setAtPath((obj as any)[first], rest as any, value),
   );
 }
 
 function objCloneAndSet<T, K extends keyof T>(obj: T, key: K, value: T[K]): T {
   const clone = Object.assign(
     Object.create(Object.getPrototypeOf(obj)),
-    obj
+    obj,
   ) as T;
   clone[key] = value;
   return clone;

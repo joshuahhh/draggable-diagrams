@@ -51,10 +51,10 @@ function applyEasing({ easing, duration }: Transition, t: number): number {
     typeof easing === "function"
       ? easing
       : easing === "cubic-out"
-      ? d3Ease.easeCubicOut
-      : easing === "elastic-out"
-      ? d3Ease.easeElasticOut
-      : assertNever(easing);
+        ? d3Ease.easeCubicOut
+        : easing === "elastic-out"
+          ? d3Ease.easeElasticOut
+          : assertNever(easing);
   return easingFunction(t / duration);
 }
 
@@ -66,7 +66,7 @@ export type TransitionLike =
   | undefined;
 
 export function resolveTransitionLike(
-  t: TransitionLike
+  t: TransitionLike,
 ): Transition | undefined {
   if (!t) return undefined;
   if (typeof t === "object") {
@@ -160,7 +160,7 @@ export function DraggableRenderer<T extends object>({
       pointerRef.current = pointer;
       return pointer;
     },
-    [svgElem]
+    [svgElem],
   );
 
   // Animation loop: update dragging states and spring decay each frame
@@ -193,7 +193,7 @@ export function DraggableRenderer<T extends object>({
               setState: throwError,
             }),
             assignPaths,
-            accumulateTransforms
+            accumulateTransforms,
           );
           const element =
             typeof result.chainNow === "string"
@@ -236,7 +236,7 @@ export function DraggableRenderer<T extends object>({
                 newState,
                 frame,
                 ds.pointerStart,
-                newSpringingFrom
+                newSpringingFrom,
               );
               dragStateRef.current = chainedState;
               setDragState(chainedState);
@@ -296,7 +296,7 @@ export function DraggableRenderer<T extends object>({
           setDragState(newState);
         }
       }
-    }, [draggable, setDragState])
+    }, [draggable, setDragState]),
   );
 
   // Cursor style
@@ -364,7 +364,7 @@ export function DraggableRenderer<T extends object>({
       },
       onDebugDragInfoRef,
     }),
-    [catchToRenderError, draggable, setDragState, setPointerFromEvent]
+    [catchToRenderError, draggable, setDragState, setPointerFromEvent],
   );
 
   return (
@@ -400,7 +400,7 @@ export function DraggableRenderer<T extends object>({
  */
 function runSpring(
   springingFrom: SpringingFrom | null,
-  target: LayeredSvgx
+  target: LayeredSvgx,
 ): LayeredSvgx {
   if (!springingFrom) return target;
   const elapsed = performance.now() - springingFrom.time;
@@ -421,7 +421,7 @@ function runSpring(
 
 function renderReadOnly<T extends object>(
   draggable: Draggable<T>,
-  props: Omit<DraggableProps<T>, "setState">
+  props: Omit<DraggableProps<T>, "setState">,
 ): LayeredSvgx {
   return pipe(
     draggable({
@@ -430,7 +430,7 @@ function renderReadOnly<T extends object>(
     }),
     assignPaths,
     accumulateTransforms,
-    layerSvg
+    layerSvg,
   );
 }
 
@@ -440,7 +440,7 @@ function initDrag<T extends object>(
   state: T,
   frame: DragFrame,
   pointerStart: Vec2,
-  springingFrom: SpringingFrom | null
+  springingFrom: SpringingFrom | null,
 ): {
   dragState: DragState<T> & { type: "dragging" };
   debugInfo: DebugDragInfo<T>;
@@ -501,7 +501,7 @@ type RenderContext<T extends object> = {
 function postProcessForInteraction<T extends object>(
   content: Svgx,
   state: T,
-  ctx: RenderContext<T>
+  ctx: RenderContext<T>,
 ): LayeredSvgx {
   return pipe(
     content,
@@ -538,14 +538,14 @@ function postProcessForInteraction<T extends object>(
               state,
               frame,
               pointer,
-              null
+              null,
             );
             ctx.setDragState(dragState);
             ctx.onDebugDragInfoRef.current?.(debugInfo);
           }),
         };
       }),
-    layerSvg
+    layerSvg,
   );
 }
 
@@ -567,7 +567,7 @@ const DrawIdleMode = memoGeneric(
       setState: ctx.catchToRenderError(
         (
           newState: SetStateAction<T>,
-          { transition }: { transition?: TransitionLike } = {}
+          { transition }: { transition?: TransitionLike } = {},
         ) => {
           const resolved =
             typeof newState === "function"
@@ -591,13 +591,13 @@ const DrawIdleMode = memoGeneric(
               },
             },
           });
-        }
+        },
       ),
     });
 
     const layered = postProcessForInteraction(content, dragState.state, ctx);
     return drawLayered(runSpring(dragState.springingFrom, layered));
-  }
+  },
 );
 
 const DrawDraggingMode = memoGeneric(
@@ -610,7 +610,7 @@ const DrawDraggingMode = memoGeneric(
   }) => {
     const rendered = runSpring(
       dragState.springingFrom,
-      dragState.result.rendered
+      dragState.result.rendered,
     );
     const debugOverlay =
       showDebugOverlay && dragState.result.debugOverlay
@@ -622,5 +622,5 @@ const DrawDraggingMode = memoGeneric(
         {debugOverlay}
       </>
     );
-  }
+  },
 );

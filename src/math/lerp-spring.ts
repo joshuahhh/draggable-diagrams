@@ -64,7 +64,7 @@ export class LerpSpring<P> {
       1 + alpha - beta,
       target,
       beta,
-      lerp
+      lerp,
     );
 
     // Shift state forward
@@ -84,7 +84,7 @@ export class LerpSpring<P> {
     wB: number,
     C: P,
     wC: number,
-    lerp: LerpFn<P>
+    lerp: LerpFn<P>,
   ): P {
     // Prefer combining A+B; if degenerate, combine B+C instead.
     const sumAB = wA + wB;

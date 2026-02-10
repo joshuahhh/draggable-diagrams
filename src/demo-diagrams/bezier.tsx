@@ -44,7 +44,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
   const CURVE_SAMPLES = 9;
   const tValues = Array.from(
     { length: CURVE_SAMPLES },
-    (_, i) => (i + 1) / (CURVE_SAMPLES + 1)
+    (_, i) => (i + 1) / (CURVE_SAMPLES + 1),
   );
 
   return (

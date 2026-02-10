@@ -32,7 +32,7 @@ export function Vec2(xOrXY: number | Vec2able, y?: number): Vec2 {
 }
 
 function isArrayWithTwoNumbers(
-  value: unknown
+  value: unknown,
 ): value is [number, number, ...any] | readonly [number, number, ...any] {
   return (
     Array.isArray(value) &&
@@ -47,7 +47,10 @@ export function isVec2(value: unknown): value is Vec2 {
 }
 
 class Vec2Class {
-  constructor(readonly x: number, readonly y: number) {}
+  constructor(
+    readonly x: number,
+    readonly y: number,
+  ) {}
 
   // # extraction
 

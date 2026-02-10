@@ -99,7 +99,7 @@ export function DemoDraggable<T extends object>({
   const { data: overlayData, computing: overlayComputing } = useDropZoneData(
     showDropZones ? draggingDebugInfo : null,
     width,
-    height
+    height,
   );
 
   return (
@@ -256,7 +256,7 @@ export function ConfigSelect<T>({
         value={stringify(value)}
         onChange={(e) => {
           const selected = options.find(
-            (opt) => stringify(opt) === e.target.value
+            (opt) => stringify(opt) === e.target.value,
           );
           assert(selected !== undefined, "Selected option not found");
           onChange(selected);

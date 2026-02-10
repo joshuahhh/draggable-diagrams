@@ -78,7 +78,7 @@ function draggableFactory(config: Config): Draggable<State> {
       return (
         isInBounds(pos) &&
         !Object.values(state.objects).some(
-          (w) => w.type === "wall" && pos.eq(w.pos)
+          (w) => w.type === "wall" && pos.eq(w.pos),
         )
       );
     }
@@ -103,7 +103,7 @@ function draggableFactory(config: Config): Draggable<State> {
               fill="none"
               data-z-index={-5}
             />
-          ))
+          )),
         )}
 
         {/* Objects */}
@@ -112,7 +112,7 @@ function draggableFactory(config: Config): Draggable<State> {
             id={`object-${id}`}
             transform={translate(
               object.pos.x * TILE_SIZE,
-              object.pos.y * TILE_SIZE
+              object.pos.y * TILE_SIZE,
             )}
             data-z-index={object.type === "goal" ? 1 : 0}
             data-on-drag={
@@ -142,7 +142,7 @@ function draggableFactory(config: Config): Draggable<State> {
                               },
                             ]);
                           })
-                          .filter(defined)
+                          .filter(defined),
                       )
                       .withSnapRadius(3, { transition: true, chain: true })
                 : undefined
@@ -183,7 +183,7 @@ function draggableFactory(config: Config): Draggable<State> {
           id="player"
           transform={translate(
             state.player.x * TILE_SIZE,
-            state.player.y * TILE_SIZE
+            state.player.y * TILE_SIZE,
           )}
           data-z-index={2}
           data-on-drag={() =>
@@ -227,7 +227,7 @@ function draggableFactory(config: Config): Draggable<State> {
                       },
                     ]);
                   })
-                  .filter(defined)
+                  .filter(defined),
               )
               .withSnapRadius(3, { transition: true, chain: true })
           }

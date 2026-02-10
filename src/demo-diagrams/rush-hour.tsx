@@ -54,7 +54,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
             fill="none"
             data-z-index={-5}
           />
-        ))
+        )),
       )}
 
       {/* Cars */}

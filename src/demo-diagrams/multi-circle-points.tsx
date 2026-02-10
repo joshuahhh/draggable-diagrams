@@ -73,7 +73,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                 d.vary(
                   state,
                   ["circles", circleIdx, "x"],
-                  ["circles", circleIdx, "y"]
+                  ["circles", circleIdx, "y"],
                 )
               }
             />
@@ -112,7 +112,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                 return lessThan(p.dx ** 2 + p.dy ** 2, (c.radius - 10) ** 2);
               },
               constrainByParams: true,
-            }
+            },
           );
         });
 

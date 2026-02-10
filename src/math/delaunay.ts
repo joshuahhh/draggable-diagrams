@@ -44,7 +44,7 @@ export class Delaunay {
       edge = 0,
       // visit = null,
       limit = Infinity,
-    } = {}
+    } = {},
   ): number {
     // Special case: Not enough points to form any triangle.
     if (this.numPoints() < 3) return -1;
@@ -71,7 +71,7 @@ export class Delaunay {
         points[pn],
         points[pn + 1],
         pt.x,
-        pt.y
+        pt.y,
       );
 
       if (o >= 0) {
@@ -139,7 +139,7 @@ export class Delaunay {
             pt,
             delPt(ptIdx0),
             delPt(ptIdx1),
-            delPt(ptIdx2)
+            delPt(ptIdx2),
           ),
           projectedPt: pt,
           dist: 0,
@@ -241,7 +241,7 @@ function orientation(
   bx: number,
   by: number,
   cx: number,
-  cy: number
+  cy: number,
 ) {
   // Determinant of vectors of the line segments AB and BC:
   // [ cx - bx ][ bx - ax ]
@@ -269,7 +269,7 @@ function barycentric(pt: Vec2, p0: Vec2, p1: Vec2, p2: Vec2) {
  * undocumented d3-delaunay property
  */
 function d3DelaunayCollinearIdxs(
-  delaunay: D3Delaunay<D3Delaunay.Point>
+  delaunay: D3Delaunay<D3Delaunay.Point>,
 ): number[] {
   return (delaunay as any).collinear;
 }

@@ -255,8 +255,8 @@ function Box({
   const bg = color
     ? colorToAlpha(color, 0.15)
     : active
-    ? ACTIVE_BG
-    : INACTIVE_BG;
+      ? ACTIVE_BG
+      : INACTIVE_BG;
   const border = color ? color : active ? ACTIVE_BORDER : INACTIVE_BORDER;
   const borderWidth = active && !color ? 2 : 1;
 

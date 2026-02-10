@@ -29,13 +29,13 @@ export function accumulateTransforms(element: Svgx): Svgx {
 
 function walkAndAccumulateTransforms(
   element: Svgx,
-  accumulatedTransform: string
+  accumulatedTransform: string,
 ): Svgx {
   const props = element.props as any;
   const elementTransform = props.transform || "";
   const newAccumulatedTransform = combineTransforms(
     accumulatedTransform,
-    elementTransform
+    elementTransform,
   );
 
   return updateElement(
@@ -43,7 +43,7 @@ function walkAndAccumulateTransforms(
     (child) => walkAndAccumulateTransforms(child, newAccumulatedTransform),
     {
       [accumulatedTransformProp as any]: newAccumulatedTransform || undefined,
-    }
+    },
   );
 }
 
@@ -65,7 +65,7 @@ export function layerSvg(element: Svgx): LayeredSvgx {
     element,
     byId,
     descendents,
-    null
+    null,
   );
   if (rootWithExtractedRemoved) {
     // we gotta put the root at the beginning of the map
@@ -85,14 +85,14 @@ function extractIdNodes(
   element: Svgx,
   byId: Map<string, Svgx>,
   descendents: Map<string, Set<string>>,
-  ancestorId: string | null
+  ancestorId: string | null,
 ): Svgx | null {
   const props = element.props as any;
 
   // Validate: data-z-index can only be set on nodes with ids
   if (props["data-z-index"] !== undefined && !props.id) {
     throw new Error(
-      `data-z-index can only be set on elements with an id attribute. Found data-z-index="${props["data-z-index"]}" on <${element.type}> without id.`
+      `data-z-index can only be set on elements with an id attribute. Found data-z-index="${props["data-z-index"]}" on <${element.type}> without id.`,
     );
   }
 
@@ -100,13 +100,13 @@ function extractIdNodes(
   const newAncestorId = currentId || ancestorId;
 
   const newElement = updateElement(element, (child) =>
-    extractIdNodes(child, byId, descendents, newAncestorId)
+    extractIdNodes(child, byId, descendents, newAncestorId),
   );
 
   if (currentId) {
     assert(
       !byId.has(currentId),
-      `Duplicate id "${currentId}" found in SVG tree. Each element must have a unique id.`
+      `Duplicate id "${currentId}" found in SVG tree. Each element must have a unique id.`,
     );
 
     // Track this ID as a descendent of its ancestor (if any)
@@ -181,7 +181,7 @@ export function drawLayered(layered: LayeredSvgx): Svgx {
 
 export function layeredExtract(
   layered: LayeredSvgx,
-  id: string
+  id: string,
 ): { remaining: LayeredSvgx; extracted: LayeredSvgx } {
   assert(layered.descendents !== null, "layered.descendents is null");
   assert(layered.byId.has(id), `Layered SVG does not contain id "${id}"`);
@@ -242,7 +242,7 @@ export function layeredMerge(h1: LayeredSvgx, h2: LayeredSvgx): LayeredSvgx {
   for (const [key, value] of h2.byId.entries()) {
     assert(
       !mergedById.has(key),
-      `Cannot merge LayeredSvgx: duplicate id "${key}" found`
+      `Cannot merge LayeredSvgx: duplicate id "${key}" found`,
     );
     mergedById.set(key, value);
   }
@@ -251,7 +251,7 @@ export function layeredMerge(h1: LayeredSvgx, h2: LayeredSvgx): LayeredSvgx {
 
 export function layeredTransform(
   layered: LayeredSvgx,
-  transform: string
+  transform: string,
 ): LayeredSvgx {
   const transformedById = new Map<string, Svgx>();
   for (const [key, element] of layered.byId.entries()) {
@@ -268,7 +268,7 @@ export function layeredTransform(
 
 export function layeredPrefixIds(
   layered: LayeredSvgx,
-  prefix: string
+  prefix: string,
 ): LayeredSvgx {
   const prefixedById = new Map<string, Svgx>();
   for (const [key, element] of layered.byId.entries()) {
@@ -281,7 +281,7 @@ export function layeredPrefixIds(
 
 export function layeredStripIdPrefix(
   layered: LayeredSvgx,
-  prefix: string
+  prefix: string,
 ): LayeredSvgx {
   const strippedById = new Map<string, Svgx>();
   for (const [key, element] of layered.byId.entries()) {
@@ -297,7 +297,7 @@ export function layeredStripIdPrefix(
 
 export function layeredShiftZIndices(
   layered: LayeredSvgx,
-  shift: number
+  shift: number,
 ): LayeredSvgx {
   const shiftedById = new Map<string, Svgx>();
   for (const [key, element] of layered.byId.entries()) {
@@ -314,7 +314,7 @@ export function layeredShiftZIndices(
 
 export function layeredSetAttributes(
   layered: LayeredSvgx,
-  attrs: Partial<React.SVGProps<SVGElement>>
+  attrs: Partial<React.SVGProps<SVGElement>>,
 ): LayeredSvgx {
   const newById = new Map<string, Svgx>();
   for (const [key, element] of layered.byId.entries()) {
@@ -325,7 +325,7 @@ export function layeredSetAttributes(
 
 export function findByPathInLayered(
   path: string,
-  layered: LayeredSvgx
+  layered: LayeredSvgx,
 ): Svgx | null {
   for (const element of layered.byId.values()) {
     const found = findByPath(path, element);

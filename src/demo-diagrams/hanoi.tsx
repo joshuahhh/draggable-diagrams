@@ -102,8 +102,8 @@ const draggable: Draggable<State> = ({ state, d }) => {
 
                   return d.closest(
                     statesWith.map((s) =>
-                      d.floating(s, { ghost: { opacity: 0.5 } })
-                    )
+                      d.floating(s, { ghost: { opacity: 0.5 } }),
+                    ),
                   );
                 })
               }
@@ -132,7 +132,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
               </text>
             </g>
           );
-        })
+        }),
       )}
     </g>
   );

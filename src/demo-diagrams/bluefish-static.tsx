@@ -38,14 +38,14 @@ const draggable: Draggable<State> = () =>
             "stroke-width": 3,
             stroke: "black",
           }),
-        ])
+        ]),
       ),
       Background(
         { rx: 10 },
-        StackV({ spacing: 30 }, [Text("Mercury"), Ref({ select: "mercury" })])
+        StackV({ spacing: 30 }, [Text("Mercury"), Ref({ select: "mercury" })]),
       ),
     ],
-    {}
+    {},
   );
 
 export const BluefishStatic = () => (

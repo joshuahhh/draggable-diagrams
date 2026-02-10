@@ -175,7 +175,7 @@ function renderTree(
   rootState: Tree,
   draggedId: string | null,
   d: DragSpecBuilders<Tree>,
-  config: Config
+  config: Config,
 ): {
   elem: Svgx;
   h: number;
@@ -250,7 +250,7 @@ function renderTree(
             rootState,
             draggedId,
             d,
-            config
+            config,
           );
           const childPositioned = (
             <g id={`position-${child.id}`} transform={translate(INDENT, y)}>

@@ -22,7 +22,7 @@ export function shouldRecurseIntoChildren(element: Svgx): boolean {
 export function updateElement(
   element: Svgx,
   childFn?: (el: Svgx, idx: number) => Svgx | null,
-  newProps?: React.SVGProps<SVGElement>
+  newProps?: React.SVGProps<SVGElement>,
 ): Svgx {
   const { children } = element.props;
 
@@ -49,7 +49,7 @@ export function updateElement(
 
 export function findElement(
   element: Svgx,
-  predicate: (el: Svgx) => boolean
+  predicate: (el: Svgx) => boolean,
 ): Svgx | null {
   if (predicate(element)) {
     return element;
@@ -70,11 +70,11 @@ export function findElement(
 
 export function updatePropsDownTree(
   element: Svgx,
-  mapFn: (el: Svgx) => React.SVGProps<SVGElement> | undefined
+  mapFn: (el: Svgx) => React.SVGProps<SVGElement> | undefined,
 ): Svgx {
   return updateElement(
     element,
     (child) => updatePropsDownTree(child, mapFn),
-    mapFn(element)
+    mapFn(element),
   );
 }

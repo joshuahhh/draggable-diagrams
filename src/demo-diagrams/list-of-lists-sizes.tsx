@@ -60,7 +60,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
       {state.rows.map((row, rowIdx) => {
         const origY = y;
         const maxItemHeight = assertDefined(
-          _.max(row.items.map((item) => item.h))
+          _.max(row.items.map((item) => item.h)),
         );
         y += maxItemHeight + ROW_PADDING * 2 + ROW_GAP;
         let x = 0;
@@ -75,7 +75,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
               const statesWith = _.range(state.rows.length).map((newIdx) =>
                 produce(stateWithout, (draft) => {
                   draft.rows.splice(newIdx, 0, row);
-                })
+                }),
               );
               return d
                 .closest(statesWith.map((s) => d.floating(s)))
@@ -106,7 +106,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
                     r={1.5}
                     fill="#333"
                   />
-                ))
+                )),
               )}
             </g>
             {row.items.map((p, idx) => {
@@ -118,7 +118,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
                   data-z-index={1}
                   transform={translate(
                     GRIP_WIDTH + GRIP_PADDING + origX + ROW_PADDING,
-                    ROW_PADDING
+                    ROW_PADDING,
                   )}
                   data-on-drag={() => {
                     const stateWithout = produce(state, (draft) => {

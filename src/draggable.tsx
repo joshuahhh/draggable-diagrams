@@ -22,7 +22,7 @@ export type SetState<T> = (
   newState: SetStateAction<T>,
   props?: {
     transition?: TransitionLike;
-  }
+  },
 ) => void;
 
 // # drag
@@ -30,7 +30,7 @@ export type SetState<T> = (
 export type OnDragPropValue<T> = () => DragSpec<T>;
 
 export function getDragSpecCallbackOnElement<T>(
-  element: ReactElement
+  element: ReactElement,
 ): (() => DragSpec<T>) | undefined {
   return (element.props as any)["data-on-drag"] || undefined;
 }

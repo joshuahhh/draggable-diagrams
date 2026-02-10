@@ -27,8 +27,8 @@ export function path(...pts: (Vec2able | string | number)[]): string {
       typeof pt === "string"
         ? pt
         : typeof pt === "number"
-        ? pt.toString()
-        : Vec2(pt).str()
+          ? pt.toString()
+          : Vec2(pt).str(),
     )
     .join(" ");
 }

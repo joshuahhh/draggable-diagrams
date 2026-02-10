@@ -88,13 +88,13 @@ export function LiveEditor({
         `
         ${transformed}
         return { draggable, initialState };
-        `
+        `,
       );
 
       // Execute with dependencies
       const { draggable, initialState } = fn(
         createElement,
-        ...Object.values(GLOBALS)
+        ...Object.values(GLOBALS),
       );
 
       setError(null);

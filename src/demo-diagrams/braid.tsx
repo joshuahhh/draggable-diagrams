@@ -80,7 +80,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
                   stroke="black"
                   strokeWidth={2}
                 />
-              ) : null
+              ) : null,
             )}
           </g>
         );
@@ -103,7 +103,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
           id={`strand-end-${p}`}
           transform={translate(
             i * TILE_SIZE,
-            (state.seq.length + 1) * TILE_SIZE
+            (state.seq.length + 1) * TILE_SIZE,
           )}
           data-z-index={1}
           data-on-drag={() => {
@@ -112,14 +112,14 @@ const draggable: Draggable<State> = ({ state, d }) => {
               spanStates.push(
                 produce(state, (s) => {
                   s.seq.push([i, i - 1]);
-                })
+                }),
               );
             }
             if (i < state.n - 1) {
               spanStates.push(
                 produce(state, (s) => {
                   s.seq.push([i, i + 1]);
-                })
+                }),
               );
             }
             const specs = [d.span(spanStates)];
@@ -130,7 +130,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
                   produce(state, (s) => {
                     s.seq.pop();
                   }),
-                ])
+                ]),
               );
             }
             return d.closest(specs).withSnapRadius(1, { chain: true });

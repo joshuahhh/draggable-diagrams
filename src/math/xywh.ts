@@ -31,7 +31,7 @@ export const lerpXYWH = (a: XYWH, b: XYWH, t: number): XYWH => {
     lerp(a[0], b[0], t),
     lerp(a[1], b[1], t),
     lerp(a[2], b[2], t),
-    lerp(a[3], b[3], t)
+    lerp(a[3], b[3], t),
   );
 };
 

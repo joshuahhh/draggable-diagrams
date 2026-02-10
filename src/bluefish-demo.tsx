@@ -31,18 +31,18 @@ const bluefishDiagram = () => [
         id: "earth",
       }),
       Circle({ r: 21, fill: "#F1CF8E", "stroke-width": 3, stroke: "black" }),
-    ])
+    ]),
   ),
   Background(
     { rx: 10 },
-    StackV({ spacing: 30 }, [Text("Mercury"), Ref({ select: "mercury" })])
+    StackV({ spacing: 30 }, [Text("Mercury"), Ref({ select: "mercury" })]),
   ),
 ];
 
 export function BluefishDemo() {
   const [div, setDiv] = useState<HTMLDivElement | null>(null);
   const [jsxContents, setJsxContents] = useState<React.ReactElement | null>(
-    null
+    null,
   );
   const [jsxContentsParser, setJsxContentsParser] =
     useState<React.ReactElement | null>(null);

@@ -24,7 +24,7 @@ export function normalizeIndent(
   textLines = textLines.slice(1);
   assert(
     textLines[textLines.length - 1].match(/^ *$/) !== null,
-    "no non-whitespace on closing backtick line please"
+    "no non-whitespace on closing backtick line please",
   );
   textLines = textLines.slice(0, textLines.length - 1);
   const leftPadding = Math.min(
@@ -34,7 +34,7 @@ export function normalizeIndent(
         return Infinity;
       } // lines without non-spaces don't constrain
       return m[1].length;
-    })
+    }),
   );
   return textLines.map((line) => line.slice(leftPadding)).join("\n") + "\n";
 }

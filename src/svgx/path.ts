@@ -24,14 +24,14 @@ function assignPathsRecursive(element: Svgx, currentPath: string): Svgx {
 
   assert(
     !id || !id.includes("/"),
-    `Element id "${id}" contains a slash, which is not allowed.`
+    `Element id "${id}" contains a slash, which is not allowed.`,
   );
 
   const elementPath: string = id ? id + "/" : currentPath;
 
   assert(
     !(typeof element.key === "string" && !element.key.startsWith(".")),
-    `Element with path "${elementPath}" has a key prop (${element.key}), which is not allowed.`
+    `Element with path "${elementPath}" has a key prop (${element.key}), which is not allowed.`,
   );
 
   return updateElement(
@@ -40,7 +40,7 @@ function assignPathsRecursive(element: Svgx, currentPath: string): Svgx {
       assignPathsRecursive(child, elementPath + String(index) + "/"),
     {
       [pathPropName as any]: elementPath,
-    }
+    },
   );
 }
 

@@ -54,7 +54,7 @@ function draggableFactory(config: Config): Draggable<State> {
               setState(
                 produce(state, (s) => {
                   s.todoDraft.text = e.target.value;
-                })
+                }),
               );
             }}
             placeholder="What needs to be done?"
@@ -72,7 +72,7 @@ function draggableFactory(config: Config): Draggable<State> {
                     completed: false,
                     text: "",
                   };
-                })
+                }),
               );
             }}
           >
@@ -94,7 +94,7 @@ function draggableFactory(config: Config): Draggable<State> {
           todo,
           transform: translate(
             10 - (isDragged && !config.useFloating ? 5 : 0),
-            80 + idx * TILE_SIZE
+            80 + idx * TILE_SIZE,
           ),
           "data-z-index": isDragged ? 1 : 0,
           opacity: 1,
@@ -106,7 +106,7 @@ function draggableFactory(config: Config): Draggable<State> {
             const statesWith = _.range(state.todos.length).map((newIdx) =>
               produce(stateWithout, (s) => {
                 s.todos.splice(newIdx, 0, todo);
-              })
+              }),
             );
             return config.useFloating
               ? d
@@ -155,7 +155,7 @@ function drawTodoItem({
                 if (t) {
                   t.completed = e.target.checked;
                 }
-              })
+              }),
             );
           }}
           className="w-5 h-5 rounded border-2 border-gray-300 text-blue-500 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0 cursor-pointer"

@@ -28,7 +28,7 @@ import {
 function traverseUntilPred<T>(
   node: T,
   next: (n: T) => T[],
-  pred: (n: T) => boolean
+  pred: (n: T) => boolean,
 ) {
   const visited = new Set([node]);
   const todo: [T, T[]][] = [[node, []]];
@@ -49,7 +49,7 @@ const nodeDist = (a: TreeNode, b: TreeNode) =>
   traverseUntilPred(
     a,
     (n) => (n ? [...n.children, ...(n.parent ? [n.parent] : [])] : []),
-    (n) => n === b
+    (n) => n === b,
   )!.length;
 
 type Config = {
@@ -78,7 +78,7 @@ function draggableFactory(
   codomainTree: TreeNode,
   allMorphs: TreeMorph[],
   config: Config,
-  yForTradRep: number
+  yForTradRep: number,
 ): Draggable<State> {
   return ({ state, d }) => {
     const finalizers = new Finalizers();
@@ -128,14 +128,14 @@ function dragSpec(draggedNodeId: string, ctx: Ctx) {
     newMorphs = ctx.allMorphs.filter((newMorph) =>
       domainIds.every(
         (nodeId) =>
-          nodeId === draggedNodeId || ctx.morph[nodeId] === newMorph[nodeId]
-      )
+          nodeId === draggedNodeId || ctx.morph[nodeId] === newMorph[nodeId],
+      ),
     );
   } else {
     // Group morphisms by where they send draggedNodeId
     const morphsByDragTarget = _.groupBy(
       ctx.allMorphs,
-      (targetMorph) => targetMorph[draggedNodeId]
+      (targetMorph) => targetMorph[draggedNodeId],
     );
 
     // For each group, pick the morphism with minimum total movement
@@ -146,11 +146,11 @@ function dragSpec(draggedNodeId: string, ctx: Ctx) {
             domainIds.map((nodeId) =>
               nodeDist(
                 getNodeById(ctx.codomainTree, ctx.morph[nodeId])!,
-                getNodeById(ctx.codomainTree, newMorph[nodeId])!
-              )
-            )
-          )
-        )!
+                getNodeById(ctx.codomainTree, newMorph[nodeId])!,
+              ),
+            ),
+          ),
+        )!,
     );
   }
 
@@ -171,7 +171,7 @@ const FG_NODE_GAP = 20;
 function drawBgTree(
   bgNode: TreeNode,
   fgNode: TreeNode,
-  ctx: Ctx
+  ctx: Ctx,
 ): { element: Svgx; w: number; h: number } {
   const result = drawBgSubtree(bgNode, [fgNode], ctx);
   return {
@@ -184,7 +184,7 @@ function drawBgTree(
 function drawBgSubtree(
   bgNode: TreeNode,
   fgNodes: TreeNode[],
-  ctx: Ctx
+  ctx: Ctx,
 ): {
   element: Svgx;
   w: number;
@@ -195,7 +195,7 @@ function drawBgSubtree(
 
   const [fgNodesHere, fgNodesBelow] = _.partition(
     fgNodes,
-    (n) => ctx.morph[n.id] === bgNode.id
+    (n) => ctx.morph[n.id] === bgNode.id,
   );
 
   const bgNodeR = drawBgNodeWithFgNodesInside(bgNode, fgNodesHere, ctx);
@@ -212,7 +212,7 @@ function drawBgSubtree(
   }
 
   const childRs = bgNode.children.map((child) =>
-    drawBgSubtree(child, fgNodesBelow, ctx)
+    drawBgSubtree(child, fgNodesBelow, ctx),
   );
 
   const childrenWidth =
@@ -229,7 +229,7 @@ function drawBgSubtree(
   elements.push(
     <g id={`bg-node-group-${bgNode.id}`} transform={translate(aOffset, 0)}>
       {bgNodeR.element}
-    </g>
+    </g>,
   );
 
   let x = bOffset;
@@ -245,7 +245,7 @@ function drawBgSubtree(
         transform={translate(childOffset)}
       >
         {childR.element}
-      </g>
+      </g>,
     );
 
     x += childR.w + BG_NODE_GAP;
@@ -283,7 +283,7 @@ function drawBgSubtree(
 function drawBgNodeWithFgNodesInside(
   bgNode: TreeNode,
   fgNodesHere: TreeNode[],
-  ctx: Ctx
+  ctx: Ctx,
 ): {
   element: Svgx;
   w: number;
@@ -304,7 +304,7 @@ function drawBgNodeWithFgNodesInside(
     elementsInRect.push(
       <g id={`fg-in-bg-${bgNode.id}-${fgNode.id}`} transform={translate(x, y)}>
         {r.element}
-      </g>
+      </g>,
     );
 
     x += r.w + FG_NODE_GAP;
@@ -348,7 +348,7 @@ function drawBgNodeWithFgNodesInside(
 function drawFgSubtreeInBgNode(
   fgNode: TreeNode,
   bgNodeId: string,
-  ctx: Ctx
+  ctx: Ctx,
 ): {
   element: Svgx;
   fgNodesBelow: TreeNode[];
@@ -376,7 +376,7 @@ function drawFgSubtreeInBgNode(
           transform={translate(childrenX, 0)}
         >
           {r.element}
-        </g>
+        </g>,
       );
       fgNodesBelow.push(...r.fgNodesBelow);
       childrenX += r.w;
@@ -435,7 +435,7 @@ function drawFgSubtreeInBgNode(
     nodeX = FG_NODE_SIZE / 2;
     childrenTransform = translate(
       (FG_NODE_SIZE - childrenX) / 2,
-      FG_NODE_SIZE + FG_NODE_GAP
+      FG_NODE_SIZE + FG_NODE_GAP,
     );
   } else {
     nodeX = childrenX / 2;
@@ -482,12 +482,12 @@ function drawTradRep(ctx: Ctx): Svgx[] {
 
   const domR = drawTree(ctx.domainTree, "domain", "fg", ctx.finalizers);
   elements.push(
-    <g transform={translate(0, ctx.yForTradRep)}>{domR.element}</g>
+    <g transform={translate(0, ctx.yForTradRep)}>{domR.element}</g>,
   );
 
   const codR = drawTree(ctx.codomainTree, "codomain", "bg", ctx.finalizers);
   elements.push(
-    <g transform={translate(domR.w + 40, ctx.yForTradRep)}>{codR.element}</g>
+    <g transform={translate(domR.w + 40, ctx.yForTradRep)}>{codR.element}</g>,
   );
 
   for (const [domElem, codElem] of Object.entries(ctx.morph)) {
@@ -526,7 +526,7 @@ function drawTree(
   node: TreeNode,
   idPrefix: string,
   style: "fg" | "bg",
-  finalizers: Finalizers
+  finalizers: Finalizers,
 ): {
   element: Svgx;
   w: number;
@@ -544,7 +544,7 @@ function drawSubtree(
   node: TreeNode,
   idPrefix: string,
   style: "fg" | "bg",
-  finalizers: Finalizers
+  finalizers: Finalizers,
 ): {
   element: Svgx;
   w: number;
@@ -565,7 +565,7 @@ function drawSubtree(
         transform={translate(childrenX, 0)}
       >
         {r.element}
-      </g>
+      </g>,
     );
     childrenX += r.w;
     childrenMaxH = Math.max(childrenMaxH, r.h);
@@ -627,11 +627,11 @@ export const OrderPreserving = () => {
 
   const draggable3 = useMemo(
     () => draggableFactory(tree3, tree3, allMorphs3, config, 300),
-    [config]
+    [config],
   );
   const draggable7 = useMemo(
     () => draggableFactory(tree7, tree7, allMorphs7, config, 500),
-    [config]
+    [config],
   );
 
   return (

@@ -65,7 +65,7 @@ export function resolvePointRef(ref: PointRef, tree: Svgx): Vec2 {
 
   if (!element) {
     throw new Error(
-      `Cannot resolve point ref: element with id "${ref.elementId}" not found`
+      `Cannot resolve point ref: element with id "${ref.elementId}" not found`,
     );
   }
 

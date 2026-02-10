@@ -94,7 +94,7 @@ function edgeMidpoint(
   col: number,
   row: number,
   edge: number,
-  cellSize: number
+  cellSize: number,
 ): Vec2 {
   const x = col * cellSize;
   const y = row * cellSize;
@@ -121,7 +121,7 @@ function neighbor(
   minCol: number,
   maxCol: number,
   minRow: number,
-  maxRow: number
+  maxRow: number,
 ): [number, number, number] | null {
   switch (exitEdge) {
     case 0:
@@ -150,7 +150,7 @@ function traceContours(
   fineCols: number,
   fineRows: number,
   cellSize: number,
-  region: string
+  region: string,
 ): Vec2[][] {
   const vi = (r: number, c: number) => r * (fineCols + 1) + c;
 
@@ -207,7 +207,7 @@ function traceContours(
             minCol,
             maxCol,
             minRow,
-            maxRow
+            maxRow,
           );
           if (!nb) break;
 
@@ -320,7 +320,7 @@ const CHECK_EVERY = 4;
 function* computeDropZones(
   sample: (x: number, y: number) => string,
   width: number,
-  height: number
+  height: number,
 ): Generator<void, DropZoneData, void> {
   let chunkStart = performance.now();
   let sinceCheck = 0;
@@ -418,7 +418,7 @@ function* computeDropZones(
       fineCols,
       fineRows,
       FINE_CELL,
-      path
+      path,
     );
     if (polygons.length === 0) continue;
     const smoothed = polygons.map((p) => smoothPolygon(p));
@@ -440,7 +440,7 @@ export function useDropZoneData<T extends object>(
     pointerStart: Vec2;
   } | null,
   width: number,
-  height: number
+  height: number,
 ): { data: DropZoneData | null; computing: boolean } {
   const spec = dragging?.spec ?? null;
   const behaviorCtx = dragging?.behaviorCtx ?? null;

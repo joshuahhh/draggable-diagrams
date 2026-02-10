@@ -4,12 +4,12 @@ import { Route, useParams } from "react-router-dom";
 type SplitOr<S extends string, D extends string> = S extends ""
   ? never
   : S extends `${infer T}${D}${infer U}`
-  ? T | SplitOr<U, D>
-  : S;
+    ? T | SplitOr<U, D>
+    : S;
 
 type StripMandatoryPrefix<
   S extends string,
-  P extends string
+  P extends string,
 > = S extends `${P}${infer U}` ? U : never;
 
 type ParamNames<Path extends string> = StripMandatoryPrefix<
@@ -19,7 +19,7 @@ type ParamNames<Path extends string> = StripMandatoryPrefix<
 
 function InjectParams<
   ParamNames extends string,
-  MoreProps extends object
+  MoreProps extends object,
 >(props: {
   Component: ComponentType<Record<ParamNames, string> & MoreProps>;
   moreProps: MoreProps;
@@ -31,17 +31,17 @@ function InjectParams<
 
 export function autoRoute<Path extends string>(
   path: Path,
-  Component: ComponentType<Record<ParamNames<Path>, string>>
+  Component: ComponentType<Record<ParamNames<Path>, string>>,
 ): ReactElement;
 export function autoRoute<Path extends string, MoreProps extends object>(
   path: Path,
   Component: ComponentType<Record<ParamNames<Path>, string> & MoreProps>,
-  moreProps: MoreProps
+  moreProps: MoreProps,
 ): ReactElement;
 export function autoRoute<Path extends string, MoreProps extends object>(
   path: Path,
   Component: ComponentType<Record<ParamNames<Path>, string> & MoreProps>,
-  moreProps?: MoreProps
+  moreProps?: MoreProps,
 ) {
   return (
     <Route

@@ -15,7 +15,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
     name: string,
     degrees: number,
     length: number,
-    strokeWidth: number
+    strokeWidth: number,
   ) {
     return (
       <g id={name} transform={translate(100, 100) + rotateDeg(degrees)}>

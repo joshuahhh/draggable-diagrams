@@ -75,7 +75,7 @@ describe("tree helpers", () => {
           { id: "a", label: "a", children: [] },
           { id: "b", label: "b", children: [] },
         ],
-      })
+      }),
     ).toBe(true);
     expect(
       isBinaryOp({
@@ -85,14 +85,14 @@ describe("tree helpers", () => {
           { id: "a", label: "a", children: [] },
           { id: "b", label: "b", children: [] },
         ],
-      })
+      }),
     ).toBe(true);
     expect(
       isBinaryOp({
         id: "x",
         label: "+",
         children: [{ id: "a", label: "a", children: [] }],
-      })
+      }),
     ).toBe(false);
     expect(
       isBinaryOp({
@@ -102,7 +102,7 @@ describe("tree helpers", () => {
           { id: "a", label: "a", children: [] },
           { id: "b", label: "b", children: [] },
         ],
-      })
+      }),
     ).toBe(false);
   });
 });

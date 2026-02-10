@@ -92,7 +92,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
   function getRowWidth(row: Row): number {
     const itemsWidth = row.items.reduce(
       (acc, item) => acc + getItemWidth(item) + TILE_GAP,
-      -TILE_GAP
+      -TILE_GAP,
     );
     return GRIP_WIDTH + GRIP_PADDING + itemsWidth + ROW_PADDING * 2;
   }
@@ -101,8 +101,8 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
     const maxItemHeight = Math.max(
       TILE_SIZE,
       ...row.items.map((item) =>
-        item.type === "tile" ? TILE_SIZE : getRowHeight(item)
-      )
+        item.type === "tile" ? TILE_SIZE : getRowHeight(item),
+      ),
     );
     return maxItemHeight + ROW_PADDING * 2;
   }
@@ -112,7 +112,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
     itemsPath: PathIn<State, (Tile | Row)[]>,
     idx: number,
     zIndexBase: number,
-    attrs?: SVGProps<SVGGElement>
+    attrs?: SVGProps<SVGGElement>,
   ) {
     const isDragged = draggedId === item.id;
 
@@ -158,8 +158,8 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
           d.vary(
             stateWithTopRow,
             ["rows", stateWithTopRow.rows.length - 1, "x"],
-            ["rows", stateWithTopRow.rows.length - 1, "y"]
-          )
+            ["rows", stateWithTopRow.rows.length - 1, "y"],
+          ),
         );
     };
 
@@ -225,7 +225,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                   r={1.5}
                   fill="#333"
                 />
-              ))
+              )),
             )}
           </g>
           {item.items.map((child, childIdx) => {
@@ -236,7 +236,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
               [...itemsPath, idx, "items"] as PathIn<State, (Tile | Row)[]>,
               childIdx,
               effectiveZIndex + 1,
-              { transform: translate(childX, ROW_PADDING) }
+              { transform: translate(childX, ROW_PADDING) },
             );
           })}
         </g>
@@ -247,7 +247,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
   return (
     <g>
       {state.rows.map((row, rowIdx) =>
-        renderItem(row, ["rows"], rowIdx, 0, { transform: translate(row) })
+        renderItem(row, ["rows"], rowIdx, 0, { transform: translate(row) }),
       )}
     </g>
   );

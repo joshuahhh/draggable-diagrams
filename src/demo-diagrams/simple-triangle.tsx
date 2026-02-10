@@ -19,7 +19,7 @@ const SQUARE_SIZE = 40;
 const initialState: State = { posIndex: 0 };
 
 function draggableFactory(
-  mode: "span" | "floating" | "just"
+  mode: "span" | "floating" | "just",
 ): Draggable<State> {
   return ({ state, d }) => (
     <g>

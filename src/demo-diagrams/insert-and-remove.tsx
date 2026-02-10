@@ -104,7 +104,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
               .closest(statesWith.map((s) => d.floating(s)))
               .withBackground(d.floating(stateWithout));
           },
-        })
+        }),
       )}
 
       {/* Items */}
@@ -139,7 +139,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
               ])
               .withBackground(d.floating(stateWithout));
           },
-        })
+        }),
       )}
 
       {/* Deleted bin */}

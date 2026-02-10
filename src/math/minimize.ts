@@ -109,7 +109,7 @@ export function gradient(f: (x: Vector) => number, x: Vector): Vector {
     for (let k = 0; ; k++) {
       if (k == 20)
         throw new Error(
-          "Gradient failed at index " + i + " of [" + x.join(" ") + "]"
+          "Gradient failed at index " + i + " of [" + x.join(" ") + "]",
         );
       tempX[i] = x[i] + delta;
       let f0 = f(tempX);
@@ -125,7 +125,7 @@ export function gradient(f: (x: Vector) => number, x: Vector): Vector {
         let d2 = (f1 - f2) / delta;
         let err = min(
           max(abs(d1 - grad[i]), abs(d2 - grad[i]), abs(d1 - d2)),
-          delta
+          delta,
         );
         let normalize = max(
           abs(grad[i]),
@@ -135,7 +135,7 @@ export function gradient(f: (x: Vector) => number, x: Vector): Vector {
           abs(t0),
           abs(t1),
           abs(t2),
-          1e-8
+          1e-8,
         );
         if (err / normalize < 1e-3) break; //break if this index is done
       }
@@ -150,7 +150,7 @@ export function minimize(
   x0: Vector,
   end_on_line_search = true,
   tol = 1e-8,
-  maxit = 1000
+  maxit = 1000,
 ) {
   tol = Math.max(tol, 2e-16);
   let grad = (a: Vector) => gradient(f, a);
@@ -206,7 +206,7 @@ export function minimize(
     let Hy = dot(H1, y);
     H1 = sub(
       add(H1, mul(ten(s, s), (ys + dot(y, Hy)) / (ys * ys))),
-      div(add(ten(Hy, s), ten(s, Hy)), ys)
+      div(add(ten(Hy, s), ten(s, Hy)), ys),
     );
     x0 = x1;
     f0 = f1!;

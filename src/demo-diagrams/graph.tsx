@@ -39,7 +39,7 @@ function stateIsValid(state: State) {
     Object.values(state.edges).every((e) => e.from !== e.to) &&
     // No duplicate edges
     uPairs(Object.values(state.edges)).every(
-      ([e1, e2]) => !(e1.from === e2.from && e1.to === e2.to)
+      ([e1, e2]) => !(e1.from === e2.from && e1.to === e2.to),
     )
   );
 }
@@ -61,7 +61,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
         // Is the opposite edge present?
         const oppositeEdgeKey = _.findKey(
           state.edges,
-          (e) => e.from === edge.to && e.to === edge.from
+          (e) => e.from === edge.to && e.to === edge.from,
         );
         let offset = Vec2(0);
         if (oppositeEdgeKey) {
@@ -97,7 +97,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
                   produceAmb(state, (draft) => {
                     draft.edges[key].to = amb(Object.keys(state.nodes));
                     require(stateIsValid(draft));
-                  })
+                  }),
                 ),
               "data-z-index": 1,
             })}
@@ -111,7 +111,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
                   produceAmb(state, (draft) => {
                     draft.edges[key].from = amb(Object.keys(state.nodes));
                     require(stateIsValid(draft));
-                  })
+                  }),
                 )
               }
               data-z-index={1}

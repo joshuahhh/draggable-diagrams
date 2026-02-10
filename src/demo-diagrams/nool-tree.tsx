@@ -163,7 +163,7 @@ const rewriteSets: RewriteSet[] = [
 ];
 
 const defaultActiveRewriteSets = rewriteSets.map(
-  (rs) => rs.defaultEnabled ?? false
+  (rs) => rs.defaultEnabled ?? false,
 );
 
 function draggableFactory(activeRewrites: Rewrite[]): Draggable<State> {
@@ -174,7 +174,7 @@ function renderTree(
   state: State,
   tree: Tree,
   d: DragSpecBuilders<State>,
-  activeRewrites: Rewrite[]
+  activeRewrites: Rewrite[],
 ): {
   element: Svgx;
   w: number;
@@ -187,14 +187,14 @@ function renderTree(
   const LABEL_MIN_HEIGHT = 20;
 
   const renderedChildren = tree.children.map((child) =>
-    renderTree(state, child, d, activeRewrites)
+    renderTree(state, child, d, activeRewrites),
   );
 
   const renderedChildrenElements: Svgx[] = [];
   let childY = 0;
   for (const childR of renderedChildren) {
     renderedChildrenElements.push(
-      <g transform={translate(0, childY)}>{childR.element}</g>
+      <g transform={translate(0, childY)}>{childR.element}</g>,
     );
     childY += childR.h + GAP;
   }
@@ -252,7 +252,7 @@ function dragTargets(
   d: DragSpecBuilders<State>,
   state: State,
   draggedKey: string,
-  activeRewrites: Rewrite[]
+  activeRewrites: Rewrite[],
 ) {
   const newTrees = allPossibleRewrites(state, activeRewrites, draggedKey);
   if (newTrees.length === 0) return d.span([state]);
@@ -288,7 +288,7 @@ const drawRewrite = (rewrite: Rewrite) => {
 const drawPattern = (
   pattern: Pattern,
   topLevel: boolean,
-  firstTriggerId: string | null
+  firstTriggerId: string | null,
 ): ReactNode => {
   let contents;
   if (isWildcard(pattern)) {
@@ -360,20 +360,20 @@ function RewriteRuleCheckboxes({
 
 export const NoolTree = () => {
   const [activeRewriteSets, setActiveRewriteSets] = useState(
-    defaultActiveRewriteSets
+    defaultActiveRewriteSets,
   );
 
   const activeRewrites = useMemo(
     () =>
       _.zip(rewriteSets, activeRewriteSets).flatMap(([set, enabled]) =>
-        enabled ? set!.rewrites : []
+        enabled ? set!.rewrites : [],
       ),
-    [activeRewriteSets]
+    [activeRewriteSets],
   );
 
   const draggable = useMemo(
     () => draggableFactory(activeRewrites),
-    [activeRewrites]
+    [activeRewrites],
   );
 
   return (

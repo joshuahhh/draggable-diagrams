@@ -52,7 +52,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
             fill="none"
             data-z-index={-5}
           />
-        ))
+        )),
       )}
 
       {/* Tiles */}
@@ -75,7 +75,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
                 return;
               const adjTileKey = _.findKey(
                 state.tiles,
-                (t) => t.x === adjX && t.y === adjY
+                (t) => t.x === adjX && t.y === adjY,
               );
               if (!adjTileKey) return;
               if (!(key === " " || adjTileKey === " ")) return;

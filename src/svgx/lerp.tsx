@@ -63,7 +63,7 @@ function lerpPoints(pointsA: string, pointsB: string, t: number): string {
 
   if (parsedA.length !== parsedB.length) {
     throw new Error(
-      `Cannot lerp points: different point counts (${parsedA.length} vs ${parsedB.length})`
+      `Cannot lerp points: different point counts (${parsedA.length} vs ${parsedB.length})`,
     );
   }
 
@@ -124,7 +124,7 @@ function lerpValue(key: string, valA: any, valB: any, t: number): any {
       if (colorRgb === null) {
         // If color parsing failed, fall through to error
         throw new Error(
-          `Cannot lerp prop "${key}": invalid color value (${actualColor})`
+          `Cannot lerp prop "${key}": invalid color value (${actualColor})`,
         );
       }
 
@@ -155,12 +155,12 @@ function lerpValue(key: string, valA: any, valB: any, t: number): any {
 
     // Non-numeric strings - can't interpolate
     throw new Error(
-      `Cannot lerp prop "${key}": different non-numeric values (${valA} vs ${valB})`
+      `Cannot lerp prop "${key}": different non-numeric values (${valA} vs ${valB})`,
     );
   } else {
     // Different non-numeric values
     throw new Error(
-      `Cannot lerp prop "${key}": different non-numeric values (${valA} vs ${valB})`
+      `Cannot lerp prop "${key}": different non-numeric values (${valA} vs ${valB})`,
     );
   }
 }
@@ -176,28 +176,26 @@ export function lerpSvgx(a: Svgx, b: Svgx, t: number): Svgx {
   if (a.type !== b.type) {
     throw new ErrorWithJSX(
       `Cannot lerp between different element types: ${String(
-        a.type
+        a.type,
       )} and ${String(b.type)}`,
-      (
-        <>
+      <>
+        <p className="mb-2">
+          During interpolation, I found elements of different types at the same
+          path in the "before" and "after" SVG trees. I don't know how to
+          interpolate between those, sorry.
+        </p>
+        {a.props.id === b.props.id && (
           <p className="mb-2">
-            During interpolation, I found elements of different types at the
-            same path in the "before" and "after" SVG trees. I don't know how to
-            interpolate between those, sorry.
+            (FYI: These elements share the ID{" "}
+            <span className="font-mono">{a.props.id}</span>. I would guess that
+            you are drawing this element in two different code paths, and they
+            don't match up.)
           </p>
-          {a.props.id === b.props.id && (
-            <p className="mb-2">
-              (FYI: These elements share the ID{" "}
-              <span className="font-mono">{a.props.id}</span>. I would guess
-              that you are drawing this element in two different code paths, and
-              they don't match up.)
-            </p>
-          )}
-          <PrettyPrint value={a} />
-          <div className="my-4">vs</div>
-          <PrettyPrint value={b} />
-        </>
-      )
+        )}
+        <PrettyPrint value={a} />
+        <div className="my-4">vs</div>
+        <PrettyPrint value={b} />
+      </>,
     );
   }
 
@@ -242,7 +240,7 @@ export function lerpSvgx(a: Svgx, b: Svgx, t: number): Svgx {
           styleKey,
           styleA[styleKey],
           styleB[styleKey],
-          t
+          t,
         );
       }
 
@@ -276,13 +274,11 @@ export function lerpSvgx(a: Svgx, b: Svgx, t: number): Svgx {
     prettyLog(childrenB, { label: "Children B" });
     throw new ErrorWithJSX(
       `Cannot lerp children: different child counts (${childrenA.length} vs ${childrenB.length})`,
-      (
-        <div>
-          <PrettyPrint value={a} />
-          <div className="my-4">vs</div>
-          <PrettyPrint value={b} />
-        </div>
-      )
+      <div>
+        <PrettyPrint value={a} />
+        <div className="my-4">vs</div>
+        <PrettyPrint value={b} />
+      </div>,
     );
   }
 
@@ -300,7 +296,7 @@ function lerp(a: number, b: number, t: number): number {
 export function lerpLayered(
   a: LayeredSvgx,
   b: LayeredSvgx,
-  t: number
+  t: number,
 ): LayeredSvgx {
   const result = new Map<string, Svgx>();
   const allKeys = new Set([...a.byId.keys(), ...b.byId.keys()]);
@@ -332,7 +328,7 @@ export function lerpLayered3(
   a: LayeredSvgx,
   b: LayeredSvgx,
   c: LayeredSvgx,
-  { l0, l1, l2 }: { l0: number; l1: number; l2: number }
+  { l0, l1, l2 }: { l0: number; l1: number; l2: number },
 ): LayeredSvgx {
   if (l0 + l1 < 1e-6) return c;
   const ab = lerpLayered(a, b, l1 / (l0 + l1));

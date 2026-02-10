@@ -109,7 +109,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                     r={1.5}
                     fill="#333"
                   />
-                ))
+                )),
               )}
             </g>
             {row.items.map((p, idx) => (
@@ -120,7 +120,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                     GRIP_PADDING +
                     idx * (TILE_SIZE + TILE_GAP) +
                     ROW_PADDING,
-                  ROW_PADDING
+                  ROW_PADDING,
                 )}
                 data-z-index={isDragged ? 11 : 1}
                 data-on-drag={() => {
@@ -137,7 +137,8 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                   });
                   const [newRowId, newRowColor] = _.range(100)
                     .map(
-                      (i) => [`row${i + 1}`, colors[i % colors.length]] as const
+                      (i) =>
+                        [`row${i + 1}`, colors[i % colors.length]] as const,
                     )
                     .find(([id]) => !(id in stateWithout.rows))!;
                   const stateWithNewRow = produce(stateWithout, (draft) => {
@@ -154,8 +155,8 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                       d.vary(
                         stateWithNewRow,
                         ["rows", newRowId, "x"],
-                        ["rows", newRowId, "y"]
-                      )
+                        ["rows", newRowId, "y"],
+                      ),
                     );
                 }}
               >

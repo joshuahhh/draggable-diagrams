@@ -45,7 +45,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
             strokeWidth={1}
             fill="none"
           />
-        ))
+        )),
       )}
       {Object.entries(state.tiles).map(([key, tile]) => (
         <g
@@ -69,7 +69,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
                   const newState = structuredClone(state);
                   newState.tiles[key] = { x: adjLoc.x, y: adjLoc.y };
                   return d.span([state, newState]);
-                })
+                }),
               )
               .withSnapRadius(3, { transition: true, chain: true })
           }

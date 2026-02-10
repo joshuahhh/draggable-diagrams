@@ -14,7 +14,7 @@ import { assert } from "./utils";
  * for the original SVG's viewBox.
  */
 export function extractSvgContentsAsJsxWithParser(
-  container: HTMLElement
+  container: HTMLElement,
 ): Svgx {
   const svg = container.querySelector("svg");
   assert(!!svg, "No SVG element found in container");
@@ -36,7 +36,7 @@ export function extractSvgContentsAsJsxWithParser(
  * Alternative: Extract the entire SVG element (including the <svg> tag)
  */
 export function extractSvgAsJsxWithParser(
-  container: HTMLElement
+  container: HTMLElement,
 ): React.ReactElement {
   const svg = container.querySelector("svg");
   assert(!!svg, "No SVG element found in container");

@@ -98,7 +98,7 @@ describe("lerpTransformString", () => {
     const result = lerpTransformString(
       "translate(0, 0)",
       "translate(100, 100)",
-      0.5
+      0.5,
     );
     expect(result).toBe("translate(50, 50)");
   });
@@ -107,7 +107,7 @@ describe("lerpTransformString", () => {
     const result = lerpTransformString(
       "translate(0, 0)",
       "translate(100, 100)",
-      0
+      0,
     );
     expect(result).toBe("translate(0, 0)");
   });
@@ -116,7 +116,7 @@ describe("lerpTransformString", () => {
     const result = lerpTransformString(
       "translate(0, 0)",
       "translate(100, 100)",
-      1
+      1,
     );
     expect(result).toBe("translate(100, 100)");
   });
@@ -135,7 +135,7 @@ describe("lerpTransformString", () => {
     const result = lerpTransformString(
       "translate(0, 0) rotate(0)",
       "translate(100, 100) rotate(90)",
-      0.5
+      0.5,
     );
     expect(result).toBe("translate(50, 50) rotate(45, 0, 0)");
   });
@@ -145,14 +145,14 @@ describe("lerpTransformString", () => {
       lerpTransformString(
         "translate(0, 0)",
         "translate(100, 100) rotate(90)",
-        0.3
-      )
+        0.3,
+      ),
     ).toThrow("Cannot lerp transforms with different lengths");
   });
 
   it("throws on mismatched transform types", () => {
     expect(() =>
-      lerpTransformString("translate(0, 0)", "rotate(90)", 0.3)
+      lerpTransformString("translate(0, 0)", "rotate(90)", 0.3),
     ).toThrow("Cannot lerp transforms with different types");
   });
 
@@ -160,7 +160,7 @@ describe("lerpTransformString", () => {
     const result = lerpTransformString(
       "translate(10, 20) translate(30, 40)",
       "translate(50, 60) translate(70, 80)",
-      0.5
+      0.5,
     );
     // (10+30, 20+40) = (40, 60) lerp to (50+70, 60+80) = (120, 140) at t=0.5
     // Result: ((40+120)/2, (60+140)/2) = (80, 100)
@@ -171,7 +171,7 @@ describe("lerpTransformString", () => {
     const result = lerpTransformString(
       "translate(0, 0)",
       "translate(100, 100)",
-      0.5
+      0.5,
     );
     expect(result).toBe("translate(50, 50)");
   });
@@ -180,7 +180,7 @@ describe("lerpTransformString", () => {
     const result = lerpTransformString(
       "translate(10, 20)",
       "translate(30, 40) translate(50, 60)",
-      0.5
+      0.5,
     );
     // Left: (10, 20)
     // Right: (30+50, 40+60) = (80, 100)
@@ -192,10 +192,10 @@ describe("lerpTransformString", () => {
     expect(lerpTransformString("", "", 0.5)).toBe("");
     // Empty with translate treats empty as translate(0,0)
     expect(lerpTransformString("translate(10, 20)", "", 0.5)).toBe(
-      "translate(5, 10)"
+      "translate(5, 10)",
     );
     expect(lerpTransformString("", "translate(10, 20)", 0.5)).toBe(
-      "translate(5, 10)"
+      "translate(5, 10)",
     );
     // Empty with non-translate just returns the non-empty one
     expect(lerpTransformString("rotate(90)", "", 0.5)).toBe("rotate(90)");

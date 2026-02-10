@@ -71,7 +71,7 @@ export type TreeNode = {
 export function addParents(
   node: TreeNodeWithoutParents,
   parentId: string | null = null,
-  parent: TreeNode | null = null
+  parent: TreeNode | null = null,
 ): TreeNode {
   const n: TreeNode = {
     id: node.id,
@@ -185,7 +185,7 @@ export const testMorphs: TreeMorph[] = [
  */
 export function getAllMorphs(
   domain: TreeNode,
-  codomain: TreeNode
+  codomain: TreeNode,
 ): TreeMorph[] {
   const results: TreeMorph[] = [];
 
@@ -195,7 +195,7 @@ export function getAllMorphs(
   // Recursively find all morphisms from a domain subtree into a codomain subtree
   function findMorphsForSubtree(
     domainNode: TreeNode,
-    codomainNode: TreeNode
+    codomainNode: TreeNode,
   ): TreeMorph[] {
     const key = `${domainNode.id}->${codomainNode.id}`;
 
@@ -227,7 +227,7 @@ export function getAllMorphs(
           morphsForThisChild.push(...morphs);
         }
         return morphsForThisChild;
-      }
+      },
     );
 
     // Now combine: take the cartesian product of all child morphism options
@@ -281,7 +281,7 @@ function cartesianProduct<T>(arrays: T[][]): T[][] {
  * Build a function that checks if node1 is an ancestor of node2 (or equal to node2)
  */
 export function buildAncestorMap(
-  root: TreeNode
+  root: TreeNode,
 ): (ancestor: TreeNode, descendant: TreeNode) => boolean {
   const ancestorMap = new Map<string, Set<string>>();
 
@@ -312,7 +312,7 @@ export function buildAncestorMap(
 export function covers(
   f: TreeMorph,
   g: TreeMorph,
-  codomain: TreeNode
+  codomain: TreeNode,
 ): string | null {
   const codomainNodes = nodesInTree(codomain);
   const nodeById = new Map(codomainNodes.map((n) => [n.id, n]));
@@ -356,7 +356,7 @@ export type HasseDiagram = {
  */
 export function buildHasseDiagram(
   domain: TreeNode,
-  codomain: TreeNode
+  codomain: TreeNode,
 ): HasseDiagram {
   const morphs = getAllMorphs(domain, codomain);
   const edges: [number, number, string][] = [];

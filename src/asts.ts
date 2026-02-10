@@ -39,7 +39,7 @@ export type Pattern = { id: string; isTrigger?: boolean } & (
 );
 
 export function isWildcard(
-  node: Pattern
+  node: Pattern,
 ): node is Pattern & { type: "wildcard" } {
   return hasKey(node, "type") && node.type === "wildcard";
 }
@@ -106,7 +106,7 @@ function match(pattern: Pattern, tree: Tree, triggerId: string): Match | null {
 function matchHelper(
   pattern: Pattern,
   tree: Tree,
-  triggerId: string
+  triggerId: string,
 ): { match: Match; isTriggered: boolean } | null {
   let result = {
     match: new Map<string, Tree>(),
@@ -170,7 +170,7 @@ export function applyRewrite(match: Match, rewriteTo: Pattern): Tree {
 export function allPossibleRewrites(
   tree: Tree,
   rewrites: Rewrite[],
-  triggerId: string
+  triggerId: string,
 ): Tree[] {
   const results: Tree[] = [];
 
@@ -187,7 +187,7 @@ export function allPossibleRewrites(
       results.push(
         produce(tree, (draft) => {
           draft.children[i] = newChild;
-        })
+        }),
       );
     }
   }

@@ -30,8 +30,8 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) =>
                   const draggedIdx = draft.perm.indexOf(p);
                   draft.perm.splice(draggedIdx, 1);
                   draft.perm.splice(idx, 0, p);
-                })
-              )
+                }),
+              ),
             ),
           "data-z-index": p === draggedId ? 1 : 0,
         });
@@ -53,7 +53,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) =>
           }),
           Text(
             { name: labelName, "font-size": "20px", "font-weight": "normal" },
-            p
+            p,
           ),
           Align({ alignment: "center" }, [
             Ref({ select: labelName }),
@@ -65,7 +65,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) =>
           ]),
         ]);
       }),
-    ])
+    ]),
   );
 
 export const BluefishPerm = () => (

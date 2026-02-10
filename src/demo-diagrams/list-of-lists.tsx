@@ -66,7 +66,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
             id={`row-${row.id}`}
             transform={translate(
               0,
-              rowIdx * (TILE_SIZE + ROW_PADDING * 2 + ROW_GAP)
+              rowIdx * (TILE_SIZE + ROW_PADDING * 2 + ROW_GAP),
             )}
             data-on-drag={() => {
               const stateWithout = produce(state, (draft) => {
@@ -75,7 +75,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
               const statesWith = _.range(state.rows.length).map((newIdx) =>
                 produce(stateWithout, (draft) => {
                   draft.rows.splice(newIdx, 0, row);
-                })
+                }),
               );
               return d
                 .closest(statesWith.map((s) => d.floating(s)))
@@ -106,7 +106,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
                     r={1.5}
                     fill="#333"
                   />
-                ))
+                )),
               )}
             </g>
             {row.items.map((p, idx) => (
@@ -118,7 +118,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
                     GRIP_PADDING +
                     idx * (TILE_SIZE + TILE_GAP) +
                     ROW_PADDING,
-                  ROW_PADDING
+                  ROW_PADDING,
                 )}
                 data-on-drag={() => {
                   const stateWithout = produce(state, (draft) => {

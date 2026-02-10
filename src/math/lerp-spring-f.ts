@@ -17,7 +17,7 @@ export interface LerpSpringState<P> {
  */
 export function createLerpSpringState<P>(
   initial: P,
-  time: number
+  time: number,
 ): LerpSpringState<P> {
   return {
     prev: initial,
@@ -36,7 +36,7 @@ export function step<P>(
   params: LerpSpringParams,
   lerp: LerpFn<P>,
   newT: number,
-  target: P
+  target: P,
 ): LerpSpringState<P> {
   const { omega, gamma } = params;
 
@@ -67,7 +67,7 @@ export function step<P>(
     1 + alpha - beta,
     target,
     beta,
-    lerp
+    lerp,
   );
 
   // Return new state
@@ -89,7 +89,7 @@ function affine3<P>(
   wB: number,
   C: P,
   wC: number,
-  lerp: LerpFn<P>
+  lerp: LerpFn<P>,
 ): P {
   // Prefer combining A+B; if degenerate, combine B+C instead.
   const sumAB = wA + wB;

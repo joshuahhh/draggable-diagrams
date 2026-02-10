@@ -130,7 +130,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                     d.closest(
                       d.floating(cardMoveStates, {
                         ghost: { opacity: 0.3 },
-                      })
+                      }),
                     )
                   }
                 >

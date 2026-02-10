@@ -38,7 +38,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
         p2
           .sub(p1)
           .mul(state.squareness * dir)
-          .rotateDeg(90 + state.tilt)
+          .rotateDeg(90 + state.tilt),
       );
       return [
         ...dragon(p1, mid, -1, level - 1),

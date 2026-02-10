@@ -17,7 +17,7 @@ export function useCatchToRenderError() {
   const throwRenderError = useThrowRenderError();
 
   return function catchToRenderError<TArgs extends any[], TReturn>(
-    fn: (...args: TArgs) => TReturn
+    fn: (...args: TArgs) => TReturn,
   ) {
     return (...args: TArgs) => {
       try {

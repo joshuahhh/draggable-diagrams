@@ -45,7 +45,7 @@ function draggableFactory(config: Config): Draggable<State> {
         id="missing-square"
         data-z-index={1}
         transform={translate(
-          state.missingSquare.mul(CELL_SIZE).add(TROMINO_PADDING)
+          state.missingSquare.mul(CELL_SIZE).add(TROMINO_PADDING),
         )}
         width={CELL_SIZE - 2 * TROMINO_PADDING}
         height={CELL_SIZE - 2 * TROMINO_PADDING}
@@ -57,8 +57,8 @@ function draggableFactory(config: Config): Draggable<State> {
               config.snappyMode
                 ? d.closest(
                     [...singleRotations, state].map((s) =>
-                      d.floating(s, { ghost: { opacity: 0.2 } })
-                    )
+                      d.floating(s, { ghost: { opacity: 0.2 } }),
+                    ),
                   )
                 : d.closest(singleRotations.map((s) => d.span([state, s])))
             ).withSnapRadius(1, { chain: true });
@@ -66,8 +66,8 @@ function draggableFactory(config: Config): Draggable<State> {
             return config.snappyMode
               ? d.closest(
                   allStates(state).map((s) =>
-                    d.floating(s, { ghost: { opacity: 0.2 } })
-                  )
+                    d.floating(s, { ghost: { opacity: 0.2 } }),
+                  ),
                 )
               : d.span(allStates(state));
           }
@@ -81,7 +81,7 @@ function allStates(state: State): State[] {
   return produceAmb(state, (s) => {
     s.missingSquare = Vec2(
       amb(_.range(2 ** s.boardLevel)),
-      amb(_.range(2 ** s.boardLevel))
+      amb(_.range(2 ** s.boardLevel)),
     );
   });
 }
@@ -178,11 +178,11 @@ function drawState(state: State) {
             [CELL_SIZE - TROMINO_PADDING, TROMINO_PADDING - CELL_SIZE],
             "L",
             [TROMINO_PADDING, TROMINO_PADDING - CELL_SIZE],
-            "Z"
+            "Z",
           )}
           transform={rotateDeg(
             missingLeft ? (missingTop ? 0 : 270) : missingTop ? 90 : 180,
-            [0, 0]
+            [0, 0],
           )}
           fill={COLORS[state.boardLevel - 1]}
           stroke="black"

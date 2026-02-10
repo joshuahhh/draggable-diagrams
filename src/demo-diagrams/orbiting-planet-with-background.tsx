@@ -79,13 +79,13 @@ const draggable: Draggable<State> = ({ state, d }) => {
               STARS.map((_, starIdx) =>
                 d.vary(
                   { mode: "orbiting" as const, currentStar: starIdx, angle },
-                  ["angle"]
-                )
-              )
+                  ["angle"],
+                ),
+              ),
             )
             .withBackground(
               d.vary({ mode: "free", x: planetX, y: planetY }, ["x"], ["y"]),
-              { radius: 50 }
+              { radius: 50 },
             );
           // return d.closest([
           //   ...STARS.map((_, starIdx) =>

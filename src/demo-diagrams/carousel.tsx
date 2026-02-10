@@ -102,7 +102,7 @@ const draggable: Draggable<State> = ({ state, d, setState }) => (
             id={`dot-${idx}`}
             transform={translate(
               (idx - (SLIDES.length - 1) / 2) * DOT_SPACING,
-              0
+              0,
             )}
             r={isActive ? DOT_RADIUS : DOT_RADIUS - 2}
             fill={isActive ? "#3b82f6" : "#d1d5db"}
@@ -117,7 +117,7 @@ const draggable: Draggable<State> = ({ state, d, setState }) => (
         id="drag-dot"
         transform={translate(
           (state.slideIdx - (SLIDES.length - 1) / 2) * DOT_SPACING,
-          0
+          0,
         )}
         r={DOT_RADIUS}
         fill="transparent"

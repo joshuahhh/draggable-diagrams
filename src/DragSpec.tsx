@@ -54,11 +54,11 @@ export interface DragSpecMethods<T> {
   andThen(state: T): DragSpec<T>;
   withBackground<B>(
     background: DragSpec<B>,
-    opts?: { radius?: number }
+    opts?: { radius?: number },
   ): DragSpec<T | B>;
   withSnapRadius(
     radius: number,
-    options?: { transition?: boolean; chain?: boolean }
+    options?: { transition?: boolean; chain?: boolean },
   ): DragSpec<T>;
   withDropTransition(transition?: TransitionLike): DragSpec<T>;
   withDistance(f: (distance: number) => number): DragSpec<T>;
@@ -175,15 +175,15 @@ function just<T>(stateOrStates: T | T[]): DragSpec<T> | DragSpec<T>[] {
 
 function floating<T>(
   states: T[],
-  opts?: { ghost?: SVGProps<SVGElement> }
+  opts?: { ghost?: SVGProps<SVGElement> },
 ): DragSpec<T>[];
 function floating<T>(
   state: T,
-  opts?: { ghost?: SVGProps<SVGElement> }
+  opts?: { ghost?: SVGProps<SVGElement> },
 ): DragSpec<T>;
 function floating<T>(
   stateOrStates: T | T[],
-  { ghost }: { ghost?: SVGProps<SVGElement> } = {}
+  { ghost }: { ghost?: SVGProps<SVGElement> } = {},
 ): DragSpec<T> | DragSpec<T>[] {
   if (Array.isArray(stateOrStates)) {
     return stateOrStates.map((s) => floating(s, { ghost }));
@@ -199,7 +199,7 @@ function closest<T>(specs: Many<DragSpec<T>>): DragSpec<T> {
 export function withBackground<F, B>(
   foreground: DragSpec<F>,
   background: DragSpec<B>,
-  { radius = 50 }: { radius?: number } = {}
+  { radius = 50 }: { radius?: number } = {},
 ): DragSpec<F | B> {
   return withMethods({
     type: "with-background",
@@ -253,7 +253,7 @@ function vary<T>(state: T, ...args: VaryArgs<T>): DragSpec<T> {
 
 export function withDistance<T>(
   spec: DragSpec<T>,
-  f: (distance: number) => number
+  f: (distance: number) => number,
 ): DragSpec<T> {
   return withMethods({ type: "with-distance", spec, f });
 }
@@ -261,7 +261,7 @@ export function withDistance<T>(
 export function withSnapRadius<T>(
   spec: DragSpec<T>,
   radius: number,
-  options: { transition?: boolean; chain?: boolean } = {}
+  options: { transition?: boolean; chain?: boolean } = {},
 ): DragSpec<T> {
   return withMethods({
     type: "with-snap-radius",
@@ -274,7 +274,7 @@ export function withSnapRadius<T>(
 
 export function withDropTransition<T>(
   spec: DragSpec<T>,
-  transition: TransitionLike = true
+  transition: TransitionLike = true,
 ): DragSpec<T> {
   return withMethods({
     type: "with-drop-transition",
@@ -290,7 +290,7 @@ function span<T>(states: T[]): DragSpec<T> {
 
 export function transitionToAndThen<T>(
   state: T,
-  draggedId: string
+  draggedId: string,
 ): DragSpec<T> {
   return withMethods({ type: "transition-to-and-then", state, draggedId });
 }
@@ -354,7 +354,7 @@ export type BehaviorContext<T extends object> = {
 
 function renderStateReadOnly<T extends object>(
   ctx: BehaviorContext<T>,
-  state: T
+  state: T,
 ): LayeredSvgx {
   return pipe(
     ctx.draggable({
@@ -366,13 +366,13 @@ function renderStateReadOnly<T extends object>(
     }),
     assignPaths,
     accumulateTransforms,
-    layerSvg
+    layerSvg,
   );
 }
 
 function getElementPosition<T extends object>(
   ctx: BehaviorContext<T>,
-  layered: LayeredSvgx
+  layered: LayeredSvgx,
 ): Vec2 {
   const element = findByPathInLayered(ctx.draggedPath, layered);
   if (!element) return Vec2(Infinity, Infinity);
@@ -426,7 +426,7 @@ function DistanceLine({
 
 export function dragSpecToBehavior<T extends object>(
   spec: DragSpec<T>,
-  ctx: BehaviorContext<T>
+  ctx: BehaviorContext<T>,
 ): DragBehavior<T> {
   if (spec.type === "just") {
     const rendered = renderStateReadOnly(ctx, spec.state);
@@ -461,7 +461,7 @@ export function dragSpecToBehavior<T extends object>(
     const { draggedId, floatLayered } = ctx;
     assert(
       draggedId !== null,
-      "Floating drags require the dragged element to have an id"
+      "Floating drags require the dragged element to have an id",
     );
     assert(floatLayered !== null, "Floating drags require floatLayered");
     const layered = renderStateReadOnly(ctx, spec.state);
@@ -487,15 +487,15 @@ export function dragSpecToBehavior<T extends object>(
     return (frame) => {
       const floatPositioned = layeredTransform(
         floatLayered,
-        translate(frame.pointer.sub(frame.pointerStart))
+        translate(frame.pointer.sub(frame.pointerStart)),
       );
       const rendered = layeredMerge(
         backdrop,
         pipe(
           floatPositioned,
           (h) => layeredSetAttributes(h, { "data-transition": false }),
-          (h) => layeredShiftZIndices(h, 1000000)
-        )
+          (h) => layeredShiftZIndices(h, 1000000),
+        ),
       );
       const distance = frame.pointer.dist(elementPos);
       return {
@@ -597,7 +597,7 @@ export function dragSpecToBehavior<T extends object>(
           setState: throwError,
         }),
         assignPaths,
-        accumulateTransforms
+        accumulateTransforms,
       );
       const element = findByPath(ctx.draggedPath, content);
       if (!element) return Vec2(Infinity, Infinity);
@@ -691,7 +691,7 @@ export function dragSpecToBehavior<T extends object>(
       for (const id of result.rendered.byId.keys()) {
         result.rendered.byId.set(
           id,
-          accumulateTransforms(result.rendered.byId.get(id)!)
+          accumulateTransforms(result.rendered.byId.get(id)!),
         );
       }
       const elementPos = getElementPosition(ctx, result.rendered);
@@ -741,20 +741,20 @@ export function dragSpecToBehavior<T extends object>(
         rendered = lerpLayered(
           renderedStates[projection.ptIdx0].layered,
           renderedStates[projection.ptIdx1].layered,
-          projection.t
+          projection.t,
         );
       } else {
         rendered = lerpLayered3(
           renderedStates[projection.ptIdx0].layered,
           renderedStates[projection.ptIdx1].layered,
           renderedStates[projection.ptIdx2].layered,
-          projection.barycentric
+          projection.barycentric,
         );
       }
 
       // Drop state: closest rendered state by pointer distance
       const closest = _.minBy(renderedStates, (rs) =>
-        rs.position.dist(frame.pointer)
+        rs.position.dist(frame.pointer),
       )!;
 
       return {

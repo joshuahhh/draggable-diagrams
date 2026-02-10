@@ -35,7 +35,7 @@ function portY(count: number, idx: number, h: number) {
 function portPos(
   nodes: State["nodes"],
   nodeId: string,
-  port: string
+  port: string,
 ): [number, number] {
   const n = nodes[nodeId];
   const def = NODE_DEFS[nodeId];
@@ -106,8 +106,8 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
       d.just(
         produce(state, (draft) => {
           draft.wires[wireId][endKey] = { type: "on-port", nodeId, port };
-        })
-      )
+        }),
+      ),
     );
 
     // ways to leave it danglin'
@@ -118,7 +118,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
     let varySpec = d.vary(
       freeState,
       ["wires", wireId, endKey, "x"],
-      ["wires", wireId, endKey, "y"]
+      ["wires", wireId, endKey, "y"],
     );
     if (
       freeState.wires[wireId].from.type === "free" &&
@@ -127,7 +127,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
       varySpec = varySpec.andThen(
         produce(freeState, (draft) => {
           delete draft.wires[wireId];
-        })
+        }),
       );
     }
 
@@ -264,7 +264,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                         });
                         return transitionToAndThen(
                           newState,
-                          `wire-${wid}-${endKey}`
+                          `wire-${wid}-${endKey}`,
                         );
                       })
                     }

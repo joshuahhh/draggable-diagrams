@@ -90,10 +90,10 @@ describe("getAtPath", () => {
 
     expect(getAtPath<typeof obj, string>(obj, ["user", "name"])).toBe("Alice");
     expect(
-      getAtPath<typeof obj, string>(obj, ["user", "address", "city"])
+      getAtPath<typeof obj, string>(obj, ["user", "address", "city"]),
     ).toBe("NYC");
     expect(getAtPath<typeof obj, number>(obj, ["user", "address", "zip"])).toBe(
-      10001
+      10001,
     );
   });
 
@@ -121,7 +121,7 @@ describe("getAtPath", () => {
     };
 
     expect(getAtPath<typeof obj, string>(obj, ["a", "b", "c", "d", "e"])).toBe(
-      "deep value"
+      "deep value",
     );
   });
 });
@@ -175,14 +175,14 @@ describe("setAtPath", () => {
     const result = setAtPath<typeof obj, number>(
       obj,
       ["a", "b", "c", "d", "e"],
-      100
+      100,
     );
 
     expect(
-      getAtPath<typeof result, number>(result, ["a", "b", "c", "d", "e"])
+      getAtPath<typeof result, number>(result, ["a", "b", "c", "d", "e"]),
     ).toBe(100);
     expect(getAtPath<typeof obj, number>(obj, ["a", "b", "c", "d", "e"])).toBe(
-      42
+      42,
     ); // original unchanged
   });
 
@@ -225,7 +225,7 @@ describe("setAtPath", () => {
     const result = setAtPath<typeof obj, { theme: string; lang: string }>(
       obj,
       ["config"],
-      newConfig
+      newConfig,
     );
 
     expect(result.config).toEqual(newConfig);
@@ -267,7 +267,7 @@ describe("integration: get and set", () => {
     const updated = setAtPath<typeof obj, string>(
       obj,
       ["data", "users", 1, "name"],
-      "Robert"
+      "Robert",
     );
     const newValue = getAtPath<typeof updated, string>(updated, [
       "data",
@@ -279,7 +279,7 @@ describe("integration: get and set", () => {
 
     // Original unchanged
     expect(
-      getAtPath<typeof obj, string>(obj, ["data", "users", 1, "name"])
+      getAtPath<typeof obj, string>(obj, ["data", "users", 1, "name"]),
     ).toBe("Bob");
   });
 
@@ -311,12 +311,12 @@ describe("integration: get and set", () => {
     let nextState = setAtPath<State, boolean>(
       state,
       ["ui", "modal", "isOpen"],
-      true
+      true,
     );
     nextState = setAtPath<State, string>(
       nextState,
       ["ui", "modal", "title"],
-      "Hello"
+      "Hello",
     );
     nextState = setAtPath<State, number>(nextState, ["data", "count"], 5);
 

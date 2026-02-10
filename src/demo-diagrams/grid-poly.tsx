@@ -27,7 +27,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
       {_.range(state.w).map((x) =>
         _.range(state.h).map((y) => (
           <circle cx={x * TILE_SIZE} cy={y * TILE_SIZE} r={5} fill="gray" />
-        ))
+        )),
       )}
 
       {/* Polygon edges */}
@@ -55,10 +55,10 @@ const draggable: Draggable<State> = ({ state, d }) => {
               produceAmb(state, (draft) => {
                 draft.points[idx] = Vec2(
                   amb(_.range(state.w)),
-                  amb(_.range(state.h))
+                  amb(_.range(state.h)),
                 );
                 require(uPairs(draft.points).every(([p1, p2]) => !p1.eq(p2)));
-              })
+              }),
             )
           }
         />
