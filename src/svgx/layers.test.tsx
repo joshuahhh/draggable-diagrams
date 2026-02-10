@@ -13,13 +13,13 @@ describe("layerSvg", () => {
     expect(layerSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       {
         "byId": Map {
+          "" => <g />,
           "r1" => <rect
             id="r1"
           />,
           "c1" => <circle
             id="c1"
           />,
-          "" => <g />,
         },
         "descendents": Map {},
       }
@@ -36,13 +36,13 @@ describe("layerSvg", () => {
     expect(layerSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       {
         "byId": Map {
+          "" => <g
+            data-accumulated-transform="translate(10, 20)"
+            transform="translate(10, 20)"
+          />,
           "r1" => <rect
             data-accumulated-transform="translate(10, 20)"
             id="r1"
-            transform="translate(10, 20)"
-          />,
-          "" => <g
-            data-accumulated-transform="translate(10, 20)"
             transform="translate(10, 20)"
           />,
         },
@@ -63,11 +63,6 @@ describe("layerSvg", () => {
     expect(layerSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       {
         "byId": Map {
-          "r1" => <rect
-            data-accumulated-transform="translate(10, 20) rotate(45) scale(2)"
-            id="r1"
-            transform="translate(10, 20) rotate(45) scale(2)"
-          />,
           "" => <g
             data-accumulated-transform="translate(10, 20)"
             transform="translate(10, 20)"
@@ -77,6 +72,11 @@ describe("layerSvg", () => {
               transform="rotate(45)"
             />
           </g>,
+          "r1" => <rect
+            data-accumulated-transform="translate(10, 20) rotate(45) scale(2)"
+            id="r1"
+            transform="translate(10, 20) rotate(45) scale(2)"
+          />,
         },
         "descendents": Map {},
       }
@@ -96,6 +96,15 @@ describe("layerSvg", () => {
     expect(layerSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       {
         "byId": Map {
+          "" => <g
+            data-accumulated-transform="translate(100, 0)"
+            transform="translate(100, 0)"
+          >
+            <g
+              data-accumulated-transform="translate(100, 0) rotate(90)"
+              transform="rotate(90)"
+            />
+          </g>,
           "r1" => <rect
             data-accumulated-transform="translate(100, 0) rotate(90)"
             id="r1"
@@ -106,15 +115,6 @@ describe("layerSvg", () => {
             id="c1"
             transform="translate(100, 0) rotate(90) scale(0.5)"
           />,
-          "" => <g
-            data-accumulated-transform="translate(100, 0)"
-            transform="translate(100, 0)"
-          >
-            <g
-              data-accumulated-transform="translate(100, 0) rotate(90)"
-              transform="rotate(90)"
-            />
-          </g>,
         },
         "descendents": Map {},
       }
@@ -131,6 +131,10 @@ describe("layerSvg", () => {
     expect(layerSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       {
         "byId": Map {
+          "" => <g
+            data-accumulated-transform="translate(10, 20)"
+            transform="translate(10, 20)"
+          />,
           "r1" => <rect
             data-accumulated-transform="translate(10, 20)"
             fill="red"
@@ -138,10 +142,6 @@ describe("layerSvg", () => {
             transform="translate(10, 20)"
             x={5}
             y={10}
-          />,
-          "" => <g
-            data-accumulated-transform="translate(10, 20)"
-            transform="translate(10, 20)"
           />,
         },
         "descendents": Map {},
@@ -161,13 +161,13 @@ describe("layerSvg", () => {
     expect(layerSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       {
         "byId": Map {
-          "c1" => <circle
-            id="c1"
-          />,
           "" => <g>
             <rect />
             <line />
           </g>,
+          "c1" => <circle
+            id="c1"
+          />,
         },
         "descendents": Map {},
       }
@@ -187,6 +187,12 @@ describe("layerSvg", () => {
     expect(layerSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       {
         "byId": Map {
+          "" => <React.Fragment>
+            <g
+              data-accumulated-transform="translate(10, 10)"
+              transform="translate(10, 10)"
+            />
+          </React.Fragment>,
           "r1" => <rect
             data-accumulated-transform="translate(0, 0)"
             id="r1"
@@ -197,12 +203,6 @@ describe("layerSvg", () => {
             id="c1"
             transform="translate(10, 10)"
           />,
-          "" => <React.Fragment>
-            <g
-              data-accumulated-transform="translate(10, 10)"
-              transform="translate(10, 10)"
-            />
-          </React.Fragment>,
         },
         "descendents": Map {},
       }
@@ -252,6 +252,12 @@ describe("layerSvg", () => {
     expect(layerSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       {
         "byId": Map {
+          "" => <React.Fragment>
+            <g
+              data-accumulated-transform="translate(10, 10)"
+              transform="translate(10, 10)"
+            />
+          </React.Fragment>,
           "inner" => <g
             data-accumulated-transform="translate(10, 10) rotate(45)"
             id="inner"
@@ -261,12 +267,6 @@ describe("layerSvg", () => {
               data-accumulated-transform="translate(10, 10) rotate(45)"
             />
           </g>,
-          "" => <React.Fragment>
-            <g
-              data-accumulated-transform="translate(10, 10)"
-              transform="translate(10, 10)"
-            />
-          </React.Fragment>,
         },
         "descendents": Map {},
       }
@@ -286,6 +286,14 @@ describe("layerSvg", () => {
     expect(layerSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       {
         "byId": Map {
+          "" => <g
+            className="wrapper"
+          >
+            <g
+              data-accumulated-transform="translate(100, 100)"
+              transform="translate(100, 100)"
+            />
+          </g>,
           "r1" => <rect
             data-accumulated-transform="translate(100, 100)"
             id="r1"
@@ -296,14 +304,6 @@ describe("layerSvg", () => {
             id="c1"
             transform="translate(100, 100)"
           />,
-          "" => <g
-            className="wrapper"
-          >
-            <g
-              data-accumulated-transform="translate(100, 100)"
-              transform="translate(100, 100)"
-            />
-          </g>,
         },
         "descendents": Map {},
       }
@@ -323,6 +323,10 @@ describe("layerSvg", () => {
     expect(layerSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       {
         "byId": Map {
+          "" => <g
+            data-accumulated-transform="translate(10, 10)"
+            transform="translate(10, 10)"
+          />,
           "inner" => <rect
             data-accumulated-transform="translate(10, 10) rotate(45)"
             id="inner"
@@ -338,10 +342,6 @@ describe("layerSvg", () => {
               data-accumulated-transform="translate(10, 10) rotate(45)"
             />
           </g>,
-          "" => <g
-            data-accumulated-transform="translate(10, 10)"
-            transform="translate(10, 10)"
-          />,
         },
         "descendents": Map {
           "outer" => Set {
@@ -421,6 +421,10 @@ describe("layerSvg", () => {
     expect(layerSvg(accumulateTransforms(tree))).toMatchInlineSnapshot(`
       {
         "byId": Map {
+          "" => <g
+            data-accumulated-transform="translate(50, 100)"
+            transform="translate(50, 100)"
+          />,
           "label1" => <text
             data-accumulated-transform="translate(50, 100)"
             id="label1"
@@ -433,10 +437,6 @@ describe("layerSvg", () => {
           "r1" => <rect
             data-accumulated-transform="translate(50, 100)"
             id="r1"
-            transform="translate(50, 100)"
-          />,
-          "" => <g
-            data-accumulated-transform="translate(50, 100)"
             transform="translate(50, 100)"
           />,
         },
@@ -453,7 +453,7 @@ describe("layerSvg", () => {
     );
 
     expect(() => layerSvg(accumulateTransforms(tree))).toThrow(
-      /data-z-index can only be set on elements with an id attribute/
+      /data-z-index can only be set on elements with an id attribute/,
     );
   });
 
@@ -476,7 +476,7 @@ describe("layerSvg", () => {
     );
 
     expect(() => layerSvg(accumulateTransforms(tree))).toThrow(
-      /Duplicate id "duplicate" found in SVG tree/
+      /Duplicate id "duplicate" found in SVG tree/,
     );
   });
 
@@ -491,7 +491,7 @@ describe("layerSvg", () => {
     );
 
     expect(() => layerSvg(accumulateTransforms(tree))).toThrow(
-      /Duplicate id "duplicate" found in SVG tree/
+      /Duplicate id "duplicate" found in SVG tree/,
     );
   });
 
@@ -508,7 +508,7 @@ describe("layerSvg", () => {
     );
 
     expect(() => layerSvg(accumulateTransforms(tree))).toThrow(
-      /Duplicate id "inner" found in SVG tree/
+      /Duplicate id "inner" found in SVG tree/,
     );
   });
 });
@@ -538,10 +538,10 @@ describe("layeredExtract", () => {
     expect(remaining).toMatchInlineSnapshot(`
       {
         "byId": Map {
+          "" => <g />,
           "c1" => <circle
             id="c1"
           />,
-          "" => <g />,
         },
         "descendents": Map {},
       }
@@ -591,13 +591,13 @@ describe("layeredExtract", () => {
     expect(remaining).toMatchInlineSnapshot(`
       {
         "byId": Map {
+          "" => <g
+            data-accumulated-transform="translate(10, 10)"
+            transform="translate(10, 10)"
+          />,
           "sibling" => <rect
             data-accumulated-transform="translate(10, 10)"
             id="sibling"
-            transform="translate(10, 10)"
-          />,
-          "" => <g
-            data-accumulated-transform="translate(10, 10)"
             transform="translate(10, 10)"
           />,
         },
@@ -648,10 +648,10 @@ describe("layeredExtract", () => {
     expect(remaining).toMatchInlineSnapshot(`
       {
         "byId": Map {
+          "" => <g />,
           "d" => <rect
             id="d"
           />,
-          "" => <g />,
         },
         "descendents": Map {},
       }

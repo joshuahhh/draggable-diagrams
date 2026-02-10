@@ -5,6 +5,7 @@
 - NEVER say "Perfect!" or similar overly enthusiastic confirmations.
 - NEVER use `any` as a lazy workaround for type errors. Only use `any` when truly called for. Ask first.
 - NEVER run `npm run dev`. The user will start the dev server when needed.
+- NEVER mention Claude in commit messages.
 
 ## 1. Working on the Library Codebase
 
