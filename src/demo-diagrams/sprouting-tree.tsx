@@ -1,0 +1,162 @@
+import { DemoDraggable } from "../demo-ui";
+import { Draggable } from "../draggable";
+import { translate } from "../svgx/helpers";
+
+const NODE_R = 14;
+const LEVEL_H = 60;
+const LEAF_W = 50;
+
+type Tree = { id: string; children: Tree[]; emergeFrom?: string };
+type State = { root: Tree };
+
+function leafCount(node: Tree): number {
+  if (node.children.length === 0) return 1;
+  return node.children.reduce((sum, c) => sum + leafCount(c), 0);
+}
+
+type Pos = { x: number; y: number };
+
+function layout(node: Tree, x: number, y: number): Map<string, Pos> {
+  const positions = new Map<string, Pos>();
+  positions.set(node.id, { x, y });
+  if (node.children.length === 0) return positions;
+
+  const totalLeaves = leafCount(node);
+  const totalWidth = totalLeaves * LEAF_W;
+  let cx = x - totalWidth / 2;
+
+  for (const child of node.children) {
+    const childLeaves = leafCount(child);
+    const childWidth = childLeaves * LEAF_W;
+    const childX = cx + childWidth / 2;
+    const childPositions = layout(child, childX, y + LEVEL_H);
+    for (const [id, pos] of childPositions) {
+      positions.set(id, pos);
+    }
+    cx += childWidth;
+  }
+
+  return positions;
+}
+
+let nextId = 1;
+function freshId(): string {
+  return `n${nextId++}`;
+}
+
+/** Sprout a leaf into a parent with two children.
+ *  The child at `keepIndex` keeps the original leaf's ID (so the framework tracks it moving).
+ *  The new parent and sibling are new elements. */
+function sprout(tree: Tree, targetId: string, keepIndex: 0 | 1): Tree {
+  if (tree.id === targetId && tree.children.length === 0) {
+    const newParentId = freshId();
+    const siblingId = freshId();
+    const kept: Tree = { id: targetId, children: [] };
+    const sibling: Tree = { id: siblingId, emergeFrom: targetId, children: [] };
+    return {
+      id: newParentId,
+      emergeFrom: targetId,
+      children: keepIndex === 0 ? [kept, sibling] : [sibling, kept],
+    };
+  }
+  return {
+    ...tree,
+    children: tree.children.map((c) => sprout(c, targetId, keepIndex)),
+  };
+}
+
+/** Prune: replace the target's parent with just the target.
+ *  The target keeps its ID and moves up to the parent's position. */
+function prune(tree: Tree, targetId: string): Tree {
+  if (tree.children.some((c) => c.id === targetId)) {
+    return { id: targetId, children: [] };
+  }
+  return {
+    ...tree,
+    children: tree.children.map((c) => prune(c, targetId)),
+  };
+}
+
+const initialState: State = {
+  root: { id: "n0", children: [] },
+};
+
+const WIDTH = 500;
+const HEIGHT = 300;
+
+const draggable: Draggable<State> = ({ state, d, draggedId }) => {
+  const positions = layout(state.root, WIDTH / 2, 40);
+
+  function renderNode(node: Tree): React.ReactElement {
+    const pos = positions.get(node.id)!;
+    const leaf = node.children.length === 0;
+
+    return (
+      <g id={`tree-${node.id}`}>
+        {/* edges to children */}
+        {node.children.map((child) => {
+          const childPos = positions.get(child.id)!;
+          return (
+            <line
+              id={`edge-${node.id}-${child.id}`}
+              x1={pos.x}
+              y1={pos.y}
+              x2={childPos.x}
+              y2={childPos.y}
+              stroke="#ccc"
+              strokeWidth={2}
+            />
+          );
+        })}
+
+        {/* children */}
+        {node.children.map((child) => renderNode(child))}
+
+        {/* this node */}
+        <g
+          id={node.id}
+          transform={translate(pos.x, pos.y)}
+          data-z-index={draggedId === node.id ? 3 : 1}
+          data-emerge-from={node.emergeFrom}
+          data-on-drag={
+            leaf &&
+            (() => {
+              return d
+                .closest(
+                  // to children
+                  d.span(
+                    state,
+                    { root: sprout(state.root, node.id, 0) },
+                    { root: sprout(state.root, node.id, 1) },
+                  ),
+                  // to parent (if not root)
+                  state.root.id !== node.id
+                    ? d.span(state, { root: prune(state.root, node.id) })
+                    : null,
+                )
+                .withSnapRadius(5, { chain: true });
+            })
+          }
+        >
+          <circle
+            r={NODE_R}
+            fill={leaf ? "#7cb3f0" : "#e8e8e8"}
+            stroke={leaf ? "#4a90d9" : "#bbb"}
+            strokeWidth={2}
+          />
+        </g>
+      </g>
+    );
+  }
+
+  return <g>{renderNode(state.root)}</g>;
+};
+
+export const SproutingTree = () => (
+  <DemoDraggable
+    draggable={draggable}
+    initialState={initialState}
+    width={WIDTH}
+    height={HEIGHT}
+  />
+);

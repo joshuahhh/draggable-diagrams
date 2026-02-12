@@ -41,6 +41,7 @@ import { SimplestClicker } from "./demo-diagrams/simplest-clicker";
 import { SimplestJust } from "./demo-diagrams/simplest-just";
 import { Sokoban } from "./demo-diagrams/sokoban";
 import { Spinny } from "./demo-diagrams/spinny";
+import { SproutingTree } from "./demo-diagrams/sprouting-tree";
 import { StretchyRot } from "./demo-diagrams/stretchy-rot";
 import { StretchyXY } from "./demo-diagrams/stretchy-xy";
 import { Tiles } from "./demo-diagrams/tiles";
@@ -100,6 +101,7 @@ export const demos: Demo[] = [
   { id: "constrained-point", Component: ConstrainedPoint },
   { id: "multi-circle-points", Component: MultiCirclePoints },
   { id: "node-wires", Component: NodeWires },
+  { id: "sprouting-tree", Component: SproutingTree },
   { id: "simplest-just", Component: SimplestJust },
   { id: "bluefish-static", Component: BluefishStatic },
   { id: "bluefish-perm", Component: BluefishPerm },
