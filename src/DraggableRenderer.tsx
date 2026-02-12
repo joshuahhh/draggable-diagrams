@@ -90,8 +90,15 @@ type SpringingFrom = {
   transition: Transition;
 };
 
+type PendingDrag<T extends object> = {
+  startClientPos: Vec2;
+  threshold: number;
+  dragState: DragState<T> & { type: "dragging" };
+  debugInfo: DebugDragInfo<T>;
+};
+
 type DragState<T extends object> = { springingFrom: SpringingFrom | null } & (
-  | { type: "idle"; state: T }
+  | { type: "idle"; state: T; pendingDrag?: PendingDrag<T> }
   | {
       type: "dragging";
       startState: T;
@@ -127,6 +134,13 @@ interface DraggableRendererProps<T extends object> {
   height?: number;
   onDebugDragInfo?: (info: DebugDragInfo<T>) => void;
   showDebugOverlay?: boolean;
+  /**
+   * Minimum pointer movement (in px) before a pointerdown becomes a drag.
+   * Below this threshold the gesture is treated as a click — the state
+   * machine stays idle, so onClick handlers on the element fire normally.
+   * Set to 0 to start drags immediately (old behavior). Default: 2.
+   */
+  dragThreshold?: number;
 }
 
 export function DraggableRenderer<T extends object>({
@@ -136,6 +150,7 @@ export function DraggableRenderer<T extends object>({
   height,
   onDebugDragInfo,
   showDebugOverlay,
+  dragThreshold = 2,
 }: DraggableRendererProps<T>) {
   const catchToRenderError = useCatchToRenderError();
 
@@ -301,18 +316,46 @@ export function DraggableRenderer<T extends object>({
       dragState.type === "dragging" ? "grabbing" : "default";
   }, [dragState.type]);
 
-  // Document-level pointer listeners during drag
+  // Document-level pointer listeners during drag or pending drag
+  const shouldListenToPointer =
+    dragState.type === "dragging" ||
+    (dragState.type === "idle" && !!dragState.pendingDrag);
   useEffect(() => {
-    if (dragState.type !== "dragging") return;
+    if (!shouldListenToPointer) return;
 
     const onPointerMove = catchToRenderError((e: globalThis.PointerEvent) => {
-      setPointerFromEvent(e);
+      const ds = dragStateRef.current;
+      if (ds.type === "idle" && ds.pendingDrag) {
+        // Pending: check threshold
+        const { pendingDrag: pending } = ds;
+        const clientPos = Vec2(e.clientX, e.clientY);
+        const d = clientPos.sub(pending.startClientPos);
+        if (d.len2() > pending.threshold * pending.threshold) {
+          setPointerFromEvent(e);
+          setDragState(pending.dragState);
+          onDebugDragInfoRef.current?.(pending.debugInfo);
+        }
+      } else {
+        // Dragging: track pointer
+        setPointerFromEvent(e);
+      }
     });
 
     const onPointerUp = catchToRenderError((e: globalThis.PointerEvent) => {
-      const pointer = setPointerFromEvent(e);
       const ds = dragStateRef.current;
+      if (ds.type === "idle" && ds.pendingDrag) {
+        // Released before threshold — clear pending, stay idle.
+        const newState: DragState<T> = {
+          type: "idle",
+          state: ds.state,
+          springingFrom: ds.springingFrom,
+        };
+        setDragState(newState);
+        return;
+      }
+
       if (ds.type !== "dragging") return;
+      const pointer = setPointerFromEvent(e);
 
       const frame: DragFrame = { pointer, pointerStart: ds.pointerStart };
       const result = ds.behavior(frame);
@@ -342,9 +385,8 @@ export function DraggableRenderer<T extends object>({
     };
   }, [
     catchToRenderError,
-    dragState.type,
     dragStateRef,
-    draggable,
+    shouldListenToPointer,
     setDragState,
     setPointerFromEvent,
   ]);
@@ -356,8 +398,15 @@ export function DraggableRenderer<T extends object>({
       setPointerFromEvent,
       setDragState,
       onDebugDragInfoRef,
+      dragThreshold,
     }),
-    [catchToRenderError, draggable, setDragState, setPointerFromEvent],
+    [
+      catchToRenderError,
+      draggable,
+      dragThreshold,
+      setDragState,
+      setPointerFromEvent,
+    ],
   );
 
   return (
@@ -489,6 +538,7 @@ type RenderContext<T extends object> = {
   onDebugDragInfoRef: React.RefObject<
     ((info: DebugDragInfo<T>) => void) | undefined
   >;
+  dragThreshold: number;
 };
 
 function postProcessForInteraction<T extends object>(
@@ -504,6 +554,10 @@ function postProcessForInteraction<T extends object>(
       updatePropsDownTree(el, (el) => {
         const dragSpecCallback = getDragSpecCallbackOnElement<T>(el);
         if (!dragSpecCallback) return;
+        assert(
+          !el.props.onPointerDown,
+          "Elements with data-on-drag cannot have onPointerDown (it is overwritten)",
+        );
         return {
           style: { cursor: "grab", ...(el.props.style || {}) },
           onPointerDown: ctx.catchToRenderError((e: React.PointerEvent) => {
@@ -520,7 +574,7 @@ function postProcessForInteraction<T extends object>(
             const pointerLocal = globalToLocal(transforms, pointer);
 
             const frame: DragFrame = { pointer, pointerStart: pointer };
-            const { dragState, debugInfo } = initDrag(
+            const { dragState: draggingState, debugInfo } = initDrag(
               dragSpec,
               {
                 draggable: ctx.draggable,
@@ -533,8 +587,24 @@ function postProcessForInteraction<T extends object>(
               pointer,
               null,
             );
-            ctx.setDragState(dragState);
-            ctx.onDebugDragInfoRef.current?.(debugInfo);
+
+            if (ctx.dragThreshold <= 0 || !el.props.onClick) {
+              ctx.setDragState(draggingState);
+              ctx.onDebugDragInfoRef.current?.(debugInfo);
+            } else {
+              // Stay idle with pending — DOM is preserved, clicks still work.
+              ctx.setDragState({
+                type: "idle",
+                state,
+                springingFrom: null,
+                pendingDrag: {
+                  startClientPos: Vec2(e.clientX, e.clientY),
+                  threshold: ctx.dragThreshold,
+                  dragState: draggingState,
+                  debugInfo,
+                },
+              });
+            }
           }),
         };
       }),
