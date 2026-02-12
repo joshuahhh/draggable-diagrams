@@ -178,6 +178,8 @@ export function DemoDraggable<T extends object>({
                     }
                     precision={2}
                     style={{ fontSize: "11px" }}
+                    niceId={false}
+                    niceType={false}
                   />
                 </ErrorBoundary>
               )}
