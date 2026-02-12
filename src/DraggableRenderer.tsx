@@ -433,8 +433,7 @@ export function DraggableRenderer<T extends object>({
           dragParams: newParams,
           dragParamsCallback: ds.dragParamsCallback,
           originalStartState: ds.originalStartState,
-          originalBehaviorCtxWithoutFloat:
-            ds.originalBehaviorCtxWithoutFloat,
+          originalBehaviorCtxWithoutFloat: ds.originalBehaviorCtxWithoutFloat,
         },
       );
       setDragState(newDragState);

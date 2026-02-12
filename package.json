@@ -9,7 +9,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "peggy": "npx peggy --format es --plugin ts-pegjs --extra-options-file src/peggy/pattern.options.json -o src/peggy/pattern.ts src/peggy/pattern.peggy",
-    "peggy:watch": "ls src/peggy/pattern.peggy src/peggy/pattern.options.json | entr -c npm run peggy"
+    "peggy:watch": "ls src/peggy/pattern.peggy src/peggy/pattern.options.json | entr -c npm run peggy",
+    "prettier": "prettier --write src"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
