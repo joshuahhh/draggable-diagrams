@@ -61,6 +61,7 @@ function sprout(tree: Tree, targetId: string, keepIndex: 0 | 1): Tree {
   }
   return {
     ...tree,
+    emergeFrom: undefined,
     children: tree.children.map((c) => sprout(c, targetId, keepIndex)),
   };
 }
@@ -73,6 +74,7 @@ function prune(tree: Tree, targetId: string): Tree {
   }
   return {
     ...tree,
+    emergeFrom: undefined,
     children: tree.children.map((c) => prune(c, targetId)),
   };
 }
@@ -94,17 +96,18 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
     return (
       <g id={`tree-${node.id}`}>
         {/* edges to children */}
-        {node.children.map((child) => {
+        {node.children.map((child, i) => {
           const childPos = positions.get(child.id)!;
           return (
             <line
-              id={`edge-${node.id}-${child.id}`}
+              id={`edge-${node.id}-${i}`}
               x1={pos.x}
               y1={pos.y}
               x2={childPos.x}
               y2={childPos.y}
               stroke="#ccc"
               strokeWidth={2}
+              data-emerge-from={node.emergeFrom || child.emergeFrom}
             />
           );
         })}
