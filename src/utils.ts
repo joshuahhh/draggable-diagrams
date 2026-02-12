@@ -228,6 +228,10 @@ export function templateLiteralTagOrNot<R>(fn: (input: string) => R) {
   return wrapper;
 }
 
+export function makeId(): string {
+  return Math.random().toString(36).slice(2, 10);
+}
+
 export type Entries<T> = {
   [K in keyof T]: [K, T[K]];
 }[keyof T][];

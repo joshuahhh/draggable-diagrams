@@ -1,13 +1,10 @@
 import { DemoDraggable, DemoNotes } from "../demo-ui";
 import { Draggable } from "../draggable";
 import { translate } from "../svgx/helpers";
+import { makeId } from "../utils";
 
-type Dot = { x: number; y: number };
-type State = { dots: Dot[] };
-
-const initialState: State = {
-  dots: [{ x: 150, y: 100 }],
-};
+type Dot = { x: number; y: number; color: string };
+type State = { dots: Record<string, Dot> };
 
 const DOT_RADIUS = 20;
 const colors = [
@@ -19,25 +16,38 @@ const colors = [
   "#ec4899",
 ];
 
+const id0 = makeId();
+const initialState: State = {
+  dots: { [id0]: { x: 150, y: 100, color: colors[0] } },
+};
+
 const draggable: Draggable<State> = ({ state, d, setState }) => (
   <g>
-    {state.dots.map((dot, i) => (
+    {Object.entries(state.dots).map(([id, dot]) => (
       <circle
-        id={`dot-${i}`}
+        id={`dot-${id}`}
         transform={translate(dot.x, dot.y)}
         r={DOT_RADIUS}
-        fill={colors[i % colors.length]}
+        fill={dot.color}
         onDoubleClick={() => {
-          // Remove the dot on double click
-          setState({ dots: state.dots.filter((_, idx) => idx !== i) });
+          const { [id]: _, ...rest } = state.dots;
+          setState({ dots: rest });
         }}
         data-on-drag={() => {
-          const newState: State = { dots: [...state.dots, { ...dot }] };
-          const copyIdx = state.dots.length;
+          const copyId = makeId();
+          const newState: State = {
+            dots: {
+              ...state.dots,
+              [copyId]: {
+                ...dot,
+                color: colors[Object.keys(state.dots).length % colors.length],
+              },
+            },
+          };
           return d.switchToStateAndFollow(
             newState,
-            `dot-${copyIdx}`,
-            d.vary(newState, ["dots", copyIdx, "x"], ["dots", copyIdx, "y"]),
+            `dot-${copyId}`,
+            d.vary(newState, ["dots", copyId, "x"], ["dots", copyId, "y"]),
           );
         }}
       />

@@ -1,13 +1,10 @@
 import { DemoDraggable, DemoNotes } from "../demo-ui";
 import { Draggable } from "../draggable";
 import { translate } from "../svgx/helpers";
+import { makeId } from "../utils";
 
-type Dot = { x: number; y: number };
-type State = { dots: Dot[] };
-
-const initialState: State = {
-  dots: [{ x: 150, y: 100 }],
-};
+type Dot = { x: number; y: number; color: string };
+type State = { dots: Record<string, Dot> };
 
 const DOT_RADIUS = 20;
 const colors = [
@@ -19,30 +16,45 @@ const colors = [
   "#ec4899",
 ];
 
-const draggable: Draggable<State> = ({ state, d }) => (
+const id0 = makeId();
+const initialState: State = {
+  dots: { [id0]: { x: 150, y: 100, color: colors[0] } },
+};
+
+const draggable: Draggable<State> = ({ state, d, setState }) => (
   <g>
-    {state.dots.map((dot, i) => (
+    {Object.entries(state.dots).map(([id, dot]) => (
       <circle
-        id={`dot-${i}`}
+        id={`dot-${id}`}
         transform={translate(dot.x, dot.y)}
         r={DOT_RADIUS}
-        fill={colors[i % colors.length]}
+        fill={dot.color}
+        onDoubleClick={() => {
+          const { [id]: _, ...rest } = state.dots;
+          setState({ dots: rest });
+        }}
         data-on-drag={(dp) => {
-          const moveDot = (s: State, idx: number) =>
-            d.vary(s, ["dots", idx, "x"], ["dots", idx, "y"]);
+          const moveDot = (s: State, dotId: string) =>
+            d.vary(s, ["dots", dotId, "x"], ["dots", dotId, "y"]);
 
           if (dp.altKey) {
             // Copy: add a new dot at the same position, follow the copy
-            const newState: State = { dots: [...state.dots, { ...dot }] };
-            const copyIdx = state.dots.length;
+            const copyId = makeId();
+            const newDot = {
+              ...dot,
+              color: colors[Object.keys(state.dots).length % colors.length],
+            };
+            const newState: State = {
+              dots: { ...state.dots, [copyId]: newDot },
+            };
             return d.switchToStateAndFollow(
               newState,
-              `dot-${copyIdx}`,
-              moveDot(newState, copyIdx),
+              `dot-${copyId}`,
+              moveDot(newState, copyId),
             );
           } else {
             // Move: vary this dot's position
-            return moveDot(state, i);
+            return moveDot(state, id);
           }
         }}
       />

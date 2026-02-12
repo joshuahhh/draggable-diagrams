@@ -176,6 +176,7 @@ export function DemoDraggable<T extends object>({
                         ? debugInfo.dropState
                         : debugInfo.state
                     }
+                    precision={2}
                     style={{ fontSize: "11px" }}
                   />
                 </ErrorBoundary>
