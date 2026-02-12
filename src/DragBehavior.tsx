@@ -26,27 +26,56 @@ import { assignPaths, findByPath } from "./svgx/path";
 import { localToGlobal, parseTransform } from "./svgx/transform";
 import { assert, assertNever, manyToArray, pipe, throwError } from "./utils";
 
+/**
+ * A "drag behavior" defines the ongoing behavior of a drag – what is
+ * displayed – as well as what state the draggable will transition
+ * into on drop. At least so far, it is assumed to be "memoryless".
+ */
+export type DragBehavior<T> = (frame: DragFrame) => DragResult<T>;
+
+/**
+ * The information passed to a drag behavior on every frame of the
+ * drag.
+ */
 export type DragFrame = {
   pointer: Vec2;
   pointerStart: Vec2;
 };
 
+/**
+ * The information returned by a drag behavior on every frame of the
+ * drag.
+ */
 export type DragResult<T> = {
   rendered: LayeredSvgx;
   dropState: T;
   dropTransition?: Transition;
   distance: number;
   activePath: string;
+  /**
+   * This is a drag behavior's way of saying "immediately switch to
+   * dropState and continue the drag".
+   * - `draggedId` is the id of the element to continue dragging; if
+   *   omitted, the current dragged element is used
+   * - `followSpec` is a DragSpec to follow after switching states;
+   *   if omitted, the data-on-drag behavior of the newly rendered
+   *   state is consulted as usual
+   */
   chainNow?: {
     draggedId?: string;
     followSpec?: DragSpec<T>;
   };
+  /**
+   * An optional debug overlay to render on top of the drag result.
+   */
   debugOverlay?: () => Svgx;
 };
 
-export type DragBehavior<T> = (frame: DragFrame) => DragResult<T>;
-
-export type BehaviorContext<T extends object> = {
+/**
+ * The information available to a drag behavior when it's being
+ * created from a DragSpec.
+ */
+export type DragBehaviorInitContext<T extends object> = {
   draggable: Draggable<T>;
   draggedPath: string;
   draggedId: string | null;
@@ -54,81 +83,13 @@ export type BehaviorContext<T extends object> = {
   floatLayered: LayeredSvgx | null;
 };
 
-function renderStateReadOnly<T extends object>(
-  ctx: BehaviorContext<T>,
-  state: T,
-): LayeredSvgx {
-  return pipe(
-    ctx.draggable({
-      state,
-      d: new DragSpecBuilder<T>(),
-      draggedId: ctx.draggedId,
-      ghostId: null,
-      setState: throwError,
-    }),
-    assignPaths,
-    accumulateTransforms,
-    layerSvg,
-  );
-}
-
-function getElementPosition<T extends object>(
-  ctx: BehaviorContext<T>,
-  layered: LayeredSvgx,
-): Vec2 {
-  const element = findByPathInLayered(ctx.draggedPath, layered);
-  if (!element) return Vec2(Infinity, Infinity);
-  const accTransform = getAccumulatedTransform(element);
-  const transforms = parseTransform(accTransform || "");
-  return localToGlobal(transforms, ctx.pointerLocal);
-}
-
-function DistanceLine({
-  from,
-  to,
-  distance,
-}: {
-  from: Vec2;
-  to: Vec2;
-  distance: number;
-}) {
-  const label = distance > 0.5 ? `${Math.round(distance)}px` : "on target";
-  return (
-    <g>
-      <line
-        {...from.xy1()}
-        {...to.xy2()}
-        stroke="white"
-        strokeWidth={5}
-        strokeLinecap="round"
-      />
-      <line
-        {...from.xy1()}
-        {...to.xy2()}
-        stroke="magenta"
-        strokeWidth={1.5}
-        strokeDasharray="4 3"
-      />
-      <text
-        {...from.lerp(to, 0.5).xy()}
-        fill="magenta"
-        stroke="white"
-        strokeWidth={3}
-        paintOrder="stroke"
-        fontSize={11}
-        fontFamily="monospace"
-        textAnchor="middle"
-        dominantBaseline="central"
-      >
-        {label}
-      </text>
-    </g>
-  );
-}
-
+/**
+ * Turn a DragSpec into a DragBehavior, given the necessary context.
+ * This is where the semantics of each DragSpec type are defined.
+ */
 export function dragSpecToBehavior<T extends object>(
   spec: DragSpecData<T>,
-  ctx: BehaviorContext<T>,
+  ctx: DragBehaviorInitContext<T>,
 ): DragBehavior<T> {
   if (spec.type === "just") {
     const rendered = renderStateReadOnly(ctx, spec.state);
@@ -523,4 +484,79 @@ export function dragSpecToBehavior<T extends object>(
   } else {
     assertNever(spec);
   }
+}
+
+// # Misc functions
+// used across dragSpecToBehavior
+
+function renderStateReadOnly<T extends object>(
+  ctx: DragBehaviorInitContext<T>,
+  state: T,
+): LayeredSvgx {
+  return pipe(
+    ctx.draggable({
+      state,
+      d: new DragSpecBuilder<T>(),
+      draggedId: ctx.draggedId,
+      ghostId: null,
+      setState: throwError,
+    }),
+    assignPaths,
+    accumulateTransforms,
+    layerSvg,
+  );
+}
+
+function getElementPosition<T extends object>(
+  ctx: DragBehaviorInitContext<T>,
+  layered: LayeredSvgx,
+): Vec2 {
+  const element = findByPathInLayered(ctx.draggedPath, layered);
+  if (!element) return Vec2(Infinity, Infinity);
+  const accTransform = getAccumulatedTransform(element);
+  const transforms = parseTransform(accTransform || "");
+  return localToGlobal(transforms, ctx.pointerLocal);
+}
+
+function DistanceLine({
+  from,
+  to,
+  distance,
+}: {
+  from: Vec2;
+  to: Vec2;
+  distance: number;
+}) {
+  const label = distance > 0.5 ? `${Math.round(distance)}px` : "on target";
+  return (
+    <g>
+      <line
+        {...from.xy1()}
+        {...to.xy2()}
+        stroke="white"
+        strokeWidth={5}
+        strokeLinecap="round"
+      />
+      <line
+        {...from.xy1()}
+        {...to.xy2()}
+        stroke="magenta"
+        strokeWidth={1.5}
+        strokeDasharray="4 3"
+      />
+      <text
+        {...from.lerp(to, 0.5).xy()}
+        fill="magenta"
+        stroke="white"
+        strokeWidth={3}
+        paintOrder="stroke"
+        fontSize={11}
+        fontFamily="monospace"
+        textAnchor="middle"
+        dominantBaseline="central"
+      >
+        {label}
+      </text>
+    </g>
+  );
 }

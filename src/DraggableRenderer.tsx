@@ -9,8 +9,8 @@ import React, {
 } from "react";
 import { assert } from "vitest";
 import {
-  BehaviorContext,
   DragBehavior,
+  DragBehaviorInitContext,
   DragFrame,
   DragResult,
   dragSpecToBehavior,
@@ -119,14 +119,17 @@ type DragState<T extends object> = { springingFrom: SpringingFrom | null } & (
       startState: T;
       behavior: DragBehavior<T>;
       spec: DragSpec<T>;
-      behaviorCtx: BehaviorContext<T>;
+      behaviorCtx: DragBehaviorInitContext<T>;
       pointerStart: Vec2;
       draggedId: string | null;
       result: DragResult<T>;
       dragParams: DragParams;
       dragParamsCallback: (params: DragParams) => DragSpec<T>;
       originalStartState: T;
-      originalBehaviorCtxWithoutFloat: Omit<BehaviorContext<T>, "floatLayered">;
+      originalBehaviorCtxWithoutFloat: Omit<
+        DragBehaviorInitContext<T>,
+        "floatLayered"
+      >;
     }
 );
 
@@ -137,7 +140,7 @@ export type DebugDragInfo<T extends object> =
   | {
       type: "dragging";
       spec: DragSpec<T>;
-      behaviorCtx: BehaviorContext<T>;
+      behaviorCtx: DragBehaviorInitContext<T>;
       activePath: string;
       pointerStart: Vec2;
       draggedId: string | null;
@@ -547,12 +550,15 @@ type DragParamsInfo<T extends object> = {
   dragParams: DragParams;
   dragParamsCallback: (params: DragParams) => DragSpec<T>;
   originalStartState: T;
-  originalBehaviorCtxWithoutFloat: Omit<BehaviorContext<T>, "floatLayered">;
+  originalBehaviorCtxWithoutFloat: Omit<
+    DragBehaviorInitContext<T>,
+    "floatLayered"
+  >;
 };
 
 function initDrag<T extends object>(
   spec: DragSpec<T>,
-  behaviorCtxWithoutFloat: Omit<BehaviorContext<T>, "floatLayered">,
+  behaviorCtxWithoutFloat: Omit<DragBehaviorInitContext<T>, "floatLayered">,
   state: T,
   frame: DragFrame,
   pointerStart: Vec2,
@@ -573,7 +579,7 @@ function initDrag<T extends object>(
     });
     floatLayered = layeredExtract(startLayered, draggedId).extracted;
   }
-  const behaviorCtx: BehaviorContext<T> = {
+  const behaviorCtx: DragBehaviorInitContext<T> = {
     ...behaviorCtxWithoutFloat,
     floatLayered,
   };

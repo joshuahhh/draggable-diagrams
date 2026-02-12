@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BehaviorContext, DragFrame, dragSpecToBehavior } from "./DragBehavior";
+import { DragBehaviorInitContext, DragFrame, dragSpecToBehavior } from "./DragBehavior";
 import { DragSpec } from "./DragSpec";
 import { Vec2 } from "./math/vec2";
 
@@ -432,7 +432,7 @@ function* computeDropZones(
 export function useDropZoneData<T extends object>(
   dragging: {
     spec: DragSpec<T>;
-    behaviorCtx: BehaviorContext<T>;
+    behaviorCtx: DragBehaviorInitContext<T>;
     pointerStart: Vec2;
   } | null,
   width: number,
