@@ -4,6 +4,7 @@ import {
   applyRewrite,
   isBinaryOp,
   isOp,
+  Match,
   pattern,
   rewr,
   Tree,
@@ -120,13 +121,16 @@ describe("rewrites", () => {
 
     const toPattern = pattern`(+ B A)`;
 
-    // Create match map manually
-    const matchMap = new Map<string, Tree>();
-    matchMap.set("+", tree);
-    matchMap.set("A", tree.children[0]);
-    matchMap.set("B", tree.children[1]);
+    // Create match manually
+    const matchMap: Match = {
+      wildcards: new Map<string, Tree>([
+        ["A", tree.children[0]],
+        ["B", tree.children[1]],
+      ]),
+      ops: new Map<string, Tree>([["+", tree]]),
+    };
 
-    expect(applyRewrite(matchMap, toPattern)).toEqual({
+    expect(applyRewrite(matchMap, toPattern, "a")).toEqual({
       id: "root",
       label: "+",
       children: [
@@ -301,5 +305,129 @@ describe("rewrites", () => {
       { id: "d", label: "4", children: [] },
       { id: "c", label: "3", children: [] },
     ]);
+  });
+
+  test("distributivity forward: duplicates wildcard with fresh IDs and emergeFrom", () => {
+    // a × (b + c) → (a × b) + (a × c)
+    const tree: Tree = {
+      id: "times",
+      label: "×",
+      children: [
+        { id: "a", label: "🎲", children: [] },
+        {
+          id: "plus",
+          label: "+",
+          children: [
+            { id: "b", label: "🦠", children: [] },
+            { id: "c", label: "🐝", children: [] },
+          ],
+        },
+      ],
+    };
+
+    const rewrites = [rewr("(× A #(+ B C))", "(+ (× A B) (× A C))")];
+    const results = allPossibleRewrites(tree, rewrites, "plus");
+
+    expect(results).toHaveLength(1);
+    const result = results[0];
+
+    // Outer + reuses the matched +'s ID
+    expect(result.id).toBe("plus");
+    expect(result.label).toBe("+");
+
+    // First × reuses the matched ×'s ID
+    const firstTimes = result.children[0];
+    expect(firstTimes.id).toBe("times");
+    expect(firstTimes.label).toBe("×");
+    // First A keeps original ID
+    expect(firstTimes.children[0].id).toBe("a");
+    expect(firstTimes.children[0].label).toBe("🎲");
+    expect(firstTimes.children[1].id).toBe("b");
+
+    // Second × gets a fresh ID, emerges from original ×
+    const secondTimes = result.children[1];
+    expect(secondTimes.id).not.toBe("times");
+    expect(secondTimes.label).toBe("×");
+    expect(secondTimes.emergeFrom).toBe("times");
+    // Second A gets fresh ID, emerges from original a
+    expect(secondTimes.children[0].id).not.toBe("a");
+    expect(secondTimes.children[0].label).toBe("🎲");
+    expect(secondTimes.children[0].emergeFrom).toBe("a");
+    expect(secondTimes.children[1].id).toBe("c");
+  });
+
+  test("distributivity reverse: factors with repeated wildcard matching", () => {
+    // (a × b) + (a × c) → a × (b + c), where both a's are structurally equal
+    const tree: Tree = {
+      id: "plus",
+      label: "+",
+      children: [
+        {
+          id: "times1",
+          label: "×",
+          children: [
+            { id: "a1", label: "🎲", children: [] },
+            { id: "b", label: "🦠", children: [] },
+          ],
+        },
+        {
+          id: "times2",
+          label: "×",
+          children: [
+            { id: "a2", label: "🎲", children: [] },
+            { id: "c", label: "🐝", children: [] },
+          ],
+        },
+      ],
+    };
+
+    const rewrites = [rewr("#(+ (× A B) (× A C))", "(× A (+ B C))")];
+    const results = allPossibleRewrites(tree, rewrites, "plus");
+
+    expect(results).toHaveLength(1);
+    const result = results[0];
+
+    // × reuses the first matched ×'s ID
+    expect(result.id).toBe("times1");
+    expect(result.label).toBe("×");
+    // A uses the first match (a1)
+    expect(result.children[0].id).toBe("a1");
+    expect(result.children[0].label).toBe("🎲");
+    // + reuses the matched +'s ID
+    expect(result.children[1].id).toBe("plus");
+    expect(result.children[1].label).toBe("+");
+    expect(result.children[1].children[0].id).toBe("b");
+    expect(result.children[1].children[1].id).toBe("c");
+  });
+
+  test("distributivity reverse: fails when repeated wildcard doesn't match structurally", () => {
+    // (a × b) + (d × c) where a ≠ d — should NOT match
+    const tree: Tree = {
+      id: "plus",
+      label: "+",
+      children: [
+        {
+          id: "times1",
+          label: "×",
+          children: [
+            { id: "a", label: "🎲", children: [] },
+            { id: "b", label: "🦠", children: [] },
+          ],
+        },
+        {
+          id: "times2",
+          label: "×",
+          children: [
+            { id: "d", label: "🐝", children: [] },
+            { id: "c", label: "⛅", children: [] },
+          ],
+        },
+      ],
+    };
+
+    const rewrites = [rewr("#(+ (× A B) (× A C))", "(× A (+ B C))")];
+    const results = allPossibleRewrites(tree, rewrites, "plus");
+
+    expect(results).toHaveLength(0);
   });
 });

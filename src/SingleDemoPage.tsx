@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { DemoSettingsBar, DemoSettingsProvider } from "./demo-ui";
-import { demos } from "./demos";
+import { DemoCard, demos } from "./demos";
 
 export function SingleDemoPage({ id }: { id: string }) {
   const demo = demos.find((d) => d.id === id);
@@ -42,22 +42,7 @@ export function SingleDemoPage({ id }: { id: string }) {
           </Link>
         </div>
         <div className="flex flex-col gap-5 px-5 pb-5 max-w-3xl mx-auto flex-1 w-full">
-          <div className="bg-white rounded-lg p-5 shadow-sm">
-            <div className="flex items-start justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 m-0">
-                {demo.id}
-              </h2>
-              <a
-                href={`https://github.com/joshuahhh/draggable-diagrams/blob/main/src/demo-diagrams/${demo.id}.tsx`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-gray-500 hover:text-gray-700 no-underline hover:underline"
-              >
-                source
-              </a>
-            </div>
-            <demo.Component />
-          </div>
+          <DemoCard demo={demo} />
         </div>
         <DemoSettingsBar />
       </div>

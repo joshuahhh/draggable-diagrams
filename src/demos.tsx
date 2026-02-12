@@ -1,4 +1,5 @@
 import { ComponentType } from "react";
+import { Link } from "react-router-dom";
 import { AltToCopy } from "./demo-diagrams/alt-to-copy";
 import { Angle } from "./demo-diagrams/angle";
 import { AngleViaTransform } from "./demo-diagrams/angle-via-transform";
@@ -27,7 +28,7 @@ import { ListOfLists } from "./demo-diagrams/list-of-lists";
 import { ListOfListsSizes } from "./demo-diagrams/list-of-lists-sizes";
 import { MultiCirclePoints } from "./demo-diagrams/multi-circle-points";
 import { NodeWires } from "./demo-diagrams/node-wires";
-import { NoolTree } from "./demo-diagrams/nool-tree";
+import { NoolTree } from "./demo-diagrams/nool/tree";
 import { OrbitingPlanet } from "./demo-diagrams/orbiting-planet";
 import { OrbitingPlanetWithBackground } from "./demo-diagrams/orbiting-planet-with-background";
 import { OrderPreserving } from "./demo-diagrams/order-preserving";
@@ -51,7 +52,46 @@ import { Tromino } from "./demo-diagrams/tromino";
 export type Demo = {
   id: string;
   Component: ComponentType;
+  /** Override the default source path (which is `${id}.tsx`) */
+  sourcePath?: string;
 };
+
+export function DemoCard({
+  demo,
+  linkTitle,
+}: {
+  demo: Demo;
+  linkTitle?: boolean;
+}) {
+  const sourceUrl = `https://github.com/joshuahhh/draggable-diagrams/blob/main/src/demo-diagrams/${demo.sourcePath ?? `${demo.id}.tsx`}`;
+  return (
+    <div className="bg-white rounded-lg p-5 shadow-sm">
+      <div className="flex items-start justify-between mb-4">
+        <h2 className="text-xl font-semibold text-gray-900 m-0">
+          {linkTitle ? (
+            <Link
+              to={`/demos/${demo.id}`}
+              className="no-underline text-gray-900 hover:text-gray-700 hover:underline"
+            >
+              {demo.id}
+            </Link>
+          ) : (
+            demo.id
+          )}
+        </h2>
+        <a
+          href={sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-gray-500 hover:text-gray-700 no-underline hover:underline"
+        >
+          source
+        </a>
+      </div>
+      <demo.Component />
+    </div>
+  );
+}
 
 export const demos: Demo[] = [
   { id: "linear-track", Component: LinearTrack },
@@ -73,7 +113,7 @@ export const demos: Demo[] = [
   { id: "insert-and-remove", Component: InsertAndRemove },
   { id: "tiles", Component: Tiles },
   { id: "grid-poly", Component: GridPoly },
-  { id: "nool-tree", Component: NoolTree },
+  { id: "nool-tree", Component: NoolTree, sourcePath: "nool/tree.tsx" },
   { id: "outline", Component: Outline },
   { id: "braid", Component: Braid },
   { id: "todo", Component: Todo },

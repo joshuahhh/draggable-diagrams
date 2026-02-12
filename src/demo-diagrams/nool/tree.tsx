@@ -1,5 +1,10 @@
 import _ from "lodash";
 import { ReactNode, useMemo, useState } from "react";
+import { ConfigCheckbox, ConfigPanel, DemoDraggable } from "../../demo-ui";
+import { Draggable } from "../../draggable";
+import { type DragSpecBuilder } from "../../DragSpec";
+import { Svgx } from "../../svgx";
+import { translate } from "../../svgx/helpers";
 import {
   allPossibleRewrites,
   isWildcard,
@@ -7,16 +12,13 @@ import {
   rewr,
   Rewrite,
   Tree,
-} from "../asts";
-import { ConfigCheckbox, ConfigPanel, DemoDraggable } from "../demo-ui";
-import { Draggable } from "../draggable";
-import { type DragSpecBuilder } from "../DragSpec";
-import { Svgx } from "../svgx";
-import { translate } from "../svgx/helpers";
+} from "./asts";
+
+// # State & initial states
 
 type State = Tree;
 
-const initialState1: State = {
+const initialState: State = {
   id: "root",
   label: "+",
   children: [
@@ -64,28 +66,7 @@ const initialState1: State = {
   ],
 };
 
-const initialState2: State = {
-  id: "+1",
-  label: "+",
-  children: [
-    {
-      id: "+2",
-      label: "+",
-      children: [
-        { id: "A", label: "A", children: [] },
-        { id: "B", label: "B", children: [] },
-      ],
-    },
-    {
-      id: "+3",
-      label: "+",
-      children: [
-        { id: "C", label: "C", children: [] },
-        { id: "D", label: "D", children: [] },
-      ],
-    },
-  ],
-};
+// # Rewrite rules
 
 type RewriteSet = {
   rewrites: Rewrite[];
@@ -95,6 +76,16 @@ type RewriteSet = {
 };
 
 const rewriteSets: RewriteSet[] = [
+  {
+    title: <>Identity</>,
+    rewrites: [rewr("(+ (0) #A)", "A"), rewr("(+ #A (0))", "A")],
+    defaultEnabled: true,
+  },
+  {
+    title: <>Identity (reverse)</>,
+    rewrites: [rewr("#A", "(+ (0) A)")],
+    defaultEnabled: true,
+  },
   {
     title: <>Commutativity</>,
     rewrites: [rewr("(+ #A #B)", "(+ B A)"), rewr("(× #A #B)", "(× B A)")],
@@ -129,7 +120,6 @@ const rewriteSets: RewriteSet[] = [
       rewr("(×2 (×1 #A B) C)", "(×1 A (×2 B C))"),
       rewr("(×1 A (×2 #B C))", "(×2 (×1 A B) C)"),
     ],
-    defaultEnabled: true,
   },
   {
     title: <>Associativity</>,
@@ -140,7 +130,40 @@ const rewriteSets: RewriteSet[] = [
       rewr("(×1 #A (×2 B C))", "(×2 (×1 A B) C)"),
       rewr("(×2 (×1 A B) #C)", "(×1 A (×2 B C))"),
     ],
-    defaultEnabled: true,
+  },
+  {
+    title: <>Distributivity</>,
+    subtitle: <>Distribute (drag +)</>,
+    rewrites: [
+      rewr("(× A #(+ B C))", "(+ (× A B) (× A C))"),
+      rewr("(× #(+ B C) A)", "(+ (× B A) (× C A))"),
+    ],
+  },
+  {
+    title: <>Distributivity</>,
+    subtitle: <>Distribute (drag operand)</>,
+    rewrites: [
+      rewr("(× #A (+ B C))", "(+ (× A B) (× A C))"),
+      rewr("(× (+ B C) #A)", "(+ (× B A) (× C A))"),
+    ],
+  },
+  {
+    title: <>Distributivity</>,
+    subtitle: <>Factor (drag +)</>,
+    rewrites: [
+      rewr("#(+ (× A B) (× A C))", "(× A (+ B C))"),
+      rewr("#(+ (× B A) (× C A))", "(× A (+ B C))"),
+    ],
+  },
+  {
+    title: <>Distributivity</>,
+    subtitle: <>Factor (drag operand)</>,
+    rewrites: [
+      rewr("(+ (× #A B) (× A C))", "(× A (+ B C))"),
+      rewr("(+ (× A B) (× #A C))", "(× A (+ B C))"),
+      rewr("(+ (× B #A) (× C A))", "(× A (+ B C))"),
+      rewr("(+ (× B A) (× C #A))", "(× A (+ B C))"),
+    ],
   },
   {
     title: <>Associativity</>,
@@ -166,8 +189,20 @@ const defaultActiveRewriteSets = rewriteSets.map(
   (rs) => rs.defaultEnabled ?? false,
 );
 
-function draggableFactory(activeRewrites: Rewrite[]): Draggable<State> {
-  return ({ state, d }) => renderTree(state, state, d, activeRewrites).element;
+// # Tree rendering
+
+type Config = {
+  activeRewriteSets: boolean[];
+  enableEmergeAnimation: boolean;
+  forceTransformScale: boolean;
+};
+
+function draggableFactory(config: Config): Draggable<State> {
+  const activeRewrites = _.zip(rewriteSets, config.activeRewriteSets).flatMap(
+    ([set, enabled]) => (enabled ? set!.rewrites : []),
+  );
+  return ({ state, d }) =>
+    renderTree(state, state, d, activeRewrites, config, 0).element;
 }
 
 function renderTree(
@@ -175,6 +210,8 @@ function renderTree(
   tree: Tree,
   d: DragSpecBuilder<State>,
   activeRewrites: Rewrite[],
+  config: Config,
+  depth: number,
 ): {
   element: Svgx;
   w: number;
@@ -187,7 +224,7 @@ function renderTree(
   const LABEL_MIN_HEIGHT = 20;
 
   const renderedChildren = tree.children.map((child) =>
-    renderTree(state, child, d, activeRewrites),
+    renderTree(state, child, d, activeRewrites, config, depth + 1),
   );
 
   const renderedChildrenElements: Svgx[] = [];
@@ -210,16 +247,31 @@ function renderTree(
         GAP * (renderedChildren.length - 1)
       : LABEL_MIN_HEIGHT;
 
+  const w = innerW + PADDING * 2;
+  const h = innerH + PADDING * 2;
+  const rx = Math.min(14, 0.3 * Math.min(w, h));
+
   const element = (
-    <g id={tree.id}>
+    <g
+      id={tree.id}
+      data-on-drag={() => dragTargets(d, state, tree.id, activeRewrites)}
+      data-z-index={depth}
+      data-emerge-from={
+        config.enableEmergeAnimation ? tree.emergeFrom : undefined
+      }
+      data-emerge-mode={
+        tree.emergeMode ?? (config.forceTransformScale ? "scale" : undefined)
+      }
+    >
       <rect
         x={0}
         y={0}
-        width={innerW + PADDING * 2}
-        height={innerH + PADDING * 2}
+        width={w}
+        height={h}
+        rx={rx}
         stroke="gray"
         strokeWidth={1}
-        fill="none"
+        fill="transparent"
       />
       <text
         x={PADDING + LABEL_WIDTH / 2}
@@ -228,7 +280,6 @@ function renderTree(
         textAnchor="middle"
         fontSize={20}
         fill="black"
-        data-on-drag={() => dragTargets(d, state, tree.id, activeRewrites)}
       >
         {tree.label}
       </text>
@@ -240,12 +291,7 @@ function renderTree(
     </g>
   );
 
-  return {
-    element,
-    w: innerW + PADDING * 2,
-    h: innerH + PADDING * 2,
-    id: tree.id,
-  };
+  return { element, w, h, id: tree.id };
 }
 
 function dragTargets(
@@ -255,8 +301,8 @@ function dragTargets(
   activeRewrites: Rewrite[],
 ) {
   const newTrees = allPossibleRewrites(state, activeRewrites, draggedKey);
-  if (newTrees.length === 0) return d.span([state]);
-  return d.closest(newTrees.map((newTree) => d.span([state, newTree])));
+  if (newTrees.length === 0) return d.span(state);
+  return d.closest(newTrees.map((newTree) => d.span(state, newTree)));
 }
 
 // # Rewrite rule display
@@ -293,11 +339,16 @@ const drawPattern = (
   let contents;
   if (isWildcard(pattern)) {
     contents = pattern.id;
+  } else if (pattern.id === "0") {
+    contents = <span className="text-blue-600 font-bold">0</span>;
   } else {
     const opById: Record<string, ReactNode> = {
       "+": <span className="text-red-600 font-bold">+</span>,
       "+1": <span className="text-red-600 font-bold">+</span>,
       "+2": <span className="text-green-600 font-bold">+</span>,
+      "×": <span className="text-purple-600 font-bold">×</span>,
+      "×1": <span className="text-purple-600 font-bold">×</span>,
+      "×2": <span className="text-orange-600 font-bold">×</span>,
     };
     contents = (
       <>
@@ -319,7 +370,7 @@ const drawPattern = (
   }
 };
 
-// # Config panel
+// # Config panels
 
 function RewriteRuleCheckboxes({
   activeRewriteSets,
@@ -362,44 +413,47 @@ export const NoolTree = () => {
   const [activeRewriteSets, setActiveRewriteSets] = useState(
     defaultActiveRewriteSets,
   );
+  const [enableEmergeAnimation, setEnableEmergeAnimation] = useState(true);
+  const [forceTransformScale, setForceTransformScale] = useState(false);
 
-  const activeRewrites = useMemo(
-    () =>
-      _.zip(rewriteSets, activeRewriteSets).flatMap(([set, enabled]) =>
-        enabled ? set!.rewrites : [],
-      ),
-    [activeRewriteSets],
+  const config: Config = useMemo(
+    () => ({ activeRewriteSets, enableEmergeAnimation, forceTransformScale }),
+    [activeRewriteSets, enableEmergeAnimation, forceTransformScale],
   );
 
-  const draggable = useMemo(
-    () => draggableFactory(activeRewrites),
-    [activeRewrites],
-  );
+  const draggable = useMemo(() => draggableFactory(config), [config]);
 
   return (
     <div className="flex flex-col md:flex-row gap-4 items-start">
-      <div>
-        <h3 className="text-md font-medium italic mt-6 mb-1">state 1</h3>
-        <DemoDraggable
-          draggable={draggable}
-          initialState={initialState1}
-          width={300}
-          height={350}
-        />
-        <h3 className="text-md font-medium italic mt-6 mb-1">state 2</h3>
-        <DemoDraggable
-          draggable={draggable}
-          initialState={initialState2}
-          width={300}
-          height={300}
-        />
+      <DemoDraggable
+        draggable={draggable}
+        initialState={initialState}
+        width={300}
+        height={350}
+      />
+      <div className="flex flex-col gap-4">
+        <ConfigPanel title="Rewrite rules">
+          <RewriteRuleCheckboxes
+            activeRewriteSets={activeRewriteSets}
+            setActiveRewriteSets={setActiveRewriteSets}
+          />
+        </ConfigPanel>
+        <ConfigPanel title="Animation">
+          <ConfigCheckbox
+            value={enableEmergeAnimation}
+            onChange={setEnableEmergeAnimation}
+          >
+            Enable emerge animation for new nodes
+          </ConfigCheckbox>
+          <ConfigCheckbox
+            value={forceTransformScale}
+            onChange={setForceTransformScale}
+          >
+            Force <span className="font-mono">transform: scale()</span> for
+            emerge
+          </ConfigCheckbox>
+        </ConfigPanel>
       </div>
-      <ConfigPanel title="Active rewrite rules">
-        <RewriteRuleCheckboxes
-          activeRewriteSets={activeRewriteSets}
-          setActiveRewriteSets={setActiveRewriteSets}
-        />
-      </ConfigPanel>
     </div>
   );
 };
