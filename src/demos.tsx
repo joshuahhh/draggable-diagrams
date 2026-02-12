@@ -1,4 +1,5 @@
 import { ComponentType } from "react";
+import { AltToCopy } from "./demo-diagrams/alt-to-copy";
 import { Angle } from "./demo-diagrams/angle";
 import { AngleViaTransform } from "./demo-diagrams/angle-via-transform";
 import { Bezier } from "./demo-diagrams/bezier";
@@ -58,6 +59,7 @@ export const demos: Demo[] = [
   { id: "simplest-clicker", Component: SimplestClicker },
   { id: "click-and-drag", Component: ClickAndDrag },
   { id: "drag-to-copy", Component: DragToCopy },
+  { id: "alt-to-copy", Component: AltToCopy },
   { id: "order-preserving", Component: OrderPreserving },
   { id: "perm", Component: Perm },
   { id: "perm-floating", Component: PermFloating },

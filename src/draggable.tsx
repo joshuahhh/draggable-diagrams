@@ -27,10 +27,17 @@ export type SetState<T> = (
 
 // # drag
 
-export type OnDragPropValue<T> = () => DragSpec<T>;
+export type DragParams = {
+  altKey: boolean;
+  ctrlKey: boolean;
+  metaKey: boolean;
+  shiftKey: boolean;
+};
+
+export type OnDragPropValue<T> = (params: DragParams) => DragSpec<T>;
 
 export function getDragSpecCallbackOnElement<T>(
   element: ReactElement,
-): (() => DragSpec<T>) | undefined {
+): ((params: DragParams) => DragSpec<T>) | undefined {
   return (element.props as any)["data-on-drag"] || undefined;
 }

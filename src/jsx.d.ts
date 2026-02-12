@@ -1,6 +1,7 @@
 import { Falsey } from "lodash";
 import "react";
 import { DragSpecBrand } from "./DragSpec";
+import { DragParams } from "./draggable";
 
 declare module "react" {
   interface SVGAttributes<T> {
@@ -14,7 +15,7 @@ declare module "react" {
      * @example
      * <rect data-on-drag={() => d.span([state1, state2])} />
      */
-    "data-on-drag"?: (() => DragSpecBrand) | Falsey;
+    "data-on-drag"?: ((params: DragParams) => DragSpecBrand) | Falsey;
 
     "data-z-index"?: number;
     "data-transition"?: boolean;

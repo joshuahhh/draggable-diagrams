@@ -17,6 +17,7 @@ import {
 } from "./DragBehavior";
 import { DragSpec, DragSpecBuilder } from "./DragSpec";
 import {
+  DragParams,
   Draggable,
   DraggableProps,
   getDragSpecCallbackOnElement,
@@ -38,6 +39,20 @@ import { useAnimationLoop } from "./useAnimationLoop";
 import { CatchToRenderError, useCatchToRenderError } from "./useRenderError";
 import { useStateWithRef } from "./useStateWithRef";
 import { assertNever, memoGeneric, pipe, throwError } from "./utils";
+
+function dragParamsFromEvent(e: {
+  altKey: boolean;
+  ctrlKey: boolean;
+  metaKey: boolean;
+  shiftKey: boolean;
+}): DragParams {
+  return {
+    altKey: e.altKey,
+    ctrlKey: e.ctrlKey,
+    metaKey: e.metaKey,
+    shiftKey: e.shiftKey,
+  };
+}
 
 // # Engine state machine
 
@@ -108,6 +123,10 @@ type DragState<T extends object> = { springingFrom: SpringingFrom | null } & (
       pointerStart: Vec2;
       draggedId: string | null;
       result: DragResult<T>;
+      dragParams: DragParams;
+      dragParamsCallback: (params: DragParams) => DragSpec<T>;
+      originalStartState: T;
+      originalBehaviorCtxWithoutFloat: Omit<BehaviorContext<T>, "floatLayered">;
     }
 );
 
@@ -213,7 +232,7 @@ export function DraggableRenderer<T extends object>({
           if (element) {
             const newDragSpec =
               result.chainNow.followSpec ??
-              getDragSpecCallbackOnElement<T>(element)?.();
+              getDragSpecCallbackOnElement<T>(element)?.(ds.dragParams);
             if (newDragSpec) {
               // Start spring from current display
               const layered = runSpring(springingFrom, result.rendered);
@@ -226,12 +245,6 @@ export function DraggableRenderer<T extends object>({
               const newDraggedPath = getPath(element);
               assert(!!newDraggedPath, "Chained element must have a path");
 
-              // const accTransform = getAccumulatedTransform(element);
-              // const transforms = parseTransform(accTransform || "");
-              // const pointerLocal = globalToLocal(
-              //   transforms,
-              //   pointerRef.current!
-              // );
               const pointerLocal = ds.behaviorCtx.pointerLocal;
 
               const { floatLayered: _, ...behaviorCtxWithoutFloat } =
@@ -248,6 +261,13 @@ export function DraggableRenderer<T extends object>({
                 frame,
                 ds.pointerStart,
                 newSpringingFrom,
+                {
+                  dragParams: ds.dragParams,
+                  dragParamsCallback: ds.dragParamsCallback,
+                  originalStartState: ds.originalStartState,
+                  originalBehaviorCtxWithoutFloat:
+                    ds.originalBehaviorCtxWithoutFloat,
+                },
               );
               setDragState(chainedState);
               onDebugDragInfoRef.current?.(debugInfo);
@@ -373,11 +393,63 @@ export function DraggableRenderer<T extends object>({
       onDebugDragInfoRef.current?.({ type: "idle", state: dropState });
     });
 
+    const onKeyChange = catchToRenderError((e: KeyboardEvent) => {
+      const ds = dragStateRef.current;
+      if (ds.type !== "dragging") return;
+
+      const newParams = dragParamsFromEvent(e);
+      const oldParams = ds.dragParams;
+      if (
+        newParams.altKey === oldParams.altKey &&
+        newParams.ctrlKey === oldParams.ctrlKey &&
+        newParams.metaKey === oldParams.metaKey &&
+        newParams.shiftKey === oldParams.shiftKey
+      )
+        return;
+
+      // Re-evaluate the drag spec with new modifier keys
+      const newSpec = ds.dragParamsCallback(newParams);
+      const pointer = pointerRef.current;
+      if (!pointer) return;
+
+      const frame: DragFrame = { pointer, pointerStart: ds.pointerStart };
+
+      // Spring from current display
+      const layered = runSpring(ds.springingFrom, ds.result.rendered);
+      const newSpringingFrom: SpringingFrom = {
+        layered,
+        time: performance.now(),
+        transition: resolveTransitionLike(true)!,
+      };
+
+      const { dragState: newDragState, debugInfo } = initDrag(
+        newSpec,
+        ds.originalBehaviorCtxWithoutFloat,
+        ds.originalStartState,
+        frame,
+        ds.pointerStart,
+        newSpringingFrom,
+        {
+          dragParams: newParams,
+          dragParamsCallback: ds.dragParamsCallback,
+          originalStartState: ds.originalStartState,
+          originalBehaviorCtxWithoutFloat:
+            ds.originalBehaviorCtxWithoutFloat,
+        },
+      );
+      setDragState(newDragState);
+      onDebugDragInfoRef.current?.(debugInfo);
+    });
+
     document.addEventListener("pointermove", onPointerMove);
     document.addEventListener("pointerup", onPointerUp);
+    document.addEventListener("keydown", onKeyChange);
+    document.addEventListener("keyup", onKeyChange);
     return () => {
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
+      document.removeEventListener("keydown", onKeyChange);
+      document.removeEventListener("keyup", onKeyChange);
     };
   }, [
     catchToRenderError,
@@ -472,6 +544,13 @@ function renderReadOnly<T extends object>(
   );
 }
 
+type DragParamsInfo<T extends object> = {
+  dragParams: DragParams;
+  dragParamsCallback: (params: DragParams) => DragSpec<T>;
+  originalStartState: T;
+  originalBehaviorCtxWithoutFloat: Omit<BehaviorContext<T>, "floatLayered">;
+};
+
 function initDrag<T extends object>(
   spec: DragSpec<T>,
   behaviorCtxWithoutFloat: Omit<BehaviorContext<T>, "floatLayered">,
@@ -479,6 +558,7 @@ function initDrag<T extends object>(
   frame: DragFrame,
   pointerStart: Vec2,
   springingFrom: SpringingFrom | null,
+  dragParamsInfo: DragParamsInfo<T>,
 ): {
   dragState: DragState<T> & { type: "dragging" };
   debugInfo: DebugDragInfo<T>;
@@ -511,6 +591,7 @@ function initDrag<T extends object>(
       draggedId,
       result,
       springingFrom,
+      ...dragParamsInfo,
     },
     debugInfo: {
       type: "dragging",
@@ -560,7 +641,8 @@ function postProcessForInteraction<T extends object>(
             e.stopPropagation();
             const pointer = ctx.setPointerFromEvent(e.nativeEvent);
 
-            const dragSpec: DragSpec<T> = dragSpecCallback();
+            const dragParams = dragParamsFromEvent(e);
+            const dragSpec: DragSpec<T> = dragSpecCallback(dragParams);
             const draggedId = el.props.id ?? null;
             const draggedPath = getPath(el);
             assert(!!draggedPath, "Dragged element must have a path");
@@ -569,19 +651,27 @@ function postProcessForInteraction<T extends object>(
             const transforms = parseTransform(accTransform || "");
             const pointerLocal = globalToLocal(transforms, pointer);
 
+            const behaviorCtxWithoutFloat = {
+              draggable: ctx.draggable,
+              draggedPath,
+              draggedId,
+              pointerLocal,
+            };
+
             const frame: DragFrame = { pointer, pointerStart: pointer };
             const { dragState: draggingState, debugInfo } = initDrag(
               dragSpec,
-              {
-                draggable: ctx.draggable,
-                draggedPath,
-                draggedId,
-                pointerLocal,
-              },
+              behaviorCtxWithoutFloat,
               state,
               frame,
               pointer,
               null,
+              {
+                dragParams,
+                dragParamsCallback: dragSpecCallback,
+                originalStartState: state,
+                originalBehaviorCtxWithoutFloat: behaviorCtxWithoutFloat,
+              },
             );
 
             if (ctx.dragThreshold <= 0 || !el.props.onClick) {
