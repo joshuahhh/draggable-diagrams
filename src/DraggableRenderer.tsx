@@ -654,6 +654,7 @@ const DrawIdleMode = memoGeneric(
               },
             },
           });
+          ctx.onDebugDragInfoRef.current?.({ type: "idle", state: resolved });
         },
       ),
     });
