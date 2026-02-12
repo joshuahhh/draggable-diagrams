@@ -36,6 +36,7 @@ import { assignPaths, findByPath, getPath } from "./svgx/path";
 import { globalToLocal, parseTransform } from "./svgx/transform";
 import { useAnimationLoop } from "./useAnimationLoop";
 import { CatchToRenderError, useCatchToRenderError } from "./useRenderError";
+import { useStateWithRef } from "./useStateWithRef";
 import { assertNever, memoGeneric, pipe, throwError } from "./utils";
 
 // # Engine state machine
@@ -138,13 +139,13 @@ export function DraggableRenderer<T extends object>({
 }: DraggableRendererProps<T>) {
   const catchToRenderError = useCatchToRenderError();
 
-  const [dragState, setDragState] = useState<DragState<T>>({
-    type: "idle",
-    state: initialState,
-    springingFrom: null,
-  });
-  const dragStateRef = useRef(dragState);
-  dragStateRef.current = dragState;
+  const [dragState, setDragState, dragStateRef] = useStateWithRef<DragState<T>>(
+    {
+      type: "idle",
+      state: initialState,
+      springingFrom: null,
+    },
+  );
   const pointerRef = useRef<Vec2 | undefined>(undefined);
   const onDebugDragInfoRef = useRef(onDebugDragInfo);
   onDebugDragInfoRef.current = onDebugDragInfo;
@@ -237,7 +238,6 @@ export function DraggableRenderer<T extends object>({
                 ds.pointerStart,
                 newSpringingFrom,
               );
-              dragStateRef.current = chainedState;
               setDragState(chainedState);
               onDebugDragInfoRef.current?.(debugInfo);
               return;
@@ -269,7 +269,6 @@ export function DraggableRenderer<T extends object>({
           result,
           springingFrom: springingFrom,
         };
-        dragStateRef.current = newState;
         setDragState(newState);
         onDebugDragInfoRef.current?.({
           type: "dragging",
@@ -286,16 +285,14 @@ export function DraggableRenderer<T extends object>({
           ds.springingFrom.transition.duration
         ) {
           const newState: DragState<T> = { ...ds, springingFrom: null };
-          dragStateRef.current = newState;
           setDragState(newState);
         } else {
           // Force re-render so spring progress advances
           const newState: DragState<T> = { ...ds };
-          dragStateRef.current = newState;
           setDragState(newState);
         }
       }
-    }, [draggable, setDragState]),
+    }, [dragStateRef, draggable, setDragState]),
   );
 
   // Cursor style
@@ -333,7 +330,6 @@ export function DraggableRenderer<T extends object>({
           transition: result.dropTransition ?? resolveTransitionLike(true)!,
         },
       };
-      dragStateRef.current = newState;
       setDragState(newState);
       onDebugDragInfoRef.current?.({ type: "idle", state: dropState });
     });
@@ -347,6 +343,7 @@ export function DraggableRenderer<T extends object>({
   }, [
     catchToRenderError,
     dragState.type,
+    dragStateRef,
     draggable,
     setDragState,
     setPointerFromEvent,
@@ -357,10 +354,7 @@ export function DraggableRenderer<T extends object>({
       draggable,
       catchToRenderError,
       setPointerFromEvent,
-      setDragState: (ds: DragState<T>) => {
-        dragStateRef.current = ds;
-        setDragState(ds);
-      },
+      setDragState,
       onDebugDragInfoRef,
     }),
     [catchToRenderError, draggable, setDragState, setPointerFromEvent],
