@@ -1,0 +1,328 @@
+# Study Draft
+
+Proposal for study structure:
+- We guide the participant through different parts of the system, pair-code-tutorial style. We are prepared to pretty much tell them everything they should do, step by step. At various points we get a little Socratic with it.
+- [...]
+
+Note: I'm writing this up in "docs", with the live editors and all, but I don't think we necessarily want to show any of this to the participants. Ideally they are in their editors, with TS completion etc.
+
+## Show and tell
+
+We'll start by showing you the simplest thing you can make with our library – a switch:
+
+<LiveEditor
+  code={`
+    type State = { status: "on" | "off" };
+
+    const initialState: State = { status: "off" };
+
+    const draggable: Draggable<State> = ({ state, d }) => (
+        <g transform={translate(70, 70)}>
+          <rect width={120} height={60} rx={30} fill={state.status === "on" ? "#22c55e" : "#d1d5db"} />
+          <circle
+            transform={translate(state.status === "on" ? 90 : 30, 30)}
+            r={26}
+            fill="white"
+            stroke="#e5e7eb" stroke-width={1}
+            style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.15))" }}
+            data-on-drag={() => d.between({ status: "off" }, { status: "on" })}
+          />
+        </g>
+    );
+
+`}
+/>
+
+- A `Draggable` is a lot like a React component. It takes some props, and returns JSX. But, no using hooks. Think of it as especially pure.
+- In this case, we render a state, which is a status that's "on" or "off". The status controls the position of the circle, as well as the fill.
+- Most of this is just drawing the switch. But `data-on-drag` creates the interaction. What this attribute says, attached to this circle, is that, by dragging the circle, we want to be able to move between the "off" state and the "on" state. When we start a drag, the library renders the interface in both states, behind the scenes. It looks at where the circle is, in both renderings. It then uses these positions to figure out how pointer movements should control the drag. We have some inspectors... [TODO]
+
+Any questions?
+
+## First task: Reorderable list
+
+The next fanciest thing you might want to drag, after a switch, is items in a reorderable list.
+
+We have some starter code for you which just renders a list:
+
+<LiveEditor
+  code={`
+    type State = { items: string[] };
+
+    const initialState: State = { items: ["Apples", "Bananas", "Cherries", "Dates"] };
+
+    const W = 160, H = 40, GAP = 8;
+
+    const draggable: Draggable<State> = ({ state, d }) => (
+      <g transform={translate(20, 20)}>
+        {state.items.map((item, i) => (
+          <g
+            transform={translate(0, i * (H + GAP))}
+          >
+            <rect width={W} height={H} rx={6} fill="white" stroke="#d1d5db" stroke-width={1.5} />
+            <text x={W / 2} y={H / 2} text-anchor="middle" dominant-baseline="central" font-size={16} fill="#374151">
+              {item}
+            </text>
+          </g>
+        ))}
+      </g>
+    );
+`}
+/>
+
+First of all, we're curious – how would you go about making this drag-to-reorder-able in your own life?
+
+Ok, now the task – make it drag-to-reorder-able using our library!
+
+[TODO: how do we introduce IDs?]
+
+<LiveEditor
+  code={`
+    type State = { items: string[] };
+
+    const initialState: State = { items: ["Apples", "Bananas", "Cherries", "Dates"] };
+
+    const W = 160, H = 40, GAP = 8;
+
+    const draggable: Draggable<State> = ({ state, d }) => (
+      <g transform={translate(20, 20)}>
+        {state.items.map((item, i) => (
+          <g
+            id={item}
+            transform={translate(0, i * (H + GAP))}
+            data-on-drag={() => {
+              const without = state.items.filter((x) => x !== item);
+              const options = _.range(without.length + 1).map((j) => ({
+                items: [...without.slice(0, j), item, ...without.slice(j)],
+              }));
+              return d.between(options);
+            }}
+          >
+            <rect width={W} height={H} rx={6} fill="white" stroke="#d1d5db" stroke-width={1.5} />
+            <text x={W / 2} y={H / 2} text-anchor="middle" dominant-baseline="central" font-size={16} fill="#374151">
+              {item}
+            </text>
+          </g>
+        ))}
+      </g>
+    );
+`}
+/>
+
+[Q: How did state generation feel?]
+
+Cool, great work! We want to show you some other things you can do with this. For instance, right now everything moves around smoothly. But you might want to add a "snap" behavior, which causes the element to snap into place when it's close to a target. [TODO: how might you do this traditionally?] [TODO: how might you do this here?]
+
+<LiveEditor
+  code={`
+    type State = { items: string[] };
+
+    const initialState: State = { items: ["Apples", "Bananas", "Cherries", "Dates"] };
+
+    const W = 160, H = 40, GAP = 8;
+
+    const draggable: Draggable<State> = ({ state, d }) => (
+      <g transform={translate(20, 20)}>
+        {state.items.map((item, i) => (
+          <g
+            id={item}
+            transform={translate(0, i * (H + GAP))}
+            data-on-drag={() => {
+              const without = state.items.filter((x) => x !== item);
+              const options = _.range(without.length + 1).map((j) => ({
+                items: [...without.slice(0, j), item, ...without.slice(j)],
+              }));
+              return d.between(options).withSnapRadius(5);
+            }}
+          >
+            <rect width={W} height={H} rx={6} fill="white" stroke="#d1d5db" stroke-width={1.5} />
+            <text x={W / 2} y={H / 2} text-anchor="middle" dominant-baseline="central" font-size={16} fill="#374151">
+              {item}
+            </text>
+          </g>
+        ))}
+      </g>
+    );
+`}
+/>
+
+Ok, now here's a bigger change. You'll notice that, right now, the dragged element is constrained to a linear track. That's because that's the track that connects its rendered locations. (Debugger shows this well!) But often we want to be able to drag stuff around freely. We have a different way to do that...
+
+[TODO: do we show them directly? lead them through it?]
+
+<LiveEditor
+  code={`
+    type State = { items: string[] };
+
+    const initialState: State = { items: ["Apples", "Bananas", "Cherries", "Dates"] };
+
+    const W = 160, H = 40, GAP = 8;
+
+    const draggable: Draggable<State> = ({ state, d }) => (
+      <g transform={translate(20, 20)}>
+        {state.items.map((item, i) => (
+          <g
+            id={item}
+            transform={translate(0, i * (H + GAP))}
+            data-on-drag={() => {
+              const without = state.items.filter((x) => x !== item);
+              const options = _.range(without.length + 1).map((j) => ({
+                items: [...without.slice(0, j), item, ...without.slice(j)],
+              }));
+              return d.closest(d.floating(options)).withSnapRadius(5);
+            }}
+          >
+            <rect width={W} height={H} rx={6} fill="white" stroke="#d1d5db" stroke-width={1.5} />
+            <text x={W / 2} y={H / 2} text-anchor="middle" dominant-baseline="central" font-size={16} fill="#374151">
+              {item}
+            </text>
+          </g>
+        ))}
+      </g>
+    );
+`}
+/>
+
+Play with these a bit. Is one or the other the interaction you'd expect here? (Or neither?) Do you see advantages or disadvantages to them?
+
+One riff: ghosts!
+
+<LiveEditor
+  code={`
+    type State = { items: string[] };
+
+    const initialState: State = { items: ["Apples", "Bananas", "Cherries", "Dates"] };
+
+    const W = 160, H = 40, GAP = 8;
+
+    const draggable: Draggable<State> = ({ state, d }) => (
+      <g transform={translate(20, 20)}>
+        {state.items.map((item, i) => (
+          <g
+            id={item}
+            transform={translate(0, i * (H + GAP))}
+            data-on-drag={() => {
+              const without = state.items.filter((x) => x !== item);
+              const options = _.range(without.length + 1).map((j) => ({
+                items: [...without.slice(0, j), item, ...without.slice(j)],
+              }));
+              return d.closest(d.floating(options, {ghost: true}));
+            }}
+          >
+            <rect width={W} height={H} rx={6} fill="white" stroke="#d1d5db" stroke-width={1.5} />
+            <text x={W / 2} y={H / 2} text-anchor="middle" dominant-baseline="central" font-size={16} fill="#374151">
+              {item}
+            </text>
+          </g>
+        ))}
+      </g>
+    );
+`}
+/>
+
+[TODO: they're broken when snap is enabled]
+
+[TODO: backdrop?]
+
+## Second task: Continuous dragging
+
+So far, the state has been discrete — a finite set of options. But sometimes you want continuous control, like a knob or a slider. Here's a rotary dial:
+
+<LiveEditor
+  code={`
+    type State = { angle: number };
+
+    const initialState: State = { angle: 0 };
+
+    const CX = 200, CY = 120, R = 60;
+    const TICKS = 12;
+
+    const draggable: Draggable<State> = ({ state, d }) => (
+      <g>
+        {/* Dial */}
+        <g
+          id="dial"
+          transform={translate(CX, CY) + rotateDeg(state.angle)}
+          data-on-drag={() => d.vary(state, ["angle"])}
+        >
+          <circle
+            r={R}
+            fill="#f9fafb" stroke="#d1d5db" stroke-width={2}
+            style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.15))" }}
+          />
+          <line
+            x1={0} y1={0} x2={R - 14} y2={0}
+            stroke="#374151" stroke-width={3} stroke-linecap="round"
+          />
+        </g>
+
+        {/* Tick marks */}
+        {_.range(TICKS).map((i) => (
+          <line
+            transform={translate(CX, CY) + rotateDeg(i * 360 / TICKS)}
+            x1={R + 6} y1={0} x2={R + 16} y2={0}
+            stroke="#9ca3af" stroke-width={2} stroke-linecap="round"
+          />
+        ))}
+      </g>
+    );
+
+`}
+/>
+
+## Third task: Composition
+
+<LiveEditor
+  code={`
+    type Block = { id: string; pos: number; track: number; color: string };
+    type State = { blocks: Block[] };
+
+    const initialState: State = {
+      blocks: [
+        { id: "Record", pos: 10, track: 0, color: "#3b82f6" },
+        { id: "Edit", pos: 100, track: 1, color: "#ef4444" },
+        { id: "Mix", pos: 50, track: 2, color: "#22c55e" },
+      ],
+    };
+
+    const TH = 36, GAP = 6, BW = 80, TW = 340;
+
+    const draggable: Draggable<State> = ({ state, d }) => (
+      <g transform={translate(10, 10)}>
+        {/* Track backgrounds */}
+        {_.range(3).map((t) => (
+          <rect
+            y={t * (TH + GAP)} width={TW} height={TH}
+            rx={4} fill="#f3f4f6" stroke="#e5e7eb" stroke-width={1}
+          />
+        ))}
+
+        {/* Blocks */}
+        {state.blocks.map((block, i) => (
+          <g
+            id={block.id}
+            transform={translate(block.pos, block.track * (TH + GAP))}
+            data-on-drag={() =>
+              d.closest(_.range(3).map((t) =>
+                d.vary(produce(state, (draft) => { draft.blocks[i].track = t; }), ["blocks", i, "pos"])
+              ))
+            }
+          >
+            <rect
+              width={BW} height={TH} rx={6} fill={block.color}
+              style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.15))" }}
+            />
+            <text
+              x={BW / 2} y={TH / 2}
+              text-anchor="middle" dominant-baseline="central"
+              font-size={13} font-weight="600" fill="white"
+            >
+              {block.id}
+            </text>
+          </g>
+        ))}
+      </g>
+    );
+
+`}
+/>

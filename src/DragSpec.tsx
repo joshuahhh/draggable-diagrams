@@ -173,15 +173,25 @@ export class DragSpecBuilder<T> {
    * "ghost" element can be rendered at the original position while
    * dragging. Often used with `closest`.
    */
-  floating(states: T[], opts?: { ghost?: SVGProps<SVGElement> }): DragSpec<T>[];
-  floating(state: T, opts?: { ghost?: SVGProps<SVGElement> }): DragSpec<T>;
+  floating(
+    states: T[],
+    opts?: { ghost?: SVGProps<SVGElement> | true },
+  ): DragSpec<T>[];
+  floating(
+    state: T,
+    opts?: { ghost?: SVGProps<SVGElement> | true },
+  ): DragSpec<T>;
   floating(
     stateOrStates: T | T[],
-    { ghost }: { ghost?: SVGProps<SVGElement> } = {},
+    { ghost }: { ghost?: SVGProps<SVGElement> | true } = {},
   ): DragSpec<T> | DragSpec<T>[] {
     if (Array.isArray(stateOrStates))
       return stateOrStates.map((s) => this.floating(s, { ghost }));
-    return attachMethods({ type: "floating", state: stateOrStates, ghost });
+    return attachMethods({
+      type: "floating",
+      state: stateOrStates,
+      ghost: ghost === true ? { opacity: 0.5 } : ghost,
+    });
   }
 
   /**
