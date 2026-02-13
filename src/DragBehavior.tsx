@@ -1,5 +1,4 @@
 import _ from "lodash";
-import { cloneElement } from "react";
 import { Draggable } from "./draggable";
 import { Transition } from "./DraggableRenderer";
 import { DragSpec, DragSpecBuilder, DragSpecData } from "./DragSpec";
@@ -17,6 +16,7 @@ import {
   layerSvg,
   layeredExtract,
   layeredMerge,
+  layeredPrefixIds,
   layeredSetAttributes,
   layeredShiftZIndices,
   layeredTransform,
@@ -135,15 +135,11 @@ export function dragSpecToBehavior<T extends object>(
     if (!hasElement) {
       backdrop = layered;
     } else if (spec.ghost !== undefined) {
-      const ghostId = "ghost-" + draggedId;
-      const ghost = cloneElement(layered.byId.get(draggedId)!, {
-        ...spec.ghost,
-        id: ghostId,
-      });
-      const byId = new Map(layered.byId);
-      byId.delete(draggedId);
-      byId.set(ghostId, ghost);
-      backdrop = { byId, descendents: layered.descendents };
+      const { remaining, extracted } = layeredExtract(layered, draggedId);
+      backdrop = layeredMerge(
+        remaining,
+        layeredSetAttributes(layeredPrefixIds(extracted, "ghost-"), spec.ghost),
+      );
     } else {
       backdrop = layeredExtract(layered, draggedId).remaining;
     }
