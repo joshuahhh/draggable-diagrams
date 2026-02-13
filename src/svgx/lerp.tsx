@@ -1,6 +1,6 @@
 import { prettyLog, PrettyPrint } from "@joshuahhh/pretty-print";
 import { rgb } from "d3-color";
-import { interpolateHcl } from "d3-interpolate";
+import { interpolateCubehelix } from "d3-interpolate";
 import { interpolatePath } from "d3-interpolate-path";
 import React, { cloneElement } from "react";
 import { shouldRecurseIntoChildren, Svgx } from ".";
@@ -134,14 +134,20 @@ function lerpValue(key: string, valA: any, valB: any, t: number): any {
 
       // Interpolate between transparent and opaque
       const colorInterp = isANone
-        ? interpolateHcl(transparentColor.formatRgb(), opaqueColor.formatRgb())
-        : interpolateHcl(opaqueColor.formatRgb(), transparentColor.formatRgb());
+        ? interpolateCubehelix(
+            transparentColor.formatRgb(),
+            opaqueColor.formatRgb(),
+          )
+        : interpolateCubehelix(
+            opaqueColor.formatRgb(),
+            transparentColor.formatRgb(),
+          );
 
       return colorInterp(t);
     }
 
     // Interpolate colors using HCL color space
-    const colorInterp = interpolateHcl(valA, valB);
+    const colorInterp = interpolateCubehelix(valA, valB);
     return colorInterp(t);
   } else if (typeof valA === "string" && typeof valB === "string") {
     // Try to parse both as numbers
