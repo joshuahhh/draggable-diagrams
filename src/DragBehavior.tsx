@@ -50,6 +50,7 @@ export type DragResult<T> = {
   rendered: LayeredSvgx;
   dropState: T;
   dropTransition?: Transition;
+  activePathTransition?: Transition;
   distance: number;
   activePath: string;
   /**
@@ -374,6 +375,7 @@ export function dragSpecToBehavior<T extends object>(
         ...result,
         rendered,
         activePath,
+        activePathTransition: spec.transition || undefined,
         chainNow: spec.chain && snapped ? {} : undefined,
       };
     };

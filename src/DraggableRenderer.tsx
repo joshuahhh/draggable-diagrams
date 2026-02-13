@@ -285,7 +285,8 @@ export function DraggableRenderer<T extends object>({
           springingFrom = {
             layered,
             time: performance.now(),
-            transition: resolveTransitionLike(true)!,
+            transition:
+              result.activePathTransition ?? resolveTransitionLike(true)!,
           };
         }
 

@@ -49,7 +49,7 @@ export type DragSpecWithSnapRadius<T> = {
   type: "with-snap-radius";
   spec: DragSpecData<T>;
   radius: number;
-  transition: boolean;
+  transition: Transition | false;
   chain: boolean;
 };
 
@@ -109,7 +109,7 @@ export interface DragSpecMethods<T> {
   ): DragSpec<T | B>;
   withSnapRadius(
     radius: number,
-    options?: { transition?: boolean; chain?: boolean },
+    options?: { transition?: TransitionLike; chain?: boolean },
   ): DragSpec<T>;
   withDropTransition(transition?: TransitionLike): DragSpec<T>;
   withDistance(f: (distance: number) => number): DragSpec<T>;
@@ -132,7 +132,7 @@ const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
       type: "with-snap-radius",
       spec: this,
       radius,
-      transition,
+      transition: resolveTransitionLike(transition) ?? false,
       chain,
     });
   },
