@@ -3,7 +3,8 @@ import { javascript } from "@codemirror/lang-javascript";
 import CodeMirror from "@uiw/react-codemirror";
 import { produce } from "immer";
 import _ from "lodash";
-import parserBabel from "prettier/parser-babel";
+import * as parserEstree from "prettier/plugins/estree";
+import parserTypescript from "prettier/plugins/typescript";
 import prettier from "prettier/standalone";
 import { createElement, useEffect, useMemo, useState } from "react";
 import { Draggable } from "../draggable";
@@ -45,15 +46,21 @@ export function LiveEditor({
     const normalized = normalizeIndent`${initialCode}`;
     prettier
       .format(normalized, {
-        parser: "babel",
-        plugins: [parserBabel],
+        parser: "typescript",
+        plugins: [parserTypescript, parserEstree],
         printWidth: 60,
       })
       .then(setCode)
-      .catch(() => setCode(normalized));
+      .catch((err) => {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        setError(errorMsg);
+        throw err;
+      });
   }, [initialCode]);
 
   const result = useMemo(() => {
+    if (!code) return null;
+
     try {
       // Transform JSX to JavaScript using classic runtime
       const transformed = Babel.transform(secretCode + "\n" + code, {
