@@ -273,7 +273,10 @@ export function layeredPrefixIds(
   const prefixedById = new Map<string, Svgx>();
   for (const [key, element] of layered.byId.entries()) {
     const newId = prefix + key;
-    const prefixedElement = cloneElement(element, { id: newId });
+    const prefixedElement = cloneElement(element, {
+      id: newId,
+      ["data-path" as any]: newId + "/",
+    });
     prefixedById.set(newId, prefixedElement);
   }
   return { byId: prefixedById, descendents: null };
