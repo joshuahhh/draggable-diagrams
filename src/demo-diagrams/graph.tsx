@@ -93,7 +93,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
               id: `head-${key}`,
               fill: "black",
               "data-on-drag": () =>
-                d.span(
+                d.between(
                   produceAmb(state, (draft) => {
                     draft.edges[key].to = amb(Object.keys(state.nodes));
                     require(stateIsValid(draft));
@@ -107,7 +107,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
               r={5}
               fill="black"
               data-on-drag={() =>
-                d.span(
+                d.between(
                   produceAmb(state, (draft) => {
                     draft.edges[key].from = amb(Object.keys(state.nodes));
                     require(stateIsValid(draft));

@@ -24,7 +24,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) =>
 
         attach(p, {
           "data-on-drag": () =>
-            d.span(
+            d.between(
               state.perm.map((_, idx) =>
                 produce(state, (draft) => {
                   const draggedIdx = draft.perm.indexOf(p);

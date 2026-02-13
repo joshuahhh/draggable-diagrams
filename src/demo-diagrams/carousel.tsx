@@ -47,9 +47,9 @@ const draggable: Draggable<State> = ({ state, d, setState }) => (
           data-on-drag={() => {
             const specs = [];
             if (state.slideIdx > 0)
-              specs.push(d.span([state, { slideIdx: state.slideIdx - 1 }]));
+              specs.push(d.between([state, { slideIdx: state.slideIdx - 1 }]));
             if (state.slideIdx < SLIDES.length - 1)
-              specs.push(d.span([state, { slideIdx: state.slideIdx + 1 }]));
+              specs.push(d.between([state, { slideIdx: state.slideIdx + 1 }]));
             return d.closest(specs);
           }}
           opacity={idx === state.slideIdx ? 1 : 0}
@@ -121,7 +121,9 @@ const draggable: Draggable<State> = ({ state, d, setState }) => (
         )}
         r={DOT_RADIUS}
         fill="transparent"
-        data-on-drag={() => d.span(SLIDES.map((_, idx) => ({ slideIdx: idx })))}
+        data-on-drag={() =>
+          d.between(SLIDES.map((_, idx) => ({ slideIdx: idx })))
+        }
       />
     </g>
 

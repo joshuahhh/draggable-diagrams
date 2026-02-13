@@ -1064,7 +1064,7 @@ export const draggable: Draggable<State> = ({
                 ...others.slice(pos),
               ],
             }));
-            return d.span(...targets);
+            return d.between(...targets);
           }}
           data-z-index={-5}
           onClick={() =>

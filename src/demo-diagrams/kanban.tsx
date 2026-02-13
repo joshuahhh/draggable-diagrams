@@ -74,7 +74,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
             transform={translate(colX, 0)}
             data-z-index={draggedId === `column-${column.id}` ? 5 : 0}
             data-on-drag={() =>
-              d.span([state, ...columnReorderStates]).withSnapRadius(20, {
+              d.between([state, ...columnReorderStates]).withSnapRadius(20, {
                 transition: true,
               })
             }

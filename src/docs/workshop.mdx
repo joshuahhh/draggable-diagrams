@@ -52,7 +52,7 @@ But this draggable doesn't actually do anything. Let's fix that. For a diagram t
         transform={translate(state.status === "off" ? [100, 100] : [200, 100])}
         r={50}
         fill="blue"
-        data-on-drag={() => d.span([{status: "off"}, {status: "on"}])}
+        data-on-drag={() => d.between([{status: "off"}, {status: "on"}])}
       />
     );
 
@@ -77,7 +77,7 @@ Pieces of this puzzle:
 
 - `data-on-drag` takes a callback that returns a drag spec. The drag spec constructors come from `d`, which is provided as an argument to the draggable.
 
-- Here we use `d.span`, which means "I want to be able to drag back and forth between all the states in this list". There are many alternatives, most prominently `d.floating`, which means the dragged element entirely detaches from the diagram.
+- Here we use `d.between`, which means "I want to be able to drag back and forth between all the states in this list". There are many alternatives, most prominently `d.floating`, which means the dragged element entirely detaches from the diagram.
 
 With this knowledge we can take on a more involved example: reordering objects.
 
@@ -108,7 +108,7 @@ With this knowledge we can take on a more involved example: reordering objects.
               transform={translate(idx * TILE_SIZE, isDragged ? -10 : 0)}
               data-z-index={isDragged ? 1 : 0}
               data-on-drag={() =>
-                d.span(
+                d.between(
                   _.range(state.perm.length).map((newIdx) => {
                     const draft = structuredClone(state);
                     draft.perm.splice(idx, 1);

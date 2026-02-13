@@ -301,8 +301,8 @@ function dragTargets(
   activeRewrites: Rewrite[],
 ) {
   const newTrees = allPossibleRewrites(state, activeRewrites, draggedKey);
-  if (newTrees.length === 0) return d.span(state);
-  return d.closest(newTrees.map((newTree) => d.span(state, newTree)));
+  if (newTrees.length === 0) return d.between(state);
+  return d.closest(newTrees.map((newTree) => d.between(state, newTree)));
 }
 
 // # Rewrite rule display

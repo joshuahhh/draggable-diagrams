@@ -107,33 +107,30 @@ const draggable: Draggable<State> = ({ state, d }) => {
           )}
           data-z-index={1}
           data-on-drag={() => {
-            const spanStates: State[] = [state];
-            if (i > 0) {
-              spanStates.push(
-                produce(state, (s) => {
-                  s.seq.push([i, i - 1]);
-                }),
-              );
-            }
-            if (i < state.n - 1) {
-              spanStates.push(
-                produce(state, (s) => {
-                  s.seq.push([i, i + 1]);
-                }),
-              );
-            }
-            const specs = [d.span(spanStates)];
-            if (state.seq.length > 0) {
-              specs.push(
-                d.span([
+            return d
+              .closest(
+                // drag to add crossing
+                d.between(
                   state,
-                  produce(state, (s) => {
-                    s.seq.pop();
-                  }),
-                ]),
-              );
-            }
-            return d.closest(specs).withSnapRadius(1, { chain: true });
+                  i > 0 &&
+                    produce(state, (s) => {
+                      s.seq.push([i, i - 1]);
+                    }),
+                  i < state.n - 1 &&
+                    produce(state, (s) => {
+                      s.seq.push([i, i + 1]);
+                    }),
+                ),
+                // drag to erase last crossing
+                state.seq.length > 0 &&
+                  d.between([
+                    state,
+                    produce(state, (s) => {
+                      s.seq.pop();
+                    }),
+                  ]),
+              )
+              .withSnapRadius(1, { chain: true });
           }}
         >
           <circle r={20} fill="transparent" />

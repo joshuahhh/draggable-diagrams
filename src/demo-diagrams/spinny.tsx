@@ -46,7 +46,10 @@ const draggable: Draggable<State> = ({ state, d }) => (
             });
 
             return d
-              .closest([d.span([state, newState1]), d.span([state, newState2])])
+              .closest([
+                d.between([state, newState1]),
+                d.between([state, newState2]),
+              ])
               .withSnapRadius(10, { chain: true });
           }}
         >

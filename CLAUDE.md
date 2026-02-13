@@ -24,7 +24,7 @@ npm run typecheck # Type check
 |---|---|
 | `src/draggable.tsx` | `Draggable<T>` type, `Drag`, `SetState`, `OnDragPropValue` |
 | `src/DraggableRenderer.tsx` | Low-level component that runs a `Draggable` with drag handling, spring animation |
-| `src/DragSpec.tsx` | `DragSpec<T>` union type + constructors (`span`, `just`, `floating`, `closest`, `vary`, `andThen`, `withSnapRadius`, etc.) |
+| `src/DragSpec.tsx` | `DragSpec<T>` union type + constructors (`between`, `just`, `floating`, `closest`, `vary`, `andThen`, `withSnapRadius`, etc.) |
 | `src/demo-ui.tsx` | `DemoDraggable` (wraps `DraggableRenderer` with debug UI), `DemoSettingsProvider`, `DemoSettingsBar`, `ConfigPanel`, `ConfigCheckbox`, `ConfigSelect`, `DemoNotes` |
 | `src/demos.tsx` | Demo registry — array of `{ id, Component }` |
 | `src/demo-diagrams/` | Individual demo implementations |
@@ -65,7 +65,7 @@ A draggable definition has four parts:
 ```typescript
 import { DemoDraggable } from "../demo-ui";
 import { Draggable } from "../draggable";
-import { span } from "../DragSpec";
+import { between } from "../DragSpec";
 
 // 1. State type (must be an object)
 type State = { value: boolean };
@@ -78,7 +78,7 @@ const draggable: Draggable<State> = ({ state, drag }) => (
   <g>
     <rect
       id="my-element"
-      data-on-drag={drag(() => span([{ value: true }, { value: false }]))}
+      data-on-drag={drag(() => between([{ value: true }, { value: false }]))}
     />
   </g>
 );
@@ -98,7 +98,7 @@ export const MyDemo = () => (
 
 | Function | Use |
 |---|---|
-| `span([state1, state2, ...])` | Drag between discrete states (interpolated) |
+| `between([state1, state2, ...])` | Drag between discrete states (interpolated) |
 | `just(state)` | Always resolve to this state |
 | `vary(state, ["x"], ["y"])` | Continuous numeric variation along paths |
 | `floating(states, { backdrop })` | Float between states with a backdrop |

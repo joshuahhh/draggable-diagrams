@@ -259,7 +259,7 @@ function renderNormalMode(
     );
     return () =>
       d.closest(
-        d.span(state),
+        d.between(state),
         ...newTrees.map((t) => d.just({ ...state, tree: t, gutter: [] })),
       );
   }

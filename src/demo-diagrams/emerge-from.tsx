@@ -12,7 +12,7 @@ const defaultConfig: Config = { snap: false };
 
 function draggableFactory(config: Config): Draggable<State> {
   return ({ state, d }) => {
-    let spec = d.span({ right: false }, { right: true });
+    let spec = d.between({ right: false }, { right: true });
     if (config.snap) spec = spec.withSnapRadius(20);
 
     return (

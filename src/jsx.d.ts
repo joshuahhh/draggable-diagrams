@@ -13,7 +13,7 @@ declare module "react" {
      * <circle data-on-drag={() => d.vary(state, ["x"], ["y"])} />
      *
      * @example
-     * <rect data-on-drag={() => d.span([state1, state2])} />
+     * <rect data-on-drag={() => d.between([state1, state2])} />
      */
     "data-on-drag"?: ((params: DragParams) => DragSpecBrand) | Falsey;
 

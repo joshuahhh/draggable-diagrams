@@ -120,7 +120,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
               tryMove(0, 1);
             }
 
-            return d.span(nextStates).withSnapRadius(10);
+            return d.between(nextStates).withSnapRadius(10);
           }}
         />
       ))}

@@ -19,7 +19,7 @@ export type DragSpecData<T> =
   | DragSpecWithDistance<T>
   | DragSpecWithSnapRadius<T>
   | DragSpecWithDropTransition<T>
-  | DragSpecSpan<T>
+  | DragSpecBetween<T>
   | DragSpecSwitchToStateAndFollow<T>;
 
 export type DragSpecJust<T> = {
@@ -79,8 +79,8 @@ export type DragSpecWithDistance<T> = {
   f: (distance: number) => number;
 };
 
-export type DragSpecSpan<T> = {
-  type: "span";
+export type DragSpecBetween<T> = {
+  type: "between";
   states: T[];
 };
 
@@ -174,9 +174,9 @@ export class DragSpecBuilder<T> {
     return attachMethods({ type: "floating", state: stateOrStates, ghost });
   }
 
-  span(...states: Many<T>[]): DragSpec<T> {
-    assert(states.length > 0, "span requires at least one state");
-    return attachMethods({ type: "span", states: manyToArray(states) });
+  between(...states: Many<T>[]): DragSpec<T> {
+    assert(states.length > 0, "between requires at least one state");
+    return attachMethods({ type: "between", states: manyToArray(states) });
   }
 
   closest(...specs: Many<DragSpec<T>>[]): DragSpec<T> {

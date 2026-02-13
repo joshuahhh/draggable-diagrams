@@ -61,7 +61,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
           id={`tile-${key}`}
           transform={translate(tile.x * TILE_SIZE, tile.y * TILE_SIZE)}
           data-on-drag={() => {
-            const spans = (
+            const betweens = (
               [
                 [-1, 0],
                 [1, 0],
@@ -82,9 +82,9 @@ const draggable: Draggable<State> = ({ state, d }) => {
               const newState = structuredClone(state);
               newState.tiles[key] = { x: adjX, y: adjY };
               newState.tiles[adjTileKey] = { x: tile.x, y: tile.y };
-              return d.span([state, newState]);
+              return d.between([state, newState]);
             });
-            return d.closest(spans).withSnapRadius(10, { chain: true });
+            return d.closest(betweens).withSnapRadius(10, { chain: true });
           }}
         >
           <rect

@@ -131,7 +131,7 @@ function draggableFactory(config: Config): Draggable<State> {
                           .map((dir) => {
                             const newLoc = object.pos.add(dir);
                             if (!isInBounds(newLoc)) return;
-                            return d.span([
+                            return d.between([
                               state,
                               {
                                 ...state,
@@ -204,7 +204,7 @@ function draggableFactory(config: Config): Draggable<State> {
 
                     const boxId = idOfBoxAt(newLoc);
                     if (boxId === undefined) {
-                      return d.span([state, { ...state, player: newLoc }]);
+                      return d.between([state, { ...state, player: newLoc }]);
                     }
 
                     // Box present, try to push
@@ -212,7 +212,7 @@ function draggableFactory(config: Config): Draggable<State> {
                     if (!isFloor(boxNewLoc)) return;
                     if (idOfBoxAt(boxNewLoc) !== undefined) return;
 
-                    return d.span([
+                    return d.between([
                       state,
                       {
                         ...state,

@@ -26,7 +26,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
             data-z-index={isDragged ? 1 : 0}
             data-on-drag={() => {
               const draggedIdx = state.perm.indexOf(p);
-              return d.span(
+              return d.between(
                 _.range(state.perm.length).map((idx) =>
                   produce(state, (draft) => {
                     draft.perm.splice(draggedIdx, 1);

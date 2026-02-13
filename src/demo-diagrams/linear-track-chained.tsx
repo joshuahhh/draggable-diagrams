@@ -31,8 +31,8 @@ const draggable: Draggable<State> = ({ state, d }) => (
       data-on-drag={() =>
         d
           .closest([
-            state.value > 0 && d.span([state, { value: state.value - 1 }]),
-            state.value < 3 && d.span([state, { value: state.value + 1 }]),
+            state.value > 0 && d.between([state, { value: state.value - 1 }]),
+            state.value < 3 && d.between([state, { value: state.value + 1 }]),
           ])
           .withSnapRadius(10, { chain: true })
       }

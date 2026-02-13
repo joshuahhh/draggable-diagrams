@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { DragBehaviorInitContext, DragFrame, dragSpecToBehavior } from "./DragBehavior";
+import {
+  DragBehaviorInitContext,
+  DragFrame,
+  dragSpecToBehavior,
+} from "./DragBehavior";
 import { DragSpec } from "./DragSpec";
 import { Vec2 } from "./math/vec2";
 

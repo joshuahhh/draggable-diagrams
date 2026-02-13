@@ -387,7 +387,7 @@ export function dragSpecToBehavior<T extends object>(
         activePath: `with-drop-transition/${result.activePath}`,
       };
     };
-  } else if (spec.type === "span") {
+  } else if (spec.type === "between") {
     const renderedStates = spec.states.map((state) => {
       const layered = renderStateReadOnly(ctx, state);
       return { state, layered, position: getElementPosition(ctx, layered) };
@@ -424,7 +424,7 @@ export function dragSpecToBehavior<T extends object>(
         rendered,
         dropState: closest.state,
         distance: projection.dist,
-        activePath: "span",
+        activePath: "between",
         debugOverlay: () => (
           <g>
             {/* Delaunay triangulation edges */}

@@ -197,12 +197,12 @@ function SpecNode<T>({
         />
       </Box>
     );
-  } else if (spec.type === "span") {
-    const fullPath = path + "span";
+  } else if (spec.type === "between") {
+    const fullPath = path + "between";
     const active = activePath === fullPath;
     return (
       <Box
-        label={`span [${spec.states.length}]`}
+        label={`between [${spec.states.length}]`}
         active={active}
         color={colorMap?.get(fullPath)}
       />

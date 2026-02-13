@@ -51,7 +51,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
           r={10}
           fill="black"
           data-on-drag={() =>
-            d.span(
+            d.between(
               produceAmb(state, (draft) => {
                 draft.points[idx] = Vec2(
                   amb(_.range(state.w)),

@@ -30,7 +30,7 @@ const draggable: Draggable<State> = ({ state, d }) => (
       rx={4}
       data-on-drag={() =>
         d
-          .span([{ value: true }, { value: false }])
+          .between([{ value: true }, { value: false }])
           .withSnapRadius(10)
           .withDropTransition("elastic-out")
       }

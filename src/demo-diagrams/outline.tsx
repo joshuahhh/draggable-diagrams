@@ -239,7 +239,7 @@ function renderTree(
               .closest(statesWith.map((s) => d.floating(s)))
               .withBackground(d.floating(stateWithout));
           } else {
-            return d.span(statesWith);
+            return d.between(statesWith);
           }
         }}
       >

@@ -60,7 +60,7 @@ function draggableFactory(config: Config): Draggable<State> {
                       d.floating(s, { ghost: { opacity: 0.2 } }),
                     ),
                   )
-                : d.closest(singleRotations.map((s) => d.span([state, s])))
+                : d.closest(singleRotations.map((s) => d.between([state, s])))
             ).withSnapRadius(1, { chain: true });
           } else {
             return config.snappyMode
@@ -69,7 +69,7 @@ function draggableFactory(config: Config): Draggable<State> {
                     d.floating(s, { ghost: { opacity: 0.2 } }),
                   ),
                 )
-              : d.span(allStates(state));
+              : d.between(allStates(state));
           }
         }}
       />

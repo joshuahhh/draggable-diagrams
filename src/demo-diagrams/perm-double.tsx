@@ -60,7 +60,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                     );
                   }
                 }
-                return d.span(states).withSnapRadius(10);
+                return d.between(states).withSnapRadius(10);
               }}
             >
               <rect

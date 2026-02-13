@@ -68,7 +68,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
                     return;
                   const newState = structuredClone(state);
                   newState.tiles[key] = { x: adjLoc.x, y: adjLoc.y };
-                  return d.span([state, newState]);
+                  return d.between([state, newState]);
                 }),
               )
               .withSnapRadius(3, { transition: true, chain: true })

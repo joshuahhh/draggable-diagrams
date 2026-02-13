@@ -112,7 +112,7 @@ function draggableFactory(config: Config): Draggable<State> {
               ? d
                   .closest(statesWith.map((s) => d.floating(s)))
                   .withBackground(d.floating(stateWithout))
-              : d.span(statesWith);
+              : d.between(statesWith);
           },
         });
       })}

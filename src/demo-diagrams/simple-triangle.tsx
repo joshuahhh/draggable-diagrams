@@ -19,7 +19,7 @@ const SQUARE_SIZE = 40;
 const initialState: State = { posIndex: 0 };
 
 function draggableFactory(
-  mode: "span" | "floating" | "just",
+  mode: "between" | "floating" | "just",
 ): Draggable<State> {
   return ({ state, d }) => (
     <g>
@@ -48,8 +48,8 @@ function draggableFactory(
             posIndex: i,
           }));
 
-          if (mode === "span") {
-            return d.span(states);
+          if (mode === "between") {
+            return d.between(states);
           } else if (mode === "floating") {
             return d.closest(states.map((s) => d.floating(s)));
           } else if (mode === "just") {
@@ -72,15 +72,15 @@ function draggableFactory(
   );
 }
 
-const spanDraggable = draggableFactory("span");
+const betweenDraggable = draggableFactory("between");
 const floatingDraggable = draggableFactory("floating");
 const justDraggable = draggableFactory("just");
 
 export const SimpleTriangle = () => (
   <div>
-    <h3 className="text-md font-medium italic mt-6 mb-1">span</h3>
+    <h3 className="text-md font-medium italic mt-6 mb-1">between</h3>
     <DemoDraggable
-      draggable={spanDraggable}
+      draggable={betweenDraggable}
       initialState={initialState}
       width={200}
       height={150}

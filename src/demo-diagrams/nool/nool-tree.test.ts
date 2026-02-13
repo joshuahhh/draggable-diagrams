@@ -1,31 +1,31 @@
+import { describe, expect, it } from "vitest";
 import { Tree } from "./asts";
 import {
-  replaceNode,
-  insertChild,
-  removeChild,
-  removeNode,
-  swapChildrenAtParent,
-  findParentAndIndex,
-  findAllHoles,
   allInsertionPoints,
-  arityOk,
-  treeSize,
-  cloneTreeWithFreshIds,
   allInsertionPointsInTrees,
-  findAllHolesInTrees,
-  replaceInTrees,
-  insertInTrees,
-  removeInTrees,
-  isOp,
+  arityOk,
+  cloneTreeWithFreshIds,
   expectedArity,
-  T_GAP,
-  T_PADDING,
-  T_LABEL_WIDTH,
-  T_LABEL_MIN_HEIGHT,
-  T_EMPTY_CHILD_W,
+  findAllHoles,
+  findAllHolesInTrees,
+  findParentAndIndex,
+  insertChild,
+  insertInTrees,
+  isOp,
+  removeChild,
+  removeInTrees,
+  removeNode,
+  replaceInTrees,
+  replaceNode,
+  swapChildrenAtParent,
   T_EMPTY_CHILD_H,
+  T_EMPTY_CHILD_W,
+  T_GAP,
+  T_LABEL_MIN_HEIGHT,
+  T_LABEL_WIDTH,
+  T_PADDING,
+  treeSize,
 } from "./nool-tree";
-import { describe, it, expect } from "vitest";
 
 // # Test trees
 
@@ -41,7 +41,7 @@ const op = (
   id: string,
   label: string,
   children: Tree[],
-  variadic?: boolean
+  variadic?: boolean,
 ): Tree => ({
   id,
   label,
@@ -63,7 +63,7 @@ const variadicTree: Tree = op(
   "v",
   "+",
   [leaf("va", "⛅"), leaf("vb", "🍄"), leaf("vc", "🎲")],
-  true
+  true,
 );
 
 describe("replaceNode", () => {
@@ -216,7 +216,10 @@ describe("findAllHoles", () => {
   });
 
   it("nested holes", () => {
-    const tree = op("r", "+", [hole("h1"), op("l", "+", [hole("h2"), hole("h3")])]);
+    const tree = op("r", "+", [
+      hole("h1"),
+      op("l", "+", [hole("h2"), hole("h3")]),
+    ]);
     expect(findAllHoles(tree)).toEqual(["h1", "h2", "h3"]);
   });
 
@@ -243,7 +246,7 @@ describe("allInsertionPoints", () => {
       "outer",
       "+",
       [op("inner", "+", [leaf("a", "⛅")], true)],
-      true
+      true,
     );
     const pts = allInsertionPoints(tree);
     // outer: 0,1 (2 positions); inner: 0,1 (2 positions)
@@ -296,8 +299,7 @@ describe("treeSize", () => {
     const childSizes = simpleTree.children.map(treeSize);
     const childAreaW = Math.max(...childSizes.map((c) => c.w));
     const childAreaH =
-      childSizes.reduce((s, c) => s + c.h, 0) +
-      T_GAP * (childSizes.length - 1);
+      childSizes.reduce((s, c) => s + c.h, 0) + T_GAP * (childSizes.length - 1);
     const innerW = T_LABEL_WIDTH + T_GAP + childAreaW;
     const innerH = Math.max(childAreaH, T_LABEL_MIN_HEIGHT);
     expect(size.w).toBe(innerW + T_PADDING * 2);
@@ -308,9 +310,11 @@ describe("treeSize", () => {
     const emptyOp = op("r", "+", []);
     const size = treeSize(emptyOp);
     // Should account for T_EMPTY_CHILD_W/H
-    expect(size.w).toBe(T_LABEL_WIDTH + T_GAP + T_EMPTY_CHILD_W + T_PADDING * 2);
+    expect(size.w).toBe(
+      T_LABEL_WIDTH + T_GAP + T_EMPTY_CHILD_W + T_PADDING * 2,
+    );
     expect(size.h).toBe(
-      Math.max(T_EMPTY_CHILD_H, T_LABEL_MIN_HEIGHT) + T_PADDING * 2
+      Math.max(T_EMPTY_CHILD_H, T_LABEL_MIN_HEIGHT) + T_PADDING * 2,
     );
   });
 });

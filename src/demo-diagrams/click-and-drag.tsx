@@ -40,7 +40,7 @@ const draggable: Draggable<State> = ({ state, d, setState }) => (
       }}
       data-on-drag={() =>
         d
-          .span([
+          .between([
             { ...state, value: true },
             { ...state, value: false },
           ])

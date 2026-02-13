@@ -214,11 +214,11 @@ function draggableFactory(config: Config): Draggable<State> {
                 return d
                   .closest(
                     // to children
-                    d.span(state, { root: sprout(state.root, node.id, 0) }),
-                    d.span(state, { root: sprout(state.root, node.id, 1) }),
+                    d.between(state, { root: sprout(state.root, node.id, 0) }),
+                    d.between(state, { root: sprout(state.root, node.id, 1) }),
                     // to parent (if not root)
                     state.root.id !== node.id
-                      ? d.span(state, { root: prune(state.root, node.id) })
+                      ? d.between(state, { root: prune(state.root, node.id) })
                       : null,
                   )
                   .withSnapRadius(5, { chain: true });
