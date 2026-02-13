@@ -3,8 +3,26 @@
 Proposal for study structure:
 - We guide the participant through different parts of the system, pair-code-tutorial style. We are prepared to pretty much tell them everything they should do, step by step. At various points we get a little Socratic with it.
 - [...]
+- Q: do we do the "nudge open task in structured direction" thing or the "nudge structured tutorial in open direction"?
 
 Note: I'm writing this up in "docs", with the live editors and all, but I don't think we necessarily want to show any of this to the participants. Ideally they are in their editors, with TS completion etc.
+
+## Meta: What do we want to test here?
+
+Top level:
+- data-driven, declarative approach – is it more intuitive? "mental model skew"
+  - con case: it would actually be easier for me to think about this via the mechanisms that you are obscuring (drop zones, state diagrams, etc.)
+  - con case: there's a small space of things that this implements intuitively, outside that small space it's a weird puzzle to make my intent fit into your model
+  - con case: there's stuff I wanna do that this just doesn't do
+
+What do we lead them through?
+- dragging between enumerated discrete states
+  - background
+- dragging between states by continuously varying numeric parameters
+- composing different drags (like discrete + continuous)
+  - multiple continuous drags, composed discretely
+  - discrete foreground with continuous background (scratch-style)
+
 
 ## Show and tell
 
@@ -38,6 +56,13 @@ We'll start by showing you the simplest thing you can make with our library – 
 - Most of this is just drawing the switch. But `data-on-drag` creates the interaction. What this attribute says, attached to this circle, is that, by dragging the circle, we want to be able to move between the "off" state and the "on" state. When we start a drag, the library renders the interface in both states, behind the scenes. It looks at where the circle is, in both renderings. It then uses these positions to figure out how pointer movements should control the drag. We have some inspectors... [TODO]
 
 Any questions?
+
+*TODO: smaller step from 1 to 2?*
+
+current gaps:
+- they're actually stuff at all
+- they're generating states dynamically (function of current state)
+- they have to add IDs (we may have to tell them)
 
 ## First task: Reorderable list
 
@@ -111,7 +136,11 @@ Ok, now the task – make it drag-to-reorder-able using our library!
 
 [Q: How did state generation feel?]
 
-Cool, great work! We want to show you some other things you can do with this. For instance, right now everything moves around smoothly. But you might want to add a "snap" behavior, which causes the element to snap into place when it's close to a target. [TODO: how might you do this traditionally?] [TODO: how might you do this here?]
+Cool, great work!
+
+Q: Is there anything about the produced interaction that feels unsatisfying? Or another aspect you might want to play with?
+
+We want to show you some other things you can do with this. For instance, right now everything moves around smoothly. But you might want to add a "snap" behavior, which causes the element to snap into place when it's close to a target. [TODO: how might you do this traditionally?] [TODO: how might you do this here?]
 
 <LiveEditor
   code={`
@@ -226,7 +255,37 @@ One riff: ghosts!
 
 ## Second task: Continuous dragging
 
-So far, the state has been discrete — a finite set of options. But sometimes you want continuous control, like a knob or a slider. Here's a rotary dial:
+So far, the state has been discrete — a finite set of options. But sometimes you want continuous control, like a slider:
+
+<LiveEditor
+  code={`
+    type State = { value: number };
+
+    const initialState: State = { value: 100 };
+
+    const W = 240, H = 6, R = 12;
+
+    const draggable: Draggable<State> = ({ state, d }) => (
+      <g transform={translate(30, 60)}>
+        {/* Track */}
+        <rect width={W} height={H} rx={H / 2} fill="#e5e7eb" y={-H / 2} />
+        {/* Filled portion */}
+        <rect width={state.value} height={H} rx={H / 2} fill="#3b82f6" y={-H / 2} />
+        {/* Thumb */}
+        <circle
+          id="thumb"
+          transform={translate(state.value, 0)}
+          r={R}
+          fill="white" stroke="#d1d5db" stroke-width={1.5}
+          style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.15))" }}
+          data-on-drag={() => d.vary(state, ["value"])}
+        />
+      </g>
+    );
+`}
+/>
+
+Or a rotary dial:
 
 <LiveEditor
   code={`
@@ -271,6 +330,8 @@ So far, the state has been discrete — a finite set of options. But sometimes y
 />
 
 ## Third task: Composition
+
+TODO: Be more incremental first?
 
 <LiveEditor
   code={`
@@ -324,5 +385,50 @@ So far, the state has been discrete — a finite set of options. But sometimes y
       </g>
     );
 
+`}
+/>
+
+## Bonus: Nested composition
+
+What if you combine a slider and a switch? Here, the thumb slides vertically, and the knob on it toggles horizontally:
+
+<LiveEditor
+  code={`
+    type State = { pos: number; status: "on" | "off" };
+
+    const initialState: State = { pos: 80, status: "off" };
+
+    const draggable: Draggable<State> = ({ state, d }) => (
+      <g transform={translate(50, 10)}>
+        {/* Vertical track */}
+        <rect x={-3} width={6} height={200} rx={3} fill="#e5e7eb" />
+
+        {/* Thumb (slides vertically) */}
+        <g
+          id="thumb"
+          transform={translate(0, state.pos)}
+          data-on-drag={() => d.vary(state, ["pos"])}
+        >
+          <rect x={-30} y={-15} width={60} height={30} rx={15}
+            fill={state.status === "on" ? "#22c55e" : "#d1d5db"}
+          />
+          {/* Knob (toggles horizontally) */}
+          <circle
+            id="knob"
+            data-z-index={10}
+            transform={translate(state.status === "on" ? 15 : -15, 0)}
+            r={12}
+            fill="white" stroke="#e5e7eb" stroke-width={1}
+            style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.15))" }}
+            data-on-drag={() =>
+              d.closest([
+                d.vary({ ...state, status: "off" }, ["pos"]),
+                d.vary({ ...state, status: "on" }, ["pos"]),
+              ])
+            }
+          />
+        </g>
+      </g>
+    );
 `}
 />
