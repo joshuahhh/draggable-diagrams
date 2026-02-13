@@ -35,7 +35,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
               });
               return d
                 .closest(d.floating(statesWith))
-                .withBackground(d.just(state));
+                .withBackground(d.floating(state));
             }}
           >
             <rect
