@@ -3,13 +3,13 @@ import ReactDOM from "react-dom/client";
 import { HashRouter, Routes } from "react-router-dom";
 import { autoRoute } from "./autoRoute";
 import { BluefishDemo } from "./bluefish-demo";
-import { DemoPage } from "./DemoPage";
+import { DemoPage } from "./demo/DemoPage";
 import { DocsIndexPage } from "./DocsIndexPage";
 import { DocsPage } from "./DocsPage";
 import "./index.css";
 import { IndexPage } from "./IndexPage";
 import { PrettyPrintDemo } from "./pretty-print-demo";
-import { SingleDemoPage } from "./SingleDemoPage";
+import { SingleDemoPage } from "./demo/SingleDemoPage";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

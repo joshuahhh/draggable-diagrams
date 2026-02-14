@@ -7,7 +7,7 @@ import * as parserEstree from "prettier/plugins/estree";
 import parserTypescript from "prettier/plugins/typescript";
 import prettier from "prettier/standalone";
 import { createElement, useEffect, useMemo, useState } from "react";
-import { useDemoSettings } from "../demo-ui";
+import { useDemoSettings } from "../demo/ui";
 import { Draggable } from "../draggable";
 import { DraggableRenderer } from "../DraggableRenderer";
 import { ErrorBoundary } from "../ErrorBoundary";

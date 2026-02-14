@@ -1,7 +1,7 @@
 // Custom React components that can be used in MDX pages
 
-import { DemoSettingsProvider } from "../demo-ui";
-import { demos } from "../demos";
+import { DemoSettingsProvider } from "../demo/ui";
+import { demos } from "../demo/registry";
 
 export { normalizeIndent } from "../normalizeIndent";
 
