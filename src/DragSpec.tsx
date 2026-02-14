@@ -20,7 +20,8 @@ export type DragSpecData<T> =
   | DragSpecWithSnapRadius<T>
   | DragSpecWithDropTransition<T>
   | DragSpecBetween<T>
-  | DragSpecSwitchToStateAndFollow<T>;
+  | DragSpecSwitchToStateAndFollow<T>
+  | DragSpecDropTarget<T>;
 
 export type DragSpecJust<T> = {
   type: "just";
@@ -89,6 +90,12 @@ export type DragSpecSwitchToStateAndFollow<T> = {
   state: T;
   draggedId: string;
   followSpec?: DragSpec<T>;
+};
+
+export type DragSpecDropTarget<T> = {
+  type: "drop-target";
+  state: T;
+  targetId: string;
 };
 
 // # DragSpec
@@ -226,6 +233,15 @@ export class DragSpecBuilder<T> {
   vary(state: T, ...args: (PathIn<T, number> | VaryOptions<T>)[]): DragSpec<T> {
     const { paramPaths, options } = parseVaryArgs<T>(args);
     return attachMethods({ type: "vary", state, paramPaths, ...options });
+  }
+
+  /**
+   * This drag behavior renders a state and checks whether the
+   * pointer is inside the bounds of a target element (identified by
+   * ID). Distance is 0 when inside, Infinity when outside.
+   */
+  dropTarget(state: T, targetId: string): DragSpec<T> {
+    return attachMethods({ type: "drop-target", state, targetId });
   }
 
   /**

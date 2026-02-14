@@ -236,6 +236,16 @@ function SpecNode<T>({
         color={colorMap?.get(fullPath)}
       />
     );
+  } else if (spec.type === "drop-target") {
+    const fullPath = path + "drop-target";
+    const active = activePath === fullPath;
+    return (
+      <Box
+        label={`dropTarget → ${spec.targetId}`}
+        active={active}
+        color={colorMap?.get(fullPath)}
+      />
+    );
   } else {
     assertNever(spec);
   }

@@ -7,6 +7,7 @@ import { minimize } from "./math/minimize";
 import { Vec2 } from "./math/vec2";
 import { getAtPath, setAtPath } from "./paths";
 import { Svgx } from "./svgx";
+import { getLocalBounds, pointInBounds } from "./svgx/bounds";
 import { path as svgPath, translate } from "./svgx/helpers";
 import {
   LayeredSvgx,
@@ -23,7 +24,7 @@ import {
 } from "./svgx/layers";
 import { lerpLayered, lerpLayered3 } from "./svgx/lerp";
 import { assignPaths, findByPath } from "./svgx/path";
-import { localToGlobal, parseTransform } from "./svgx/transform";
+import { globalToLocal, localToGlobal, parseTransform } from "./svgx/transform";
 import { assert, assertNever, manyToArray, pipe, throwError } from "./utils";
 
 /**
@@ -479,6 +480,51 @@ export function dragSpecToBehavior<T extends object>(
       activePath: "switch-to-state-and-follow",
       chainNow: { draggedId: spec.draggedId, followSpec: spec.followSpec },
     });
+  } else if (spec.type === "drop-target") {
+    const rendered = renderStateReadOnly(ctx, spec.state);
+    const targetElement = rendered.byId.get(spec.targetId);
+    assert(
+      targetElement !== undefined,
+      `dropTarget: element with id "${spec.targetId}" not found in rendered state`,
+    );
+    const targetTransform = (targetElement.props as Record<string, unknown>)
+      .transform as string | undefined;
+    const transforms = parseTransform(targetTransform || "");
+    const localBounds = getLocalBounds(targetElement);
+    assert(
+      localBounds !== null,
+      `dropTarget: could not compute bounds for element "${spec.targetId}"`,
+    );
+    // Pre-compute global bounds corners for debug overlay
+    const globalCorners = [
+      localToGlobal(transforms, Vec2(localBounds.minX, localBounds.minY)),
+      localToGlobal(transforms, Vec2(localBounds.maxX, localBounds.minY)),
+      localToGlobal(transforms, Vec2(localBounds.maxX, localBounds.maxY)),
+      localToGlobal(transforms, Vec2(localBounds.minX, localBounds.maxY)),
+    ];
+    return (frame) => {
+      const localPointer = globalToLocal(transforms, frame.pointer);
+      const inside = pointInBounds(localPointer, localBounds);
+      const distance = inside ? 0 : Infinity;
+      return {
+        rendered,
+        dropState: spec.state,
+        distance,
+        activePath: "drop-target",
+        debugOverlay: () => (
+          <g opacity={0.8}>
+            <polygon
+              points={globalCorners.map((c) => `${c.x},${c.y}`).join(" ")}
+              fill={inside ? "magenta" : "none"}
+              fillOpacity={0.15}
+              stroke="magenta"
+              strokeWidth={1.5}
+              strokeDasharray={inside ? undefined : "4 3"}
+            />
+          </g>
+        ),
+      };
+    };
   } else {
     assertNever(spec);
   }
