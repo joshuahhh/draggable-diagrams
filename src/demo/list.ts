@@ -51,4 +51,5 @@ export const demoList = [
   "bluefish-static",
   "bluefish-perm",
   "emerge-from",
+  "spec-workshop",
 ];
