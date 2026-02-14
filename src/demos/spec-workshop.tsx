@@ -359,64 +359,25 @@ function findParent(state: State, nodeId: string) {
 }
 
 function detach(state: State, nodeId: string): State {
-  // Active spec detach
-  if (state.activeSpecId === nodeId) {
-    const off = asChildOff(state);
-    return produce(state, (draft) => {
-      draft.activeSpecId = null;
-      draft.nodes[nodeId].x = off.x;
-      draft.nodes[nodeId].y = TOOLBAR_H + off.y;
-    });
-  }
-
-  const parent = findParent(state, nodeId);
-  if (!parent) return state;
-
-  const pn = state.nodes[parent.parentId];
-  let gx: number, gy: number;
-
-  switch (pn.expr.type) {
-    case "between": {
-      const off = btwInlet(pn.expr, parent.idx);
-      gx = pn.x + off.x;
-      gy = pn.y + off.y;
-      break;
-    }
-    case "floating": {
-      const off = fltInlet();
-      gx = pn.x + off.x;
-      gy = pn.y + off.y;
-      break;
-    }
-    case "withSnapRadius": {
-      const off = wsrChildOff(pn.expr, state.nodes[nodeId].expr, state.nodes);
-      gx = pn.x + off.x;
-      gy = pn.y + off.y;
-      break;
-    }
-    case "closest": {
-      const off = clsChildOff(
-        pn.expr,
-        parent.idx,
-        state.nodes[nodeId].expr,
-        state.nodes,
-      );
-      gx = pn.x + off.x;
-      gy = pn.y + off.y;
-      break;
-    }
-    default:
-      return state;
-  }
-
   return produce(state, (draft) => {
-    const pe = draft.nodes[parent.parentId].expr;
-    if (pe.type === "between") pe.childIds.splice(parent.idx, 1);
-    else if (pe.type === "closest") pe.childIds.splice(parent.idx, 1);
-    else if (pe.type === "withSnapRadius") pe.childId = null;
-    else if (pe.type === "floating") pe.childId = null;
-    draft.nodes[nodeId].x = gx;
-    draft.nodes[nodeId].y = gy;
+    // Unlink from active spec slot
+    if (draft.activeSpecId === nodeId) {
+      draft.activeSpecId = null;
+      draft.nodes[nodeId].x = 0;
+      draft.nodes[nodeId].y = TOOLBAR_H;
+    }
+    // Unlink from parent node
+    const parent = findParent(state, nodeId);
+    if (parent) {
+      const pn = state.nodes[parent.parentId];
+      draft.nodes[nodeId].x = pn.x;
+      draft.nodes[nodeId].y = pn.y;
+      const pe = draft.nodes[parent.parentId].expr;
+      if (pe.type === "between") pe.childIds.splice(parent.idx, 1);
+      else if (pe.type === "closest") pe.childIds.splice(parent.idx, 1);
+      else if (pe.type === "withSnapRadius") pe.childId = null;
+      else if (pe.type === "floating") pe.childId = null;
+    }
   });
 }
 
