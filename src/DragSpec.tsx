@@ -282,6 +282,12 @@ export class DragSpecBuilder<T> {
    * continuously by dragging. Provide a starting state and paths to
    * the parameters you want to vary. An optional final parameter can
    * configure constraints.
+   *
+   * Note: `vary` starts running immediately – the values of
+   * controlled parameters provided in the initial state will be used
+   * to initialize numerical optimization, but won't ever be shown
+   * directly. You can usually feel free to set them to an arbitrary
+   * value.
    */
   vary(state: T, ...paramPaths: PathIn<T, number>[]): DragSpec<T>;
   vary(
