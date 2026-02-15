@@ -77,13 +77,13 @@ export type TransitionLike =
   | Transition
   | Transition["easing"]
   | Transition["duration"]
+  /** true means default, false means no transition */
   | boolean
+  /** undefined means default */
   | undefined;
 
-export function resolveTransitionLike(
-  t: TransitionLike,
-): Transition | undefined {
-  if (!t) return undefined;
+export function resolveTransitionLike(t: TransitionLike): Transition | false {
+  if (t === false) return false;
   if (typeof t === "object") {
     return t;
   }
@@ -95,6 +95,10 @@ export function resolveTransitionLike(
     transition.easing = t;
   } else if (typeof t === "number") {
     transition.duration = t;
+  } else if (t === true || t === undefined) {
+    // cool; use default
+  } else {
+    assertNever(t);
   }
   return transition;
 }
@@ -104,6 +108,23 @@ type SpringingFrom = {
   time: number;
   transition: Transition;
 };
+
+function makeSpringingFrom(
+  transitionLike: TransitionLike,
+  /**
+   * We provide this lazily cuz if the transition says "no
+   * transition" then we can skip it.
+   */
+  layeredLazy: () => LayeredSvgx,
+): SpringingFrom | null {
+  const transition = resolveTransitionLike(transitionLike);
+  if (transition === false) return null;
+  return {
+    layered: layeredLazy(),
+    time: performance.now(),
+    transition,
+  };
+}
 
 type PendingDrag<T extends object> = {
   startClientPos: Vec2;
@@ -238,12 +259,9 @@ export function DraggableRenderer<T extends object>({
               getDragSpecCallbackOnElement<T>(element)?.(ds.dragParams);
             if (newDragSpec) {
               // Start spring from current display
-              const layered = runSpring(springingFrom, result.rendered);
-              const newSpringingFrom: SpringingFrom = {
-                layered,
-                time: performance.now(),
-                transition: resolveTransitionLike(true)!,
-              };
+              const newSpringingFrom = makeSpringingFrom(true, () =>
+                runSpring(springingFrom, result.rendered),
+              );
 
               const newDraggedPath = getPath(element);
               assert(!!newDraggedPath, "Chained element must have a path");
@@ -281,17 +299,9 @@ export function DraggableRenderer<T extends object>({
 
         // Detect activePath change → start new spring from current display
         if (result.activePath !== ds.result.activePath) {
-          if (result.activePathTransition === false) {
-            springingFrom = null;
-          } else {
-            const layered = runSpring(springingFrom, ds.result.rendered);
-            springingFrom = {
-              layered,
-              time: performance.now(),
-              transition:
-                result.activePathTransition ?? resolveTransitionLike(true)!,
-            };
-          }
+          springingFrom = makeSpringingFrom(result.activePathTransition, () =>
+            runSpring(springingFrom, ds.result.rendered),
+          );
         }
 
         // Clear expired spring
@@ -385,17 +395,12 @@ export function DraggableRenderer<T extends object>({
       const result = ds.behavior(frame);
       const dropState = result.dropState;
 
-      // Capture the current display as the spring snapshot
-      const startLayered = runSpring(ds.springingFrom, result.rendered);
-
       const newState: DragState<T> = {
         type: "idle",
         state: dropState,
-        springingFrom: {
-          layered: startLayered,
-          time: performance.now(),
-          transition: result.dropTransition ?? resolveTransitionLike(true)!,
-        },
+        springingFrom: makeSpringingFrom(result.dropTransition, () =>
+          runSpring(ds.springingFrom, result.rendered),
+        ),
       };
       setDragState(newState);
       onDebugDragInfoRef.current?.({ type: "idle", state: dropState });
@@ -424,11 +429,7 @@ export function DraggableRenderer<T extends object>({
 
       // Spring from current display
       const layered = runSpring(ds.springingFrom, ds.result.rendered);
-      const newSpringingFrom: SpringingFrom = {
-        layered,
-        time: performance.now(),
-        transition: resolveTransitionLike(true)!,
-      };
+      const newSpringingFrom = makeSpringingFrom(true, () => layered);
 
       const { dragState: newDragState, debugInfo } = initDrag(
         newSpec,
@@ -736,23 +737,17 @@ const DrawIdleMode = memoGeneric(
             typeof newState === "function"
               ? (newState as (prev: T) => T)(dragState.state)
               : newState;
-          const snapshot = renderReadOnly(ctx.draggable, {
-            state: dragState.state,
-            d: new DragSpecBuilder<T>(),
-            draggedId: null,
-            ghostId: null,
-          });
           ctx.setDragState({
             type: "idle",
             state: resolved,
-            springingFrom: {
-              layered: snapshot,
-              time: performance.now(),
-              transition: resolveTransitionLike(transition) || {
-                easing: "cubic-out",
-                duration: 200,
-              },
-            },
+            springingFrom: makeSpringingFrom(transition, () =>
+              renderReadOnly(ctx.draggable, {
+                state: dragState.state,
+                d: new DragSpecBuilder<T>(),
+                draggedId: null,
+                ghostId: null,
+              }),
+            ),
           });
           ctx.onDebugDragInfoRef.current?.({ type: "idle", state: resolved });
         },

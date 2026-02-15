@@ -58,7 +58,7 @@ export type DragSpecWithSnapRadius<T> = {
 export type DragSpecWithDropTransition<T> = {
   type: "with-drop-transition";
   spec: DragSpecData<T>;
-  transition: Transition | undefined;
+  transition: Transition | false;
 };
 
 export type DragSpecWithBranchTransition<T> = {
