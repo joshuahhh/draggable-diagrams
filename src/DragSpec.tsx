@@ -140,7 +140,7 @@ const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
       foreground: this,
       background: bg,
       radius,
-    } as DragSpecData<any>);
+    });
   },
   withSnapRadius(radius, { transition = false, chain = false } = {}) {
     return attachMethods({
@@ -171,7 +171,7 @@ const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
 };
 
 function attachMethods<T>(data: DragSpecData<T>): DragSpec<T> {
-  return Object.assign(Object.create(dragSpecMethods), data) as DragSpec<T>;
+  return Object.assign(Object.create(dragSpecMethods), data);
 }
 
 // # DragSpecBuilder
@@ -309,7 +309,7 @@ function parseVaryArgs<T>(args: (PathIn<T, number> | VaryOptions<T>)[]): {
   ) {
     return {
       paramPaths: args.slice(0, -1) as PathIn<T, number>[],
-      options: last as VaryOptions<T>,
+      options: last,
     };
   }
   return { paramPaths: args as PathIn<T, number>[], options: {} };
