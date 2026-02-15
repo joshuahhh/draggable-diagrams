@@ -50,7 +50,7 @@ export type DragFrame = {
 export type DragResult<T> = {
   rendered: LayeredSvgx;
   dropState: T;
-  dropTransition?: Transition;
+  dropTransition?: Transition | false;
   activePathTransition?: Transition | false;
   distance: number;
   activePath: string;
