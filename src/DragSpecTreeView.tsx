@@ -236,6 +236,25 @@ function SpecNode<T>({
         color={colorMap?.get(fullPath)}
       />
     );
+  } else if (spec.type === "with-branch-transition") {
+    let childActivePath = activePath;
+    if (activePath?.startsWith("with-branch-transition/")) {
+      childActivePath = activePath.slice("with-branch-transition/".length);
+    }
+    const t = spec.transition;
+    const transitionDesc = t
+      ? `${typeof t.easing === "function" ? "fn" : t.easing} ${t.duration}ms`
+      : "none";
+    return (
+      <Box label={`withBranchTransition (${transitionDesc})`}>
+        <SpecNode
+          spec={spec.spec}
+          activePath={childActivePath}
+          path={path}
+          colorMap={colorMap}
+        />
+      </Box>
+    );
   } else if (spec.type === "drop-target") {
     const fullPath = path + "drop-target";
     const active = activePath === fullPath;

@@ -51,7 +51,7 @@ export type DragResult<T> = {
   rendered: LayeredSvgx;
   dropState: T;
   dropTransition?: Transition;
-  activePathTransition?: Transition;
+  activePathTransition?: Transition | false;
   distance: number;
   activePath: string;
   /**
@@ -384,6 +384,16 @@ export function dragSpecToBehavior<T extends object>(
         ...result,
         dropTransition: spec.transition,
         activePath: `with-drop-transition/${result.activePath}`,
+      };
+    };
+  } else if (spec.type === "with-branch-transition") {
+    const subBehavior = dragSpecToBehavior(spec.spec, ctx);
+    return (frame) => {
+      const result = subBehavior(frame);
+      return {
+        ...result,
+        activePathTransition: spec.transition,
+        activePath: `with-branch-transition/${result.activePath}`,
       };
     };
   } else if (spec.type === "between") {

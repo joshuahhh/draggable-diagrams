@@ -281,13 +281,17 @@ export function DraggableRenderer<T extends object>({
 
         // Detect activePath change → start new spring from current display
         if (result.activePath !== ds.result.activePath) {
-          const layered = runSpring(springingFrom, ds.result.rendered);
-          springingFrom = {
-            layered,
-            time: performance.now(),
-            transition:
-              result.activePathTransition ?? resolveTransitionLike(true)!,
-          };
+          if (result.activePathTransition === false) {
+            springingFrom = null;
+          } else {
+            const layered = runSpring(springingFrom, ds.result.rendered);
+            springingFrom = {
+              layered,
+              time: performance.now(),
+              transition:
+                result.activePathTransition ?? resolveTransitionLike(true)!,
+            };
+          }
         }
 
         // Clear expired spring

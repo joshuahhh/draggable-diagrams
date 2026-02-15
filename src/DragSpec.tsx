@@ -21,7 +21,8 @@ export type DragSpecData<T> =
   | DragSpecWithDropTransition<T>
   | DragSpecBetween<T>
   | DragSpecSwitchToStateAndFollow<T>
-  | DragSpecDropTarget<T>;
+  | DragSpecDropTarget<T>
+  | DragSpecWithBranchTransition<T>;
 
 export type DragSpecJust<T> = {
   type: "just";
@@ -58,6 +59,12 @@ export type DragSpecWithDropTransition<T> = {
   type: "with-drop-transition";
   spec: DragSpecData<T>;
   transition: Transition | undefined;
+};
+
+export type DragSpecWithBranchTransition<T> = {
+  type: "with-branch-transition";
+  spec: DragSpecData<T>;
+  transition: Transition | false;
 };
 
 export type DragSpecAndThen<T> = {
@@ -119,6 +126,7 @@ export interface DragSpecMethods<T> {
     options?: { transition?: TransitionLike; chain?: boolean },
   ): DragSpec<T>;
   withDropTransition(transition?: TransitionLike): DragSpec<T>;
+  withBranchTransition(transition: TransitionLike): DragSpec<T>;
   withDistance(f: (distance: number) => number): DragSpec<T>;
 }
 
@@ -148,6 +156,13 @@ const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
       type: "with-drop-transition",
       spec: this,
       transition: resolveTransitionLike(transition),
+    });
+  },
+  withBranchTransition(transition) {
+    return attachMethods({
+      type: "with-branch-transition",
+      spec: this,
+      transition: resolveTransitionLike(transition) ?? false,
     });
   },
   withDistance(f) {
