@@ -632,7 +632,13 @@ function initDrag<T extends object>(
     floatLayered,
   };
   const behavior = dragSpecToBehavior(spec, behaviorCtx);
-  const result = behavior(frame);
+  // Use the canonical pointerStart (not frame.pointerStart) so that
+  // the first rendered frame of a chained drag uses the correct
+  // origin. processChainNow passes a frame with the *old*
+  // pointerStart but a new pointerStart parameter; using the
+  // parameter avoids a single-frame offset equal to the difference
+  // between the two.
+  const result = behavior({ ...frame, pointerStart });
 
   const dragState: DragState<T> & { type: "dragging" } = {
     type: "dragging",
