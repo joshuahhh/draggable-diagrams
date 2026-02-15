@@ -116,17 +116,60 @@ export type DragSpecBrand = { readonly [_dragSpecBrand]: true };
 
 // Fluent methods available on every DragSpec value.
 export interface DragSpecMethods<T> {
+  /**
+   * Set a new drop state for the behavior – the drag preview will be
+   * the same as before, but dropping will transition into the given
+   * state.
+   */
   andThen(state: T): DragSpec<T>;
+
+  /**
+   * Augment the behavior with a "background" behavior that it will
+   * switch to when the pointer gets more than a certain distance
+   * away. This distance is 50 pixels by default, but can be
+   * configured via the `radius` option.
+   */
   withBackground<B>(
     background: DragSpec<B>,
     opts?: { radius?: number },
   ): DragSpec<T | B>;
+
+  /**
+   * Set a "snap radius" for the behavior. If the dragged element
+   * gets within this distance of where the rendered drop state would
+   * place it, the preview will go straight to the rendered drop
+   * state. (This changes the drag preview but not the drop state.)
+   */
   withSnapRadius(
     radius: number,
     options?: { transition?: TransitionLike; chain?: boolean },
   ): DragSpec<T>;
+
+  /**
+   * Set a transition to be used when dropping an element. By default this is a 200ms
+   */
   withDropTransition(transition?: TransitionLike): DragSpec<T>;
+
+  /**
+   * Set a transition to be used when switching between branches of a
+   * behavior. "Branches" isn't yet a very well-established concept,
+   * but this includes, e.g., switching between behaviors in a
+   * `closest`, or switching between the "foreground" and
+   * "background" in a `withBackground`.
+   *
+   * NOTE: There is currently no way to say, e.g., "do transition X
+   * when switching between branches of a `closest` but do transition
+   * Y when switching between the `closest` and its background" –
+   * every application of `withBranchTransition` applies to all
+   * branch switches within the behavior.
+   */
   withBranchTransition(transition: TransitionLike): DragSpec<T>;
+
+  /**
+   * Advanced: Change the behavior's reported "distance" measurement
+   * via the provided function. Use this, e.g., to "reweight" the
+   * behavior's drop target in a `closest`.
+   */
   withDistance(f: (distance: number) => number): DragSpec<T>;
 }
 
