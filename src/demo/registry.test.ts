@@ -5,10 +5,7 @@ import { demoList } from "./list";
 const modules = import.meta.glob("../demos/**/*.tsx");
 
 function pathToId(path: string): string {
-  return path
-    .replace("../demos/", "")
-    .replace(".tsx", "")
-    .replace(/\//g, "-");
+  return path.replace("../demos/", "").replace(".tsx", "").replace(/\//g, "-");
 }
 
 const discoveredIds = new Set(Object.keys(modules).map(pathToId));

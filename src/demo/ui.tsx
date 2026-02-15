@@ -15,9 +15,9 @@ import {
 import { DragSpecTreeView } from "../DragSpecTreeView";
 import { DebugDragInfo, DraggableRenderer } from "../DraggableRenderer";
 import { ErrorBoundary } from "../ErrorBoundary";
-import type { Demo } from "./registry";
 import { Draggable } from "../draggable";
 import { assert } from "../utils";
+import type { Demo } from "./registry";
 
 export type DemoSettings = {
   showTreeView: boolean;

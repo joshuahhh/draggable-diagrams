@@ -1,6 +1,6 @@
 import React from "react";
-import { Vec2 } from "../math/vec2";
 import { Svgx } from ".";
+import { Vec2 } from "../math/vec2";
 import { localToGlobal, parseTransform } from "./transform";
 
 export type Bounds = {

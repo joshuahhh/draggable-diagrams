@@ -1,6 +1,6 @@
 import { ComponentType } from "react";
-import { demoList } from "./list";
 import { DemoMarked, isDemo } from ".";
+import { demoList } from "./list";
 
 export { demo } from ".";
 export type { DemoInfo, DemoOptions } from ".";
@@ -12,16 +12,12 @@ export type Demo = {
   sourcePath: string;
 };
 
-const modules = import.meta.glob<{ default: unknown }>(
-  "../demos/**/*.tsx",
-  { eager: true },
-);
+const modules = import.meta.glob<{ default: unknown }>("../demos/**/*.tsx", {
+  eager: true,
+});
 
 function pathToId(path: string): string {
-  return path
-    .replace("../demos/", "")
-    .replace(".tsx", "")
-    .replace(/\//g, "-");
+  return path.replace("../demos/", "").replace(".tsx", "").replace(/\//g, "-");
 }
 
 function markedToDemo(

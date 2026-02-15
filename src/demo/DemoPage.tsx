@@ -1,11 +1,6 @@
 import { Link, useSearchParams } from "react-router-dom";
-import {
-  DemoCard,
-  DemoSettingsBar,
-  DemoSettingsProvider,
-  DemoTag,
-} from "./ui";
 import { Demo, listedDemos, unlistedDemos } from "./registry";
+import { DemoCard, DemoSettingsBar, DemoSettingsProvider, DemoTag } from "./ui";
 
 function hasTag(demo: Demo, tag: string) {
   return demo.tags?.includes(tag);

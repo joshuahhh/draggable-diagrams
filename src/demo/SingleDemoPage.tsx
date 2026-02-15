@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { DemoCard, DemoSettingsBar, DemoSettingsProvider } from "./ui";
 import { demosById } from "./registry";
+import { DemoCard, DemoSettingsBar, DemoSettingsProvider } from "./ui";
 
 export function SingleDemoPage({ id }: { id: string }) {
   const demo = demosById.get(id);
