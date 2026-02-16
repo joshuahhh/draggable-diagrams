@@ -1,4 +1,4 @@
-import { Vec2, Vec2able } from "../math/vec2";
+import { Vec2, Vec2able, lerp } from "../math/vec2";
 import { assert } from "../utils";
 
 /**
@@ -191,10 +191,6 @@ export function lerpTransforms(
 function lerpDegrees(a: number, b: number, t: number): number {
   const delta = ((((b - a) % 360) + 540) % 360) - 180;
   return a + delta * t;
-}
-
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
 }
 
 /** Collapse multiple translations into a single one, preserving other transforms. */

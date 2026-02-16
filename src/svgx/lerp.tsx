@@ -5,6 +5,7 @@ import { interpolatePath } from "d3-interpolate-path";
 import React, { cloneElement } from "react";
 import { shouldRecurseIntoChildren, Svgx } from ".";
 import { ErrorWithJSX } from "../ErrorBoundary";
+import { lerp } from "../math/vec2";
 import { emptyToUndefined } from "../utils";
 import { LayeredSvgx } from "./layers";
 import { lerpTransformString } from "./transform";
@@ -293,10 +294,6 @@ export function lerpSvgx(a: Svgx, b: Svgx, t: number): Svgx {
     ...(lerpedTransform ? { transform: lerpedTransform } : {}),
     children: emptyToUndefined(lerpedChildren),
   });
-}
-
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
 }
 
 // # Emerge animation support

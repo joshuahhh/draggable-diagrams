@@ -282,22 +282,6 @@ export function layeredPrefixIds(
   return { byId: prefixedById, descendents: null };
 }
 
-export function layeredStripIdPrefix(
-  layered: LayeredSvgx,
-  prefix: string,
-): LayeredSvgx {
-  const strippedById = new Map<string, Svgx>();
-  for (const [key, element] of layered.byId.entries()) {
-    if (key.startsWith(prefix)) {
-      const newId = key.slice(prefix.length);
-      strippedById.set(newId, cloneElement(element, { id: newId }));
-    } else {
-      strippedById.set(key, element);
-    }
-  }
-  return { byId: strippedById, descendents: null };
-}
-
 export function layeredShiftZIndices(
   layered: LayeredSvgx,
   shift: number,
