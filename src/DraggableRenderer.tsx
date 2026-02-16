@@ -7,7 +7,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { assert } from "vitest";
 import {
   DragBehavior,
   DragBehaviorInitContext,
@@ -38,7 +37,7 @@ import { globalToLocal, localToGlobal, parseTransform } from "./svgx/transform";
 import { useAnimationLoop } from "./useAnimationLoop";
 import { CatchToRenderError, useCatchToRenderError } from "./useRenderError";
 import { useStateWithRef } from "./useStateWithRef";
-import { assertNever, memoGeneric, pipe, throwError } from "./utils";
+import { assert, assertNever, memoGeneric, pipe, throwError } from "./utils";
 
 function dragParamsFromEvent(e: {
   altKey: boolean;
