@@ -1,5 +1,4 @@
 import { memo, ReactNode } from "react";
-import { ErrorWithJSX } from "./ErrorBoundary";
 
 export function assertNever(_never: never, message?: string): never {
   throw new Error(
@@ -40,16 +39,6 @@ export function assertDefined<T>(
   return x;
 }
 
-export function assertWithJSX(
-  condition: boolean,
-  msg: string,
-  jsx: () => ReactNode,
-): asserts condition {
-  if (!condition) {
-    throw new ErrorWithJSX(msg, jsx());
-  }
-}
-
 export function assertWarning(
   condition: boolean,
   msg?: string | (() => void),
@@ -69,24 +58,6 @@ export function assertWarning(
 // this one is symmetric
 export function clamp(a: number, b: number, c: number): number {
   return a + b + c - Math.max(a, b, c) - Math.min(a, b, c);
-}
-
-export function insertImm<T>(arr: T[], idx: number, val: T): T[] {
-  const newArr = arr.slice();
-  newArr.splice(idx, 0, val);
-  return newArr;
-}
-
-export function removeImm<T>(arr: T[], idx: number): T[] {
-  const newArr = arr.slice();
-  newArr.splice(idx, 1);
-  return newArr;
-}
-
-export function setImm<T>(arr: T[], idx: number, val: T): T[] {
-  const newArr = arr.slice();
-  newArr[idx] = val;
-  return newArr;
 }
 
 export function defined<T>(x: T | undefined | null): x is T {
@@ -172,24 +143,13 @@ export function hasKey<K extends string | number | symbol>(
   return isObject(x) && key in x;
 }
 
-export function hasType(x: unknown, type: string): boolean {
-  return isObject(x) && hasKey(x, "type") && x.type === type;
-}
-
 export function emptyToUndefined<T>(arr: T[]): T[] | undefined {
   return arr.length === 0 ? undefined : arr;
 }
 
-export function noOp(): void {}
-
 export function throwError(): never {
   throw new Error("This function should not have been called");
 }
-
-/**
- * "Distributive" version of Omit, which works on union types.
- */
-export type DOmit<T, K extends keyof any> = T extends any ? Omit<T, K> : never;
 
 /**
  * version of React.memo that works with generic components, maybe.
@@ -230,12 +190,4 @@ export function templateLiteralTagOrNot<R>(fn: (input: string) => R) {
 
 export function makeId(): string {
   return Math.random().toString(36).slice(2, 10);
-}
-
-export type Entries<T> = {
-  [K in keyof T]: [K, T[K]];
-}[keyof T][];
-
-export function objectEntries<T extends object>(obj: T): Entries<T> {
-  return Object.entries(obj) as Entries<T>;
 }
