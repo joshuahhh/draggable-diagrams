@@ -1,4 +1,5 @@
 import { DragSpec, DragSpecData } from "./DragSpec";
+import { Transition } from "./transition";
 import { assertNever } from "./utils";
 
 export function DragSpecTreeView<T>({
@@ -182,15 +183,11 @@ function SpecNode<T>({
       </Box>
     );
   } else if (spec.type === "with-snap-radius") {
-    // activePath may be "with-snap-radius/..." or "with-snap-radius[snapped]/..."
-    // Strip either prefix for the child to match correctly
-    let childActivePath = activePath;
     const snapped = activePath?.startsWith("with-snap-radius[snapped]/");
-    if (snapped) {
-      childActivePath = activePath!.slice("with-snap-radius[snapped]/".length);
-    } else if (activePath?.startsWith("with-snap-radius/")) {
-      childActivePath = activePath.slice("with-snap-radius/".length);
-    }
+    const childActivePath = stripActivePathPrefix(
+      stripActivePathPrefix(activePath, "with-snap-radius[snapped]/"),
+      "with-snap-radius/",
+    );
     const options = [
       spec.transition && "transition",
       spec.chain && "chain",
@@ -222,19 +219,16 @@ function SpecNode<T>({
       />
     );
   } else if (spec.type === "with-drop-transition") {
-    let childActivePath = activePath;
-    if (activePath?.startsWith("with-drop-transition/")) {
-      childActivePath = activePath.slice("with-drop-transition/".length);
-    }
-    const t = spec.transition;
-    const transitionDesc = t
-      ? `${typeof t.easing === "function" ? "fn" : t.easing} ${t.duration}ms`
-      : "none";
     return (
-      <Box label={`withDropTransition (${transitionDesc})`}>
+      <Box
+        label={`withDropTransition (${describeTransition(spec.transition)})`}
+      >
         <SpecNode
           spec={spec.spec}
-          activePath={childActivePath}
+          activePath={stripActivePathPrefix(
+            activePath,
+            "with-drop-transition/",
+          )}
           path={path}
           colorMap={colorMap}
         />
@@ -251,19 +245,16 @@ function SpecNode<T>({
       />
     );
   } else if (spec.type === "with-branch-transition") {
-    let childActivePath = activePath;
-    if (activePath?.startsWith("with-branch-transition/")) {
-      childActivePath = activePath.slice("with-branch-transition/".length);
-    }
-    const t = spec.transition;
-    const transitionDesc = t
-      ? `${typeof t.easing === "function" ? "fn" : t.easing} ${t.duration}ms`
-      : "none";
     return (
-      <Box label={`withBranchTransition (${transitionDesc})`}>
+      <Box
+        label={`withBranchTransition (${describeTransition(spec.transition)})`}
+      >
         <SpecNode
           spec={spec.spec}
-          activePath={childActivePath}
+          activePath={stripActivePathPrefix(
+            activePath,
+            "with-branch-transition/",
+          )}
           path={path}
           colorMap={colorMap}
         />
@@ -346,6 +337,23 @@ function Slot({
       {children}
     </div>
   );
+}
+
+/** Strip a prefix from activePath if present, for passing down to child nodes. */
+function stripActivePathPrefix(
+  activePath: string | null,
+  prefix: string,
+): string | null {
+  if (activePath?.startsWith(prefix)) {
+    return activePath.slice(prefix.length);
+  }
+  return activePath;
+}
+
+/** Format a Transition for display. */
+function describeTransition(t: Transition | false): string {
+  if (!t) return "none";
+  return `${typeof t.easing === "function" ? "fn" : t.easing} ${t.duration}ms`;
 }
 
 function truncate(s: string, maxLen: number): string {
