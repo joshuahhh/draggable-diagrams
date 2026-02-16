@@ -25,3 +25,6 @@ dist-ssr
 
 # Peggy output
 /src/peggy/pattern.ts
+
+# Claude, for now
+/.claude
