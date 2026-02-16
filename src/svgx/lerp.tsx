@@ -414,6 +414,31 @@ function createSyntheticBefore(newElement: Svgx, originElement: Svgx): Svgx {
   });
 }
 
+/**
+ * For each element in `source` that has a `data-emerge-from` attribute and is
+ * missing from `target`, inject a synthetic "before" version into `target`
+ * using the referenced origin element from `origins`.
+ */
+function augmentWithEmerging(
+  target: Map<string, Svgx>,
+  source: Map<string, Svgx>,
+  origins: Map<string, Svgx>,
+) {
+  for (const [key, val] of source) {
+    if (!target.has(key)) {
+      const emergeFromId = (val.props as Record<string, unknown>)[
+        "data-emerge-from"
+      ];
+      if (emergeFromId && typeof emergeFromId === "string") {
+        const originElement = origins.get(emergeFromId);
+        if (originElement) {
+          target.set(key, createSyntheticBefore(val, originElement));
+        }
+      }
+    }
+  }
+}
+
 export function lerpLayered(
   a: LayeredSvgx,
   b: LayeredSvgx,
@@ -423,32 +448,8 @@ export function lerpLayered(
   // Bidirectional handling is needed because Delaunay interpolation can flip direction.
   const augmentedA = new Map(a.byId);
   const augmentedB = new Map(b.byId);
-
-  // Forward: elements in B that emerge from elements in A
-  for (const [key, bVal] of b.byId) {
-    if (!augmentedA.has(key)) {
-      const emergeFromId = (bVal.props as any)["data-emerge-from"];
-      if (emergeFromId && typeof emergeFromId === "string") {
-        const originElement = a.byId.get(emergeFromId);
-        if (originElement) {
-          augmentedA.set(key, createSyntheticBefore(bVal, originElement));
-        }
-      }
-    }
-  }
-
-  // Reverse: elements in A that emerge from elements in B
-  for (const [key, aVal] of a.byId) {
-    if (!augmentedB.has(key)) {
-      const emergeFromId = (aVal.props as any)["data-emerge-from"];
-      if (emergeFromId && typeof emergeFromId === "string") {
-        const originElement = b.byId.get(emergeFromId);
-        if (originElement) {
-          augmentedB.set(key, createSyntheticBefore(aVal, originElement));
-        }
-      }
-    }
-  }
+  augmentWithEmerging(augmentedA, b.byId, a.byId);
+  augmentWithEmerging(augmentedB, a.byId, b.byId);
 
   // Main lerp loop
   const result = new Map<string, Svgx>();
