@@ -1,4 +1,3 @@
-import { Falsey } from "lodash";
 import "react";
 import { DragSpecBrand } from "./DragSpec";
 import { DragParams } from "./draggable";
@@ -15,7 +14,11 @@ declare module "react" {
      * @example
      * <rect data-on-drag={() => d.between([state1, state2])} />
      */
-    "data-on-drag"?: ((params: DragParams) => DragSpecBrand) | Falsey;
+    "data-on-drag"?:
+      | ((params: DragParams) => DragSpecBrand)
+      | false
+      | null
+      | undefined;
 
     "data-z-index"?: number;
     "data-transition"?: boolean;
