@@ -52,4 +52,5 @@ export const demoList = [
   "bluefish-perm",
   "emerge-from",
   "spec-workshop",
+  "floating-dynamic-switch",
 ];

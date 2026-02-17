@@ -12,6 +12,7 @@ import { Many, assert, manyToArray } from "./utils";
 export type DragSpecData<T> =
   | DragSpecJust<T>
   | DragSpecFloating<T>
+  | DragSpecFloatingDynamic<T>
   | DragSpecClosest<T>
   | DragSpecWithBackground<T>
   | DragSpecAndThen<T>
@@ -33,6 +34,13 @@ export type DragSpecFloating<T> = {
   type: "floating";
   state: T;
   ghost: SVGProps<SVGElement> | undefined;
+};
+
+export type DragSpecFloatingDynamic<T> = {
+  type: "floating-dynamic";
+  spec: DragSpecData<T>;
+  ghost: SVGProps<SVGElement> | undefined;
+  tether: ((dist: number) => number) | undefined;
 };
 
 export type DragSpecClosest<T> = {
@@ -171,6 +179,19 @@ export interface DragSpecMethods<T> {
    * behavior's drop target in a `closest`.
    */
   withDistance(f: (distance: number) => number): DragSpec<T>;
+
+  /**
+   * Wrap this behavior with floating: on each frame, the inner
+   * behavior's rendered output is used as a dynamic backdrop (with
+   * the dragged element extracted), and the original dragged element
+   * floats freely on top. Optionally provide a ghost and/or a tether
+   * function to limit how far the float deviates from the inner
+   * behavior's element position.
+   */
+  withFloating(opts?: {
+    ghost?: SVGProps<SVGElement> | true;
+    tether?: (dist: number) => number;
+  }): DragSpec<T>;
 }
 
 const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
@@ -210,6 +231,14 @@ const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
   },
   withDistance(f) {
     return attachMethods({ type: "with-distance", spec: this, f });
+  },
+  withFloating({ ghost, tether } = {}) {
+    return attachMethods({
+      type: "floating-dynamic",
+      spec: this,
+      ghost: ghost === true ? { opacity: 0.5 } : ghost,
+      tether,
+    });
   },
 };
 

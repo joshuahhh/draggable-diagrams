@@ -472,9 +472,26 @@ export function lerpLayered(
     }
   }
 
+  // Merge descendant maps from both inputs. Lerping preserves the
+  // parent-child nesting structure, so the descendant info stays valid.
+  let descendents: Map<string, Set<string>> | null = null;
+  if (a.descendents && b.descendents) {
+    descendents = new Map(a.descendents);
+    for (const [key, bSet] of b.descendents) {
+      const existing = descendents.get(key);
+      if (existing) {
+        for (const id of bSet) existing.add(id);
+      } else {
+        descendents.set(key, new Set(bSet));
+      }
+    }
+  } else {
+    descendents = a.descendents ?? b.descendents;
+  }
+
   return {
     byId: result,
-    descendents: null,
+    descendents,
   };
 }
 

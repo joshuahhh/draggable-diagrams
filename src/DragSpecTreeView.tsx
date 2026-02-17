@@ -53,6 +53,26 @@ function SpecNode<T>({
     return (
       <Box label="floating" active={active} color={colorMap?.get(fullPath)} />
     );
+  } else if (spec.type === "floating-dynamic") {
+    const prefix = path + "floating-dynamic/";
+    let childActivePath = activePath;
+    if (activePath?.startsWith(prefix)) {
+      childActivePath = activePath.slice(prefix.length);
+    }
+    return (
+      <Box
+        label="floatingDynamic"
+        active={activePath?.startsWith(path + "floating-dynamic") ?? false}
+        color={colorMap?.get(path + "floating-dynamic")}
+      >
+        <SpecNode
+          spec={spec.spec}
+          activePath={childActivePath}
+          path={prefix}
+          colorMap={colorMap}
+        />
+      </Box>
+    );
   } else if (spec.type === "vary") {
     const fullPath = path + "vary";
     const active = activePath === fullPath;

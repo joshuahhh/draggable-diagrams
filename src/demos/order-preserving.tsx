@@ -157,9 +157,8 @@ function dragSpec(draggedNodeId: string, ctx: Ctx) {
 
   return ctx.d
     .between(newMorphs.map((morph) => ({ morph })))
-    .withSnapRadius(20, {
-      transition: true,
-    });
+    .withFloating()
+    .withSnapRadius(20, { transition: true });
 }
 
 // # Drawing constants
