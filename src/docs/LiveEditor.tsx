@@ -10,6 +10,7 @@ import { createElement, useEffect, useMemo, useState } from "react";
 import { useDemoSettings } from "../demo/ui";
 import { Draggable } from "../draggable";
 import { DraggableRenderer } from "../DraggableRenderer";
+import { lessThan } from "../DragSpec";
 import { ErrorBoundary } from "../ErrorBoundary";
 import { normalizeIndent } from "../normalizeIndent";
 import { path, rotateDeg, rotateRad, scale, translate } from "../svgx/helpers";
@@ -24,6 +25,7 @@ const GLOBALS = {
   rotateRad,
   scale,
   path,
+  lessThan,
 } as const;
 
 interface LiveEditorProps {

@@ -194,13 +194,15 @@ For instance, suppose we wanted to say that the dot can only be dragged to the n
           fill={name_to_color[state.name]}
           stroke="white" stroke-width={3}
           style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))" }}
-          data-on-drag={() =>
-            state.name === "r"
-            ? d.between({ name: "r" }, { name: "b" })
-            : state.name === "b"
-            ? d.between({ name: "b" }, { name: "g" })
-            : d.between({ name: "g" }, { name: "r" })
-          }
+          data-on-drag={() => {
+            if (state.name === "r") {
+              return d.between({ name: "r" }, { name: "b" });
+            } else if (state.name === "b") {
+              return d.between({ name: "b" }, { name: "g" });
+            } else {
+              return d.between({ name: "g" }, { name: "r" });
+            }
+          }}
         />
       </g>
     );
@@ -288,11 +290,13 @@ Do you want to try your hand first? It would be helpful for us to see your think
 `}
 />
 
-[Q: How did state generation feel?]
-
 Cool, great work!
 
+[Q: How did state generation feel?]
+
 Q: Is there anything about the produced interaction that feels unsatisfying? Or another aspect you might want to play with?
+
+[could do draggedId-based z-index?]
 
 We want to show you some other things you can do with this. For instance, right now everything moves around smoothly. But you might want to add a "snap" behavior, which causes the element to snap into place when it's close to a target. [TODO: how might you do this traditionally?] [TODO: how might you do this here?]
 
@@ -487,14 +491,18 @@ And BTW we can do constraints:
           r={R}
           fill="white" stroke="#d1d5db" stroke-width={1.5}
           style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.15))" }}
-          data-on-drag={() => d.vary(state, ["value"], constraint: [(s) => s.value])}
+          data-on-drag={() =>
+          d.vary(state, ["value"], {
+          constraint: (s) => [lessThan(0, s.value), lessThan(s.value, W)],
+        })
+          }
         />
       </g>
     );
 `}
 />
 
-Or a rotary dial:
+Here's something for you to try: a rotary dial, so far without a drag behavior.
 
 <LiveEditor
   code={`
@@ -511,7 +519,6 @@ Or a rotary dial:
         <g
           id="dial"
           transform={translate(CX, CY) + rotateDeg(state.angle)}
-          data-on-drag={() => d.vary(state, ["angle"])}
         >
           <circle
             r={R}
@@ -538,9 +545,56 @@ Or a rotary dial:
 `}
 />
 
+Solution:
+
+
+<LiveEditor
+  code={`
+    type State = { angle: number };
+
+    const initialState: State = { angle: 0 };
+
+    const CX = 200, CY = 120, R = 60;
+    const TICKS = 12;
+
+    const draggable: Draggable<State> = ({ state, d }) => (
+      <g>
+        {/* Dial */}
+        <g
+          id="dial"
+          transform={translate(CX, CY) + rotateDeg(state.angle)}
+        >
+          <circle
+            r={R}
+            fill="#f9fafb" stroke="#d1d5db" stroke-width={2}
+            style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.15))" }}
+            data-on-drag={() => d.vary(state, ["angle"])}
+          />
+          <line
+            x1={0} y1={0} x2={R - 14} y2={0}
+            stroke="#374151" stroke-width={3} stroke-linecap="round"
+          />
+        </g>
+
+        {/* Tick marks */}
+        {_.range(TICKS).map((i) => (
+          <line
+            transform={translate(CX, CY) + rotateDeg(i * 360 / TICKS)}
+            x1={R + 6} y1={0} x2={R + 16} y2={0}
+            stroke="#9ca3af" stroke-width={2} stroke-linecap="round"
+          />
+        ))}
+      </g>
+    );
+
+`}
+/>
+
+
 ## Third task: Composition
 
-TODO: Be more incremental first?
+TODO: Be more incremental first? Nah.
+
 
 <LiveEditor
   code={`
@@ -549,9 +603,9 @@ TODO: Be more incremental first?
 
     const initialState: State = {
       blocks: [
-        { id: "Record", pos: 10, track: 0, color: "#3b82f6" },
-        { id: "Edit", pos: 100, track: 1, color: "#ef4444" },
-        { id: "Mix", pos: 50, track: 2, color: "#22c55e" },
+        { id: "Cats", pos: 10, track: 0, color: "#3b82f6" },
+        { id: "Dogs", pos: 100, track: 1, color: "#ef4444" },
+        { id: "Clouds", pos: 50, track: 2, color: "#22c55e" },
       ],
     };
 
@@ -575,6 +629,76 @@ TODO: Be more incremental first?
             data-on-drag={() =>
               d.closest(_.range(3).map((t) =>
                 d.vary(produce(state, (draft) => { draft.blocks[i].track = t; }), ["blocks", i, "pos"])
+              ))
+            }
+          >
+            <rect
+              width={BW} height={TH} rx={6} fill={block.color}
+              style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.15))" }}
+            />
+            <text
+              x={BW / 2} y={TH / 2}
+              text-anchor="middle" dominant-baseline="central"
+              font-size={13} font-weight="600" fill="white"
+            >
+              {block.id}
+            </text>
+          </g>
+        ))}
+      </g>
+    );
+
+`}
+/>
+
+With overlap avoidance:
+
+<LiveEditor
+  code={`
+    type Block = { id: string; pos: number; track: number; color: string };
+    type State = { blocks: Block[] };
+
+    const initialState: State = {
+      blocks: [
+        { id: "Cats", pos: 10, track: 0, color: "#3b82f6" },
+        { id: "Dogs", pos: 100, track: 1, color: "#ef4444" },
+        { id: "Clouds", pos: 50, track: 2, color: "#22c55e" },
+      ],
+    };
+
+    const TH = 36, GAP = 6, BW = 80, TW = 340;
+
+    function amountOfOverlap(state: State): number {
+      let total = 0;
+      for (let i = 0; i < state.blocks.length; i++) {
+        for (let j = i + 1; j < state.blocks.length; j++) {
+          const a = state.blocks[i], b = state.blocks[j];
+          if (a.track !== b.track) continue;
+          const overlap = Math.min(a.pos + BW, b.pos + BW) - Math.max(a.pos, b.pos);
+          if (overlap > 0) total += overlap;
+        }
+      }
+      return total;
+    }
+
+    const draggable: Draggable<State> = ({ state, d }) => (
+      <g transform={translate(10, 10)}>
+        {/* Track backgrounds */}
+        {_.range(3).map((t) => (
+          <rect
+            y={t * (TH + GAP)} width={TW} height={TH}
+            rx={4} fill="#f3f4f6" stroke="#e5e7eb" stroke-width={1}
+          />
+        ))}
+
+        {/* Blocks */}
+        {state.blocks.map((block, i) => (
+          <g
+            id={block.id}
+            transform={translate(block.pos, block.track * (TH + GAP))}
+            data-on-drag={() =>
+              d.closest(_.range(3).map((t) =>
+                d.vary(produce(state, (draft) => { draft.blocks[i].track = t; }), ["blocks", i, "pos"], {constraint: amountOfOverlap})
               ))
             }
           >
