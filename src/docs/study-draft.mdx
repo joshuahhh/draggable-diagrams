@@ -32,9 +32,9 @@ We'll start by showing you the simplest thing you can make with our library – 
   code={`
     type State = { status: "on" | "off" };
 
-    const initialState: State = { status: "off" };
+    export const initialState: State ={ status: "off" };
 
-    const draggable: Draggable<State> = ({ state, d }) => (
+    export const draggable: Draggable<State> = ({ state, d }) => (
         <g transform={translate(70, 70)}>
           <rect width={120} height={60} rx={30} fill={state.status === "on" ? "#22c55e" : "#d1d5db"} />
           <circle
@@ -65,7 +65,7 @@ Ok, now we're going to add dragging to an interface that doesn't have it yet. He
   code={`
     type State = { name: "r" | "g" | "b" };
 
-    const initialState: State = { name: "r" };
+    export const initialState: State ={ name: "r" };
 
     const name_to_pos = {
       r: { x: 50, y: 20 },
@@ -79,7 +79,7 @@ Ok, now we're going to add dragging to an interface that doesn't have it yet. He
       b: "#3b82f6",
     };
 
-    const draggable: Draggable<State> = ({ state, d }) => (
+    export const draggable: Draggable<State> = ({ state, d }) => (
       <g transform={translate(60, 30)}>
         {/* Target dots */}
         {(["r", "g", "b"] as const).map((name) => (
@@ -110,7 +110,7 @@ Based on your experience with the switch, can you explain how you think this mig
   code={`
     type State = { name: "r" | "g" | "b" };
 
-    const initialState: State = { name: "r" };
+    export const initialState: State ={ name: "r" };
 
     const name_to_pos = {
       r: { x: 50, y: 20 },
@@ -124,7 +124,7 @@ Based on your experience with the switch, can you explain how you think this mig
       b: "#3b82f6",
     };
 
-    const draggable: Draggable<State> = ({ state, d }) => (
+    export const draggable: Draggable<State> = ({ state, d }) => (
       <g transform={translate(60, 30)}>
         {/* Target dots */}
         {(["r", "g", "b"] as const).map((name) => (
@@ -161,7 +161,7 @@ For instance, suppose we wanted to say that the dot can only be dragged to the n
   code={`
     type State = { name: "r" | "g" | "b" };
 
-    const initialState: State = { name: "r" };
+    export const initialState: State ={ name: "r" };
 
     const name_to_pos = {
       r: { x: 50, y: 20 },
@@ -175,7 +175,7 @@ For instance, suppose we wanted to say that the dot can only be dragged to the n
       b: "#3b82f6",
     };
 
-    const draggable: Draggable<State> = ({ state, d }) => (
+    export const draggable: Draggable<State> = ({ state, d }) => (
       <g transform={translate(60, 30)}>
         {/* Target dots */}
         {(["r", "g", "b"] as const).map((name) => (
@@ -228,11 +228,11 @@ Here's some starter code which just renders a list:
   code={`
     type State = { items: string[] };
 
-    const initialState: State = { items: ["Apples", "Bananas", "Cherries", "Dates"] };
+    export const initialState: State ={ items: ["Apples", "Bananas", "Cherries", "Dates"] };
 
     const W = 160, H = 40, GAP = 8;
 
-    const draggable: Draggable<State> = ({ state, d }) => (
+    export const draggable: Draggable<State> = ({ state, d }) => (
       <g transform={translate(20, 20)}>
         {state.items.map((item, i) => (
           <g
@@ -261,11 +261,11 @@ Do you want to try your hand first? It would be helpful for us to see your think
   code={`
     type State = { items: string[] };
 
-    const initialState: State = { items: ["Apples", "Bananas", "Cherries", "Dates"] };
+    export const initialState: State ={ items: ["Apples", "Bananas", "Cherries", "Dates"] };
 
     const W = 160, H = 40, GAP = 8;
 
-    const draggable: Draggable<State> = ({ state, d }) => (
+    export const draggable: Draggable<State> = ({ state, d }) => (
       <g transform={translate(20, 20)}>
         {state.items.map((item, i) => (
           <g
@@ -304,11 +304,11 @@ We want to show you some other things you can do with this. For instance, right 
   code={`
     type State = { items: string[] };
 
-    const initialState: State = { items: ["Apples", "Bananas", "Cherries", "Dates"] };
+    export const initialState: State ={ items: ["Apples", "Bananas", "Cherries", "Dates"] };
 
     const W = 160, H = 40, GAP = 8;
 
-    const draggable: Draggable<State> = ({ state, d }) => (
+    export const draggable: Draggable<State> = ({ state, d }) => (
       <g transform={translate(20, 20)}>
         {state.items.map((item, i) => (
           <g
@@ -339,11 +339,11 @@ Ok, now here's a bigger change. You'll notice that, right now, the dragged eleme
   code={`
     type State = { items: string[] };
 
-    const initialState: State = { items: ["Apples", "Bananas", "Cherries", "Dates"] };
+    export const initialState: State ={ items: ["Apples", "Bananas", "Cherries", "Dates"] };
 
     const W = 160, H = 40, GAP = 8;
 
-    const draggable: Draggable<State> = ({ state, d }) => (
+    export const draggable: Draggable<State> = ({ state, d }) => (
       <g transform={translate(20, 20)}>
         {state.items.map((item, i) => (
           <g
@@ -376,11 +376,11 @@ Another optional riff: ghosts!
   code={`
     type State = { items: string[] };
 
-    const initialState: State = { items: ["Apples", "Bananas", "Cherries", "Dates"] };
+    export const initialState: State ={ items: ["Apples", "Bananas", "Cherries", "Dates"] };
 
     const W = 160, H = 40, GAP = 8;
 
-    const draggable: Draggable<State> = ({ state, d }) => (
+    export const draggable: Draggable<State> = ({ state, d }) => (
       <g transform={translate(20, 20)}>
         {state.items.map((item, i) => (
           <g
@@ -415,11 +415,11 @@ So far, the state has been discrete — a finite set of options. But sometimes y
   code={`
     type State = { value: number };
 
-    const initialState: State = { value: 100 };
+    export const initialState: State ={ value: 100 };
 
     const W = 240, H = 6, R = 12;
 
-    const draggable: Draggable<State> = ({ state, d }) => (
+    export const draggable: Draggable<State> = ({ state, d }) => (
       <g transform={translate(30, 60)}>
         {/* Track */}
         <rect width={W} height={H} rx={H / 2} fill="#e5e7eb" y={-H / 2} />
@@ -444,11 +444,11 @@ How do you think our library might approach this?
   code={`
     type State = { value: number };
 
-    const initialState: State = { value: 100 };
+    export const initialState: State ={ value: 100 };
 
     const W = 240, H = 6, R = 12;
 
-    const draggable: Draggable<State> = ({ state, d }) => (
+    export const draggable: Draggable<State> = ({ state, d }) => (
       <g transform={translate(30, 60)}>
         {/* Track */}
         <rect width={W} height={H} rx={H / 2} fill="#e5e7eb" y={-H / 2} />
@@ -474,11 +474,11 @@ And BTW we can do constraints:
   code={`
     type State = { value: number };
 
-    const initialState: State = { value: 100 };
+    export const initialState: State ={ value: 100 };
 
     const W = 240, H = 6, R = 12;
 
-    const draggable: Draggable<State> = ({ state, d }) => (
+    export const draggable: Draggable<State> = ({ state, d }) => (
       <g transform={translate(30, 60)}>
         {/* Track */}
         <rect width={W} height={H} rx={H / 2} fill="#e5e7eb" y={-H / 2} />
@@ -508,12 +508,12 @@ Here's something for you to try: a rotary dial, so far without a drag behavior.
   code={`
     type State = { angle: number };
 
-    const initialState: State = { angle: 0 };
+    export const initialState: State ={ angle: 0 };
 
     const CX = 200, CY = 120, R = 60;
     const TICKS = 12;
 
-    const draggable: Draggable<State> = ({ state, d }) => (
+    export const draggable: Draggable<State> = ({ state, d }) => (
       <g>
         {/* Dial */}
         <g
@@ -552,12 +552,12 @@ Solution:
   code={`
     type State = { angle: number };
 
-    const initialState: State = { angle: 0 };
+    export const initialState: State ={ angle: 0 };
 
     const CX = 200, CY = 120, R = 60;
     const TICKS = 12;
 
-    const draggable: Draggable<State> = ({ state, d }) => (
+    export const draggable: Draggable<State> = ({ state, d }) => (
       <g>
         {/* Dial */}
         <g
@@ -601,7 +601,7 @@ TODO: Be more incremental first? Nah.
     type Block = { id: string; pos: number; track: number; color: string };
     type State = { blocks: Block[] };
 
-    const initialState: State = {
+    export const initialState: State ={
       blocks: [
         { id: "Cats", pos: 10, track: 0, color: "#3b82f6" },
         { id: "Dogs", pos: 100, track: 1, color: "#ef4444" },
@@ -611,7 +611,7 @@ TODO: Be more incremental first? Nah.
 
     const TH = 36, GAP = 6, BW = 80, TW = 340;
 
-    const draggable: Draggable<State> = ({ state, d }) => (
+    export const draggable: Draggable<State> = ({ state, d }) => (
       <g transform={translate(10, 10)}>
         {/* Track backgrounds */}
         {_.range(3).map((t) => (
@@ -658,7 +658,7 @@ With overlap avoidance:
     type Block = { id: string; pos: number; track: number; color: string };
     type State = { blocks: Block[] };
 
-    const initialState: State = {
+    export const initialState: State ={
       blocks: [
         { id: "Cats", pos: 10, track: 0, color: "#3b82f6" },
         { id: "Dogs", pos: 100, track: 1, color: "#ef4444" },
@@ -681,7 +681,7 @@ With overlap avoidance:
       return total;
     }
 
-    const draggable: Draggable<State> = ({ state, d }) => (
+    export const draggable: Draggable<State> = ({ state, d }) => (
       <g transform={translate(10, 10)}>
         {/* Track backgrounds */}
         {_.range(3).map((t) => (
@@ -729,9 +729,9 @@ What if you combine a slider and a switch? Here, the thumb slides vertically, an
   code={`
     type State = { pos: number; status: "on" | "off" };
 
-    const initialState: State = { pos: 80, status: "off" };
+    export const initialState: State ={ pos: 80, status: "off" };
 
-    const draggable: Draggable<State> = ({ state, d }) => (
+    export const draggable: Draggable<State> = ({ state, d }) => (
       <g transform={translate(50, 10)}>
         {/* Vertical track */}
         <rect x={-3} width={6} height={200} rx={3} fill="#e5e7eb" />
