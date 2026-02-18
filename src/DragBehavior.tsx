@@ -13,7 +13,6 @@ import {
   LayeredSvgx,
   accumulateTransforms,
   findByPathInLayered,
-  getAccumulatedTransform,
   layeredExtract,
   layeredMerge,
   layeredPrefixIds,
@@ -23,6 +22,7 @@ import {
 } from "./svgx/layers";
 import { lerpLayered, lerpLayered3 } from "./svgx/lerp";
 import { assignPaths, findByPath } from "./svgx/path";
+import { elementLocalToGlobal } from "./svgx/layers";
 import { globalToLocal, localToGlobal, parseTransform } from "./svgx/transform";
 import { Transition } from "./transition";
 import { assert, assertNever, manyToArray, pipe, throwError } from "./utils";
@@ -355,9 +355,7 @@ function varyBehavior<T extends object>(
     );
     const element = findByPath(ctx.draggedPath, content);
     if (!element) return Vec2(Infinity, Infinity);
-    const accTransform = getAccumulatedTransform(element);
-    const transforms = parseTransform(accTransform || "");
-    return localToGlobal(transforms, ctx.pointerLocal);
+    return elementLocalToGlobal(element, ctx.pointerLocal);
   };
 
   return (frame) => {
@@ -681,9 +679,7 @@ function getElementPosition<T extends object>(
 ): Vec2 {
   const element = findByPathInLayered(ctx.draggedPath, layered);
   if (!element) return Vec2(Infinity, Infinity);
-  const accTransform = getAccumulatedTransform(element);
-  const transforms = parseTransform(accTransform || "");
-  return localToGlobal(transforms, ctx.pointerLocal);
+  return elementLocalToGlobal(element, ctx.pointerLocal);
 }
 
 function DistanceLine({

@@ -1,7 +1,9 @@
 import React, { cloneElement, Fragment } from "react";
 import { Svgx, updateElement, updatePropsDownTree } from ".";
+import { Vec2, Vec2able } from "../math/vec2";
 import { assert, objectEntries } from "../utils";
 import { findByPath } from "./path";
+import { globalToLocal, localToGlobal, parseTransform } from "./transform";
 
 export type LayeredSvgx = {
   /**
@@ -139,6 +141,24 @@ function extractIdNodes(
 export function getAccumulatedTransform(element: Svgx): string | undefined {
   const props = element.props as any;
   return props[accumulatedTransformProp];
+}
+
+/** Convert a local point to global using an element's accumulated transform. */
+export function elementLocalToGlobal(
+  element: Svgx,
+  localPoint: Vec2able,
+): Vec2 {
+  const transforms = parseTransform(getAccumulatedTransform(element) || "");
+  return localToGlobal(transforms, localPoint);
+}
+
+/** Convert a global point to local using an element's accumulated transform. */
+export function elementGlobalToLocal(
+  element: Svgx,
+  globalPoint: Vec2able,
+): Vec2 {
+  const transforms = parseTransform(getAccumulatedTransform(element) || "");
+  return globalToLocal(transforms, globalPoint);
 }
 
 function combineTransforms(t1: string, t2: string): string {

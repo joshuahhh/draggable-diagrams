@@ -32,7 +32,8 @@ import {
 } from "./svgx/layers";
 import { lerpLayered } from "./svgx/lerp";
 import { assignPaths, findByPath, getPath } from "./svgx/path";
-import { globalToLocal, localToGlobal, parseTransform } from "./svgx/transform";
+import { elementGlobalToLocal } from "./svgx/layers";
+import { localToGlobal, parseTransform } from "./svgx/transform";
 import {
   Transition,
   TransitionLike,
@@ -647,9 +648,7 @@ function postProcessForInteraction<T extends object>(
             const draggedPath = getPath(el);
             assert(!!draggedPath, "Dragged element must have a path");
 
-            const accTransform = getAccumulatedTransform(el);
-            const transforms = parseTransform(accTransform || "");
-            const pointerLocal = globalToLocal(transforms, pointer);
+            const pointerLocal = elementGlobalToLocal(el, pointer);
 
             const behaviorCtxWithoutFloat = {
               draggable: ctx.draggable,
