@@ -181,70 +181,14 @@ export function DraggableRenderer<T extends object>({
   // Animation loop: update dragging states and spring decay each frame.
   useAnimationLoop(
     catchToRenderError(() => {
-      const ds = dragStateRef.current;
-      if (ds.type === "dragging") {
-        const pointer = pointerRef.current;
-        if (!pointer) return;
-        const frame: DragFrame = { pointer, pointerStart: ds.pointerStart };
-        const result = ds.behavior(frame);
-
-        // Handle chaining: restart drag from new state
-        const updatedDs: DragState<T> & { type: "dragging" } = {
-          ...ds,
-          result,
-        };
-        const chained = processChainNow(updatedDs, frame);
-        if (chained) {
-          setDragState(chained.dragState);
-          onDebugDragInfoRef.current?.(chained.debugInfo);
-          return;
-        }
-
-        let springingFrom = ds.springingFrom;
-
-        // Detect activePath change → start new spring from current display
-        if (result.activePath !== ds.result.activePath) {
-          springingFrom = makeSpringingFrom(result.activePathTransition, () =>
-            runSpring(springingFrom, ds.result.rendered),
-          );
-        }
-
-        // Clear expired spring
-        if (
-          springingFrom &&
-          performance.now() - springingFrom.time >=
-            springingFrom.transition?.duration!
-        ) {
-          springingFrom = null;
-        }
-
-        const newState: DragState<T> = {
-          ...ds,
-          result,
-          springingFrom: springingFrom,
-        };
-        setDragState(newState);
-        onDebugDragInfoRef.current?.({
-          type: "dragging",
-          spec: ds.spec,
-          behaviorCtx: ds.behaviorCtx,
-          activePath: result.activePath,
-          pointerStart: ds.pointerStart,
-          draggedId: ds.draggedId,
-          dropState: result.dropState,
-        });
-      } else if (ds.type === "idle" && ds.springingFrom) {
-        if (
-          performance.now() - ds.springingFrom.time >=
-          ds.springingFrom.transition.duration
-        ) {
-          const newState: DragState<T> = { ...ds, springingFrom: null };
-          setDragState(newState);
-        } else {
-          // Force re-render so spring progress advances
-          const newState: DragState<T> = { ...ds };
-          setDragState(newState);
-        }
+      const result = advanceFrame(
+        dragStateRef.current,
+        pointerRef.current,
+        performance.now(),
+      );
+      if (result) {
+        setDragState(result.dragState);
+        onDebugDragInfoRef.current?.(result.debugInfo);
       }
     }),
   );
@@ -484,6 +428,61 @@ function debugInfoFromDragState<T extends object>(
     draggedId: ds.draggedId,
     dropState: ds.result.dropState,
   };
+}
+
+function advanceFrame<T extends object>(
+  ds: DragState<T>,
+  pointer: Vec2 | undefined,
+  now: number,
+): { dragState: DragState<T>; debugInfo: DebugDragInfo<T> } | null {
+  if (ds.type === "dragging") {
+    if (!pointer) return null;
+    const frame: DragFrame = { pointer, pointerStart: ds.pointerStart };
+    const result = ds.behavior(frame);
+
+    // Handle chaining: restart drag from new state
+    const updatedDs: DragState<T> & { type: "dragging" } = { ...ds, result };
+    const chained = processChainNow(updatedDs, frame);
+    if (chained) return chained;
+
+    let springingFrom = ds.springingFrom;
+
+    // Detect activePath change → start new spring from current display
+    if (result.activePath !== ds.result.activePath) {
+      springingFrom = makeSpringingFrom(result.activePathTransition, () =>
+        runSpring(springingFrom, ds.result.rendered),
+      );
+    }
+
+    // Clear expired spring
+    if (
+      springingFrom &&
+      now - springingFrom.time >= springingFrom.transition?.duration!
+    ) {
+      springingFrom = null;
+    }
+
+    return {
+      dragState: { ...ds, result, springingFrom },
+      debugInfo: debugInfoFromDragState({ ...ds, result }),
+    };
+  }
+
+  if (ds.type === "idle" && ds.springingFrom) {
+    if (now - ds.springingFrom.time >= ds.springingFrom.transition.duration) {
+      return {
+        dragState: { ...ds, springingFrom: null },
+        debugInfo: { type: "idle", state: ds.state },
+      };
+    }
+    // Force re-render so spring progress advances
+    return {
+      dragState: { ...ds },
+      debugInfo: { type: "idle", state: ds.state },
+    };
+  }
+
+  return null;
 }
 
 /**
