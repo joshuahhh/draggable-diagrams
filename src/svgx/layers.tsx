@@ -1,6 +1,6 @@
 import React, { cloneElement, Fragment } from "react";
 import { Svgx, updateElement, updatePropsDownTree } from ".";
-import { assert } from "../utils";
+import { assert, objectEntries } from "../utils";
 import { findByPath } from "./path";
 
 export type LayeredSvgx = {
@@ -159,10 +159,10 @@ export function drawLayered(layered: LayeredSvgx): Svgx {
         })
         .map(([key, element]) => (
           <Fragment key={key}>
-            {updatePropsDownTree(element, (props) => {
-              // find data- props with fancy values
-              const newProps: any = {};
-              for (const [propName, propValue] of Object.entries(props)) {
+            {updatePropsDownTree(element, (el) => {
+              // Strip non-serializable data- props (e.g. data-on-drag functions)
+              const newProps: React.SVGProps<SVGElement> = {};
+              for (const [propName, propValue] of objectEntries(el.props)) {
                 if (
                   propName.startsWith("data-") &&
                   typeof propValue !== "string" &&

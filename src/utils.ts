@@ -1,5 +1,13 @@
 import { memo, ReactNode } from "react";
 
+type Entries<T> = {
+  [K in keyof T]-?: [K, T[K]];
+}[keyof T][];
+
+export function objectEntries<T extends object>(obj: T): Entries<T> {
+  return Object.entries(obj) as Entries<T>;
+}
+
 export function assertNever(_never: never, message?: string): never {
   throw new Error(
     message || `Reached unreachable code: unexpected value ${_never}`,
