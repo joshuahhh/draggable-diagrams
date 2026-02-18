@@ -182,8 +182,8 @@ export default demo(
   () => (
     <div>
       <DemoNotes>
-        This shows kinda-hacky ways to insert and remove items from a draggable
-        diagram. Much to consider.
+        This shows kinda-hacky ways to insert and remove items from a draggable.
+        Much to consider.
       </DemoNotes>
       <DemoDraggable
         draggable={draggable}

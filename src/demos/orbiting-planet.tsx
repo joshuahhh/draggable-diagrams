@@ -4,8 +4,7 @@ import { Draggable } from "../draggable";
 import { demo } from "../demo";
 import { translate } from "../svgx/helpers";
 
-// New v2-only demo: a planet that can orbit around different stars.
-// Demonstrates closest(stars.map(() => vary(...))).
+// A planet that can orbit around different stars.
 
 const STARS = [
   { x: 100, y: 150, color: "#e8b730", label: "A" },

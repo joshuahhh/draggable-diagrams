@@ -6,8 +6,6 @@ import { DemoDraggable, DemoNotes } from "../demo/ui";
 import { Draggable } from "../draggable";
 import { translate } from "../svgx/helpers";
 
-// v2 port of demo-diagrams/canvas-of-lists.tsx
-
 type State = {
   rows: Record<
     string,

@@ -4,9 +4,7 @@ export function IndexPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
       <div className="text-center py-10 px-5 max-w-3xl mx-auto">
-        <h1 className="text-4xl font-normal text-gray-800 mb-12">
-          Draggable Diagrams
-        </h1>
+        <h1 className="text-4xl font-normal text-gray-800 mb-12">Draggables</h1>
 
         <div className="flex flex-col gap-4 items-center">
           <Link

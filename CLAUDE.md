@@ -25,11 +25,12 @@ npm run typecheck # Type check
 | `src/draggable.tsx` | `Draggable<T>` type, `Drag`, `SetState`, `OnDragPropValue` |
 | `src/DraggableRenderer.tsx` | Low-level component that runs a `Draggable` with drag handling, spring animation |
 | `src/DragSpec.tsx` | `DragSpec<T>` union type + constructors (`between`, `just`, `floating`, `closest`, `vary`, `andThen`, `withSnapRadius`, etc.) |
-| `src/demo-ui.tsx` | `DemoDraggable` (wraps `DraggableRenderer` with debug UI), `DemoSettingsProvider`, `DemoSettingsBar`, `ConfigPanel`, `ConfigCheckbox`, `ConfigSelect`, `DemoNotes` |
-| `src/demos.tsx` | Demo registry — array of `{ id, Component }` |
-| `src/demo-diagrams/` | Individual demo implementations |
-| `src/DemoPage.tsx` | Gallery page showing all demos |
-| `src/SingleDemoPage.tsx` | Single demo page |
+| `src/demo/ui.tsx` | `DemoDraggable` (wraps `DraggableRenderer` with debug UI), `DemoSettingsProvider`, `DemoSettingsBar`, `ConfigPanel`, `ConfigCheckbox`, `ConfigSelect`, `DemoNotes` |
+| `src/demo/registry.tsx` | Demo registry — auto-discovers demos via `import.meta.glob` |
+| `src/demo/list.ts` | Ordered list of demo IDs for the gallery |
+| `src/demos/` | Individual demo implementations |
+| `src/demo/DemoPage.tsx` | Gallery page showing all demos |
+| `src/demo/SingleDemoPage.tsx` | Single demo page |
 | `src/docs/LiveEditor.tsx` | Interactive code editor for docs (evaluates user code that exports `draggable` + `initialState`) |
 | `src/svgx/` | SVG representation (`Svgx`, `LayeredSvgx`), transforms, interpolation |
 
@@ -58,14 +59,14 @@ DragSpec (plain data) → dragSpecToBehavior() → DragBehavior (frame → DragR
 
 ### Structure
 
-Each demo in `src/demo-diagrams/` is a self-contained file registered in `src/demos.tsx`.
+Each demo in `src/demos/` is a file (or subfolder with `index.tsx`) that default-exports via `demo()`. Demos are auto-discovered by `src/demo/registry.tsx` and ordered by `src/demo/list.ts`.
 
 A draggable definition has four parts:
 
 ```typescript
-import { DemoDraggable } from "../demo-ui";
+import { demo } from "../demo";
+import { DemoDraggable } from "../demo/ui";
 import { Draggable } from "../draggable";
-import { between } from "../DragSpec";
 
 // 1. State type (must be an object)
 type State = { value: boolean };
@@ -74,24 +75,24 @@ type State = { value: boolean };
 const initialState: State = { value: false };
 
 // 3. Draggable render function
-const draggable: Draggable<State> = ({ state, drag }) => (
+const draggable: Draggable<State> = ({ state, d }) => (
   <g>
     <rect
       id="my-element"
-      data-on-drag={drag(() => between([{ value: true }, { value: false }]))}
+      data-on-drag={() => d.between([{ value: true }, { value: false }])}
     />
   </g>
 );
 
-// 4. Export as a component using DemoDraggable
-export const MyDemo = () => (
+// 4. Default export via demo()
+export default demo(() => (
   <DemoDraggable
     draggable={draggable}
     initialState={initialState}
     width={400}
     height={300}
   />
-);
+));
 ```
 
 ### Drag Spec Constructors
@@ -120,21 +121,18 @@ export const MyDemo = () => (
 
 ### Registration
 
-Add to `src/demos.tsx`:
+Demos are auto-discovered from `src/demos/**/*.tsx` via `import.meta.glob`. To add a new demo:
 
-```typescript
-import { MyDemo } from "./demo-diagrams/my-demo";
-
-// Add to the demos array:
-{ id: "my-demo", Component: MyDemo },
-```
+1. Create `src/demos/my-demo.tsx` (or `src/demos/my-demo/index.tsx` for a subfolder)
+2. `export default demo(Component)` from the file
+3. Add `"my-demo"` to the array in `src/demo/list.ts` to set its gallery position
 
 ### Config Panels
 
 For demos with user-configurable options:
 
 ```typescript
-import { ConfigCheckbox, ConfigPanel, DemoDraggable } from "../demo-ui";
+import { ConfigCheckbox, ConfigPanel, DemoDraggable } from "../demo/ui";
 
 export const MyDemo = () => {
   const [showLabels, setShowLabels] = useState(true);

@@ -27,9 +27,7 @@ export function DemoPage() {
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <div className="text-center py-10 px-5 max-w-3xl mx-auto">
           <Link to="/" className="text-gray-500 text-sm no-underline">
-            <h1 className="text-3xl font-normal text-gray-800">
-              Draggable Diagrams
-            </h1>
+            <h1 className="text-3xl font-normal text-gray-800">Draggables</h1>
           </Link>
         </div>
         {tagFilter && (

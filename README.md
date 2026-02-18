@@ -1,4 +1,4 @@
-# Draggable Diagrams
+# Draggables
 
 ## Getting Started
 

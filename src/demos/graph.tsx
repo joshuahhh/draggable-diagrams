@@ -9,11 +9,6 @@ import { Vec2 } from "../math/vec2";
 import { translate } from "../svgx/helpers";
 import { uPairs } from "../utils";
 
-// v2 port of demo-diagrams/graph.tsx
-//
-// State uses plain {x, y} objects instead of Vec2 class instances
-// so that vary/setAtPath works correctly with immer.
-
 type State = {
   nodes: { [key: string]: { x: number; y: number } };
   edges: { [key: string]: { from: string; to: string } };

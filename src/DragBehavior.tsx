@@ -385,7 +385,7 @@ function varyBehavior<T extends object>(
             dist2 += (params[i] - x0[i]) ** 2;
           }
         } else {
-          // Diagram-space distance (more accurate)
+          // Screen-space distance (more accurate)
           const pos = getElementPos(params);
           dist2 = pos.dist2(pos0!);
         }

@@ -6,11 +6,6 @@ import { DemoDraggable, DemoNotes } from "../demo/ui";
 import { Draggable } from "../draggable";
 import { translate } from "../svgx/helpers";
 
-// v2 port of demo-diagrams/list-of-lists.tsx
-//
-// v1 used:  floating(statesWith, { backdrop: andThen(stateWithout, state) })
-// v2 uses:  states(statesWith).withBackdrop(andThen(stateWithout, state))
-
 type State = {
   rows: {
     id: string;
