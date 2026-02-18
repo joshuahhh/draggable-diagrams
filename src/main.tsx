@@ -2,14 +2,12 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { HashRouter, Routes } from "react-router-dom";
 import { autoRoute } from "./autoRoute";
-import { BluefishDemo } from "./bluefish-demo";
 import { DemoPage } from "./demo/DemoPage";
 import { SingleDemoPage } from "./demo/SingleDemoPage";
 import { DocsIndexPage } from "./DocsIndexPage";
 import { DocsPage } from "./DocsPage";
 import "./index.css";
 import { IndexPage } from "./IndexPage";
-import { PrettyPrintDemo } from "./pretty-print-demo";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -20,8 +18,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         {autoRoute("/docs/:slug", DocsPage)}
         {autoRoute("/demos", DemoPage)}
         {autoRoute("/demos/:id", SingleDemoPage)}
-        {autoRoute("/pretty-print", PrettyPrintDemo)}
-        {autoRoute("/bluefish", BluefishDemo)}
       </Routes>
     </HashRouter>
   </React.StrictMode>,
