@@ -14,7 +14,6 @@ import { getLocalBounds, pointInBounds } from "./svgx/bounds";
 import { path as svgPath, translate } from "./svgx/helpers";
 import {
   LayeredSvgx,
-  accumulateTransforms,
   elementLocalToGlobal,
   findByPathInLayered,
   layeredExtract,
@@ -438,19 +437,22 @@ function withSnapRadiusBehavior<T extends object>(
 ): DragBehavior<T> {
   const subBehavior = dragSpecToBehavior(spec.spec, ctx);
   const radiusSq = spec.radius ** 2;
+  // Cache drop-state renders by reference identity — for `between` sub-behaviors
+  // the drop state cycles through a small fixed set, so this avoids redundant
+  // full render passes on every frame.
+  const dropRenderedCache = new Map<T, LayeredSvgx>();
+  const getDropRendered = (state: T): LayeredSvgx => {
+    let cached = dropRenderedCache.get(state);
+    if (!cached) {
+      cached = renderStateReadOnly(ctx, state);
+      dropRenderedCache.set(state, cached);
+    }
+    return cached;
+  };
   return (frame) => {
     const result = subBehavior(frame);
-    // TODO: noxious smell
-    // re-accumulate transforms for everything in result.rendered
-    for (const id of result.rendered.byId.keys()) {
-      result.rendered.byId.set(
-        id,
-        accumulateTransforms(result.rendered.byId.get(id)!),
-      );
-    }
     const elementPos = getElementPosition(ctx, result.rendered);
-    // TODO: costly
-    const dropRendered = renderStateReadOnly(ctx, result.dropState);
+    const dropRendered = getDropRendered(result.dropState);
     const dropElementPos = getElementPosition(ctx, dropRendered);
     let rendered = result.rendered;
     const snapped = dropElementPos.dist2(elementPos) <= radiusSq;
