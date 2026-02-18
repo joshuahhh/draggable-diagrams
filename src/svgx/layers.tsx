@@ -3,7 +3,7 @@ import { Svgx, updateElement, updatePropsDownTree } from ".";
 import { Vec2, Vec2able } from "../math/vec2";
 import { assert, objectEntries } from "../utils";
 import { findByPath } from "./path";
-import { globalToLocal, localToGlobal, parseTransform } from "./transform";
+import { combineTransforms, globalToLocal, localToGlobal, parseTransform } from "./transform";
 
 export type LayeredSvgx = {
   /**
@@ -159,13 +159,6 @@ export function elementGlobalToLocal(
 ): Vec2 {
   const transforms = parseTransform(getAccumulatedTransform(element) || "");
   return globalToLocal(transforms, globalPoint);
-}
-
-function combineTransforms(t1: string, t2: string): string {
-  if (!t1 && !t2) return "";
-  if (!t1) return t2;
-  if (!t2) return t1;
-  return t1 + " " + t2;
 }
 
 export function drawLayered(layered: LayeredSvgx): Svgx {

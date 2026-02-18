@@ -99,6 +99,13 @@ export function globalToLocal(transforms: Transform[], able: Vec2able): Vec2 {
   return point;
 }
 
+export function combineTransforms(t1: string, t2: string): string {
+  if (!t1 && !t2) return "";
+  if (!t1) return t2;
+  if (!t2) return t1;
+  return t1 + " " + t2;
+}
+
 /**
  * Serializes an array of transform objects back to a string.
  */
