@@ -1,17 +1,18 @@
 import _ from "lodash";
-import { DragSpec, DragSpecBuilder, DragSpecData } from "./DragSpec";
-import { renderDraggableReadOnly } from "./renderDraggable";
 import { Draggable } from "./draggable";
+import { DragSpec, DragSpecBuilder, DragSpecData } from "./DragSpec";
 import { Delaunay } from "./math/delaunay";
 import { minimize } from "./math/minimize";
 import { Vec2 } from "./math/vec2";
 import { getAtPath, setAtPath } from "./paths";
+import { renderDraggableReadOnly } from "./renderDraggable";
 import { Svgx } from "./svgx";
 import { getLocalBounds, pointInBounds } from "./svgx/bounds";
 import { path as svgPath, translate } from "./svgx/helpers";
 import {
   LayeredSvgx,
   accumulateTransforms,
+  elementLocalToGlobal,
   findByPathInLayered,
   layeredExtract,
   layeredMerge,
@@ -22,7 +23,6 @@ import {
 } from "./svgx/layers";
 import { lerpLayered, lerpLayered3 } from "./svgx/lerp";
 import { assignPaths, findByPath } from "./svgx/path";
-import { elementLocalToGlobal } from "./svgx/layers";
 import { globalToLocal, localToGlobal, parseTransform } from "./svgx/transform";
 import { Transition } from "./transition";
 import { assert, assertNever, manyToArray, pipe, throwError } from "./utils";
@@ -198,10 +198,7 @@ function withFloatingBehavior<T extends object>(
       const { remaining, extracted } = layeredExtract(layered, draggedId);
       backdrop = layeredMerge(
         remaining,
-        layeredSetAttributes(
-          layeredPrefixIds(extracted, "ghost-"),
-          spec.ghost,
-        ),
+        layeredSetAttributes(layeredPrefixIds(extracted, "ghost-"), spec.ghost),
       );
     } else {
       backdrop = layeredExtract(layered, draggedId).remaining;
@@ -664,11 +661,7 @@ function renderStateReadOnly<T extends object>(
   ctx: DragBehaviorInitContext<T>,
   state: T,
 ): LayeredSvgx {
-  return renderDraggableReadOnly(ctx.draggable, {
-    state,
-    d: new DragSpecBuilder<T>(),
-    draggedId: ctx.draggedId,
-  });
+  return renderDraggableReadOnly(ctx.draggable, state, ctx.draggedId);
 }
 
 function getElementPosition<T extends object>(

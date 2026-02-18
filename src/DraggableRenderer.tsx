@@ -26,13 +26,13 @@ import {
   LayeredSvgx,
   accumulateTransforms,
   drawLayered,
+  elementGlobalToLocal,
   getAccumulatedTransform,
   layerSvg,
   layeredExtract,
 } from "./svgx/layers";
 import { lerpLayered } from "./svgx/lerp";
 import { assignPaths, findByPath, getPath } from "./svgx/path";
-import { elementGlobalToLocal } from "./svgx/layers";
 import { localToGlobal, parseTransform } from "./svgx/transform";
 import {
   Transition,
@@ -558,11 +558,7 @@ function initDrag<T extends object>(
   const { draggable, draggedId } = behaviorCtxWithoutFloat;
   let floatLayered: LayeredSvgx | null = null;
   if (draggedId) {
-    const startLayered = renderDraggableReadOnly(draggable, {
-      state,
-      d: new DragSpecBuilder<T>(),
-      draggedId,
-    });
+    const startLayered = renderDraggableReadOnly(draggable, state, draggedId);
     floatLayered = layeredExtract(startLayered, draggedId).extracted;
   }
   const behaviorCtx: DragBehaviorInitContext<T> = {
@@ -725,11 +721,7 @@ const DrawIdleMode = memoGeneric(
             type: "idle",
             state: resolved,
             springingFrom: makeSpringingFrom(transition, () =>
-              renderDraggableReadOnly(ctx.draggable, {
-                state: dragState.state,
-                d: new DragSpecBuilder<T>(),
-                draggedId: null,
-              }),
+              renderDraggableReadOnly(ctx.draggable, dragState.state, null),
             ),
           });
           ctx.onDebugDragInfoRef.current?.({ type: "idle", state: resolved });
