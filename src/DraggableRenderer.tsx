@@ -105,13 +105,7 @@ type DragState<T extends object> = { springingFrom: SpringingFrom | null } & (
       pointerStart: Vec2;
       draggedId: string | null;
       result: DragResult<T>;
-      dragParams: DragParams;
-      dragParamsCallback: (params: DragParams) => DragSpec<T>;
-      originalStartState: T;
-      originalBehaviorCtxWithoutFloat: Omit<
-        DragBehaviorInitContext<T>,
-        "floatLayered"
-      >;
+      dragParamsInfo: DragParamsInfo<T>;
     }
 );
 
@@ -264,7 +258,7 @@ export function DraggableRenderer<T extends object>({
       if (ds.type !== "dragging") return;
 
       const newParams = dragParamsFromEvent(e);
-      const oldParams = ds.dragParams;
+      const oldParams = ds.dragParamsInfo.dragParams;
       if (
         newParams.altKey === oldParams.altKey &&
         newParams.ctrlKey === oldParams.ctrlKey &&
@@ -274,7 +268,7 @@ export function DraggableRenderer<T extends object>({
         return;
 
       // Re-evaluate the drag spec with new modifier keys
-      const newSpec = ds.dragParamsCallback(newParams);
+      const newSpec = ds.dragParamsInfo.dragParamsCallback(newParams);
       const pointer = pointerRef.current;
       if (!pointer) return;
 
@@ -286,17 +280,12 @@ export function DraggableRenderer<T extends object>({
 
       const { dragState: newDragState, debugInfo } = initDrag(
         newSpec,
-        ds.originalBehaviorCtxWithoutFloat,
-        ds.originalStartState,
+        ds.dragParamsInfo.originalBehaviorCtxWithoutFloat,
+        ds.dragParamsInfo.originalStartState,
         frame,
         ds.pointerStart,
         newSpringingFrom,
-        {
-          dragParams: newParams,
-          dragParamsCallback: ds.dragParamsCallback,
-          originalStartState: ds.originalStartState,
-          originalBehaviorCtxWithoutFloat: ds.originalBehaviorCtxWithoutFloat,
-        },
+        { ...ds.dragParamsInfo, dragParams: newParams },
       );
       setDragState(newDragState);
       onDebugDragInfoRef.current?.(debugInfo);
@@ -504,7 +493,7 @@ function processChainNow<T extends object>(
 
   const newDragSpec =
     result.chainNow.followSpec ??
-    getDragSpecCallbackOnElement<T>(element)?.(ds.dragParams);
+    getDragSpecCallbackOnElement<T>(element)?.(ds.dragParamsInfo.dragParams);
   if (!newDragSpec) return null;
 
   const newSpringingFrom = makeSpringingFrom(true, () =>
@@ -532,12 +521,7 @@ function processChainNow<T extends object>(
     frame,
     newPointerStart,
     newSpringingFrom,
-    {
-      dragParams: ds.dragParams,
-      dragParamsCallback: ds.dragParamsCallback,
-      originalStartState: ds.originalStartState,
-      originalBehaviorCtxWithoutFloat: ds.originalBehaviorCtxWithoutFloat,
-    },
+    ds.dragParamsInfo,
   );
 }
 
@@ -582,7 +566,7 @@ function initDrag<T extends object>(
     draggedId,
     result,
     springingFrom,
-    ...dragParamsInfo,
+    dragParamsInfo,
   };
 
   // If the result chains immediately (e.g. switchToStateAndFollow),
