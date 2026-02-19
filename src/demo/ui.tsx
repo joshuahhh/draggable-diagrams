@@ -67,10 +67,10 @@ export function DemoSettingsProvider({ children }: { children: ReactNode }) {
 }
 
 const settingsEntries = [
-  { key: "showTreeView", label: "Tree view", mobileHidden: true },
-  { key: "showDropZones", label: "Drop zones", mobileHidden: false },
-  { key: "showDebugOverlay", label: "Debug overlay", mobileHidden: false },
   { key: "showStateViewer", label: "State viewer", mobileHidden: true },
+  { key: "showDebugOverlay", label: "Debug overlay", mobileHidden: false },
+  { key: "showTreeView", label: "Spec tree", mobileHidden: true },
+  { key: "showDropZones", label: "Drop zones", mobileHidden: false },
 ] as const;
 
 export function DemoSettingsBar({
@@ -190,7 +190,7 @@ export function DemoDraggable<T extends object>({
                     </div>
                   ) : (
                     <div className="text-xs text-slate-400 italic">
-                      Drag an element to see its tree view
+                      Drag an element to see its spec tree
                     </div>
                   )}
                 </>

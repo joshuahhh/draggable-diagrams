@@ -41,7 +41,7 @@ Draggable<T>  (render function: state → SVG)
      ↓
 DraggableRenderer  (low-level: drag state machine, spring animation, pointer handling)
      ↓
-DemoDraggable  (wraps with debug overlays, tree view, state viewer)
+DemoDraggable  (wraps with debug overlays, spec tree, state viewer)
 ```
 
 DragSpec data flow:
