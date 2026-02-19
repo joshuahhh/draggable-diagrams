@@ -233,11 +233,11 @@ function SpecNode<T>(props: NodeProps<T>) {
       </Box>
     );
   } else if (spec.type === "with-snap-radius") {
-    const snapped = activePath?.startsWith("with-snap-radius[snapped]/");
-    const childActivePath = stripActivePathPrefix(
-      stripActivePathPrefix(activePath, "with-snap-radius[snapped]/"),
-      "with-snap-radius/",
-    );
+    const snappedPrefix = "with-snap-radius[snapped]/";
+    const normalPrefix = "with-snap-radius/";
+    const snapped = activePath?.startsWith(snappedPrefix);
+    const activePrefix = snapped ? snappedPrefix : normalPrefix;
+    const childActivePath = stripActivePathPrefix(activePath, activePrefix);
     const options = [
       spec.transition && "transition",
       spec.chain && "chain",
@@ -253,7 +253,7 @@ function SpecNode<T>(props: NodeProps<T>) {
         <SpecNode
           spec={spec.spec}
           activePath={childActivePath}
-          path={path}
+          path={path + activePrefix}
           colorMap={colorMap}
           annotated={child(0)}
           svgWidth={svgWidth}
@@ -288,7 +288,7 @@ function SpecNode<T>(props: NodeProps<T>) {
             activePath,
             "with-drop-transition/",
           )}
-          path={path}
+          path={path + "with-drop-transition/"}
           colorMap={colorMap}
           annotated={child(0)}
           svgWidth={svgWidth}
@@ -323,7 +323,7 @@ function SpecNode<T>(props: NodeProps<T>) {
             activePath,
             "with-branch-transition/",
           )}
-          path={path}
+          path={path + "with-branch-transition/"}
           colorMap={colorMap}
           annotated={child(0)}
           svgWidth={svgWidth}
@@ -352,7 +352,7 @@ function SpecNode<T>(props: NodeProps<T>) {
       <Box label="withChaining">
         <SpecNode
           spec={spec.spec}
-          activePath={activePath}
+          activePath={stripActivePathPrefix(activePath, "with-chaining/")}
           path={path + "with-chaining/"}
           colorMap={colorMap}
           annotated={child(0)}
