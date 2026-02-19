@@ -19,7 +19,6 @@ const draggable: Draggable<State> = ({ state }) => (
     <rect width={state.value} height={H} rx={H / 2} fill="#3b82f6" y={-H / 2} />
     {/* Thumb */}
     <circle
-      id="thumb"
       transform={translate(state.value, 0)}
       r={R}
       fill="white"

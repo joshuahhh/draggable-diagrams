@@ -16,7 +16,7 @@ const TICKS = 12;
 const draggable: Draggable<State> = ({ state }) => (
   <g>
     {/* Dial */}
-    <g id="dial" transform={translate(CX, CY) + rotateDeg(state.angle)}>
+    <g transform={translate(CX, CY) + rotateDeg(state.angle)}>
       <circle
         r={R}
         fill="#f9fafb"

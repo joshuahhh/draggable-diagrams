@@ -1,4 +1,3 @@
-import { produce } from "immer";
 import _ from "lodash";
 import { demo } from "../demo";
 import { DemoDraggable } from "../demo/ui";
@@ -21,7 +20,7 @@ const TH = 36,
   BW = 80,
   TW = 340;
 
-const draggable: Draggable<State> = ({ state, d }) => (
+const draggable: Draggable<State> = ({ state }) => (
   <g transform={translate(10, 10)}>
     {/* Track backgrounds */}
     {_.range(3).map((t) => (
@@ -37,23 +36,8 @@ const draggable: Draggable<State> = ({ state, d }) => (
     ))}
 
     {/* Blocks */}
-    {state.blocks.map((block, i) => (
-      <g
-        id={block.id}
-        transform={translate(block.pos, block.track * (TH + GAP))}
-        data-on-drag={() =>
-          d.closest(
-            _.range(3).map((t) =>
-              d.vary(
-                produce(state, (draft) => {
-                  draft.blocks[i].track = t;
-                }),
-                ["blocks", i, "pos"],
-              ),
-            ),
-          )
-        }
-      >
+    {state.blocks.map((block) => (
+      <g transform={translate(block.pos, block.track * (TH + GAP))}>
         <rect
           width={BW}
           height={TH}

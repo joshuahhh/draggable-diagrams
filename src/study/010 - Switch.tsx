@@ -8,7 +8,7 @@ type State = { status: "on" | "off" };
 const initialState: State = { status: "off" };
 
 const draggable: Draggable<State> = ({ state, d }) => (
-  <g transform={translate(70, 70)}>
+  <g transform={translate(50, 50)}>
     <rect
       width={120}
       height={60}
@@ -31,7 +31,7 @@ export default demo(() => (
   <DemoDraggable
     draggable={draggable}
     initialState={initialState}
-    width={300}
-    height={150}
+    width={200}
+    height={200}
   />
 ));

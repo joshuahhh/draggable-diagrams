@@ -51,6 +51,6 @@ export default demo(() => (
     draggable={draggable}
     initialState={initialState}
     width={200}
-    height={150}
+    height={200}
   />
 ));
