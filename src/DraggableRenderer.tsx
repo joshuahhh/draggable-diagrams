@@ -477,7 +477,8 @@ function processChainNow<T extends object>(
   frame: DragFrame,
 ): InitDragResult<T> | null {
   const result = ds.result;
-  if (!result.chainNow || _.isEqual(result.dropState, ds.startState)) return null;
+  if (!result.chainNow || _.isEqual(result.dropState, ds.startState))
+    return null;
 
   const newState = result.dropState;
   const newDraggedId = result.chainNow.draggedId ?? ds.draggedId;
@@ -529,7 +530,12 @@ function processChainNow<T extends object>(
   );
   // TODO: this is a hack
   // Don't chain if the new state isn't strictly closer than what we had.
-  if (chainedResult.dragState.result.distance >= result.distance) {
+  // Skip this check for explicit chains (switchToStateAndFollow) which
+  // provide a followSpec — those should always proceed.
+  if (
+    !result.chainNow!.followSpec &&
+    chainedResult.dragState.result.distance >= result.distance
+  ) {
     return null;
   }
   // Try to chain further from the new state.
