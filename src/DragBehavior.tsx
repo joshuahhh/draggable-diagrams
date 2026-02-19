@@ -132,6 +132,8 @@ export function dragSpecToBehavior<T extends object>(
       return withBackgroundBehavior(spec, ctx);
     case "and-then":
       return andThenBehavior(spec, ctx);
+    case "during":
+      return duringBehavior(spec, ctx);
     case "vary":
       return varyBehavior(spec, ctx);
     case "with-distance":
@@ -344,9 +346,10 @@ function withBackgroundBehavior<T extends object>(
         annotatedSpec: {
           spec,
           debug: { inForeground: false },
-          children: [foregroundResult.annotatedSpec, bgResult.annotatedSpec].filter(
-            (c): c is AnnotatedSpec<T> => c != null,
-          ),
+          children: [
+            foregroundResult.annotatedSpec,
+            bgResult.annotatedSpec,
+          ].filter((c): c is AnnotatedSpec<T> => c != null),
         },
         debugOverlay:
           fgDebug || bgDebug
@@ -382,7 +385,38 @@ function andThenBehavior<T extends object>(
     const result = subBehavior(frame);
     return {
       ...result,
-      dropState: spec.andThenState,
+      dropState:
+        typeof spec.andThenState === "function"
+          ? (spec.andThenState as (s: T) => T)(result.dropState)
+          : spec.andThenState,
+      annotatedSpec: {
+        spec,
+        debug: {},
+        children: result.annotatedSpec ? [result.annotatedSpec] : [],
+      },
+    };
+  };
+}
+
+function duringBehavior<T extends object>(
+  spec: DragSpecData<T> & { type: "during" },
+  ctx: DragBehaviorInitContext<T>,
+): DragBehavior<T> {
+  const subBehavior = dragSpecToBehavior(spec.spec, ctx);
+  return (frame) => {
+    const result = subBehavior(frame);
+    const transformedState = spec.duringFn(result.dropState);
+    // console.group("during turned");
+    // prettyLog(result.dropState);
+    // prettyLog(transformedState);
+    // console.groupEnd();
+    const rendered = renderStateReadOnly(ctx, transformedState);
+    const elementPos = getElementPosition(ctx, rendered);
+    return {
+      ...result,
+      rendered,
+      dropState: transformedState,
+      distance: frame.pointer.dist(elementPos),
       annotatedSpec: {
         spec,
         debug: {},

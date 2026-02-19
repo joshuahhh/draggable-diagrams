@@ -23,7 +23,8 @@ export type DragSpecData<T> =
   | DragSpecSwitchToStateAndFollow<T>
   | DragSpecDropTarget<T>
   | DragSpecWithBranchTransition<T>
-  | DragSpecWithChaining<T>;
+  | DragSpecWithChaining<T>
+  | DragSpecDuring<T>;
 
 export type DragSpecFixed<T> = {
   type: "fixed";
@@ -77,7 +78,7 @@ export type DragSpecWithBranchTransition<T> = {
 export type DragSpecAndThen<T> = {
   type: "and-then";
   spec: DragSpecData<T>;
-  andThenState: T;
+  andThenState: T | ((previewState: T) => T);
 };
 
 export type DragSpecVary<T> = {
@@ -118,6 +119,12 @@ export type DragSpecWithChaining<T> = {
   chaining: Chaining<T>;
 };
 
+export type DragSpecDuring<T> = {
+  type: "during";
+  spec: DragSpecData<T>;
+  duringFn: (state: T) => T;
+};
+
 /**
  * This is a drag behavior's way of saying "immediately switch to
  * dropState and continue the drag".
@@ -148,7 +155,7 @@ export interface DragSpecMethods<T> {
    * the same as before, but dropping will transition into the given
    * state.
    */
-  andThen(state: T): DragSpec<T>;
+  andThen(state: T | ((previewState: T) => T)): DragSpec<T>;
 
   /**
    * Augment the behavior with a "background" behavior that it will
@@ -156,10 +163,10 @@ export interface DragSpecMethods<T> {
    * away. This distance is 50 pixels by default, but can be
    * configured via the `radius` option.
    */
-  withBackground<B>(
-    background: DragSpec<B>,
+  withBackground(
+    background: DragSpec<T>,
     opts?: { radius?: number },
-  ): DragSpec<T | B>;
+  ): DragSpec<T>;
 
   /**
    * Set a "snap radius" for the behavior. If the dragged element
@@ -216,6 +223,13 @@ export interface DragSpecMethods<T> {
    * behavior of the chaining.
    */
   withChaining(chaining?: Chaining<T>): DragSpec<T>;
+
+  /**
+   * Transform the state on every frame — both the rendered preview
+   * and the drop state are re-rendered from the transformed state.
+   * Like `andThen`, but the function's output is actually displayed.
+   */
+  during(fn: (state: T) => T): DragSpec<T>;
 }
 
 const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
@@ -266,6 +280,9 @@ const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
   },
   withChaining(chaining = {}) {
     return attachMethods({ type: "with-chaining", spec: this, chaining });
+  },
+  during(fn) {
+    return attachMethods({ type: "during", spec: this, duringFn: fn });
   },
 };
 

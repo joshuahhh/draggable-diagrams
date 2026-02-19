@@ -53,4 +53,5 @@ export const demoList = [
   "emerge-from",
   "spec-workshop",
   "floating-dynamic-switch",
+  "card-piles",
 ];

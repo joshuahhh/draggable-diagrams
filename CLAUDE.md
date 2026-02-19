@@ -104,9 +104,32 @@ export default demo(() => (
 | `vary(state, ["x"], ["y"])` | Continuous numeric variation along paths |
 | `floating(states, { backdrop })` | Float between states with a backdrop |
 | `closest([spec1, spec2])` | Pick whichever spec is closest |
-| `andThen(spec, nextState)` | Chain into a new drag on state change |
+| `andThen(spec, nextState)` | Chain into a new drag on state change. `nextState` can be a `T` or `(previewState: T) => T` |
+| `during(fn)` | Like `andThen(fn)` but re-renders the transformed state live during drag |
 | `withSnapRadius(spec, radius)` | Snap within radius |
 | `withDropTransition(spec, easing)` | Custom transition on drop |
+
+### How `vary` works
+
+`vary` uses **numerical optimization**: it varies the specified params to minimize distance between the dragged element's rendered position and the pointer. Key implications:
+
+- **Deep paths work**: `d.vary(state, ["nodes", key, "x"], ["nodes", key, "y"])` for `Record`-based state (see `src/demos/graph.tsx`)
+- **Only params that affect the dragged element's rendered position will have an optimization effect.** If varying a param doesn't change where the dragged element renders, the optimizer ignores it. This means you can't naively vary N items' positions to move them as a group — only the extreme items (affecting the bounding box) would move.
+- **For group movement**, vary a shared position (e.g. a pile's x/y) that all members offset from, rather than varying each member independently (see `src/demos/card-piles.tsx`)
+- The `state` arg to `vary` is the starting state for optimization (not necessarily the current rendered state). The initial param values are used as the optimizer's starting point.
+- **`during(fn)`** re-renders the transformed state each frame — use it when `vary` produces intermediate states that need cleanup (e.g. recomputing group membership as you drag). See `card-piles.tsx`.
+- **`andThen(fn)`** accepts a function `(previewState: T) => T` to compute the drop state dynamically at drop time, not just a fixed state.
+
+### Reference demos for common patterns
+
+| Pattern | Demo file | Key technique |
+|---|---|---|
+| Free-form 2D dragging | `src/demos/graph.tsx` | `d.vary(state, ["nodes", key, "x"], ["nodes", key, "y"])` |
+| Drag-to-copy | `src/demos/drag-to-copy.tsx` | `d.switchToStateAndFollow` + `setState` for delete |
+| Permutation / reorder | `src/demos/perm.tsx` | `d.between` over all possible permutations |
+| Floating with ambiguity | `src/demos/perm-floating.tsx` | `produceAmb` + `d.closest(d.floating(...))` |
+| Nested structures | `src/demos/canvas-of-lists-nested.tsx` | Recursive rendering with path-based state updates |
+| Group movement + `during` | `src/demos/card-piles.tsx` | Vary pile position, `during(recomputePiles)` for live regrouping |
 
 ### Gotchas
 

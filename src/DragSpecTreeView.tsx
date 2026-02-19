@@ -213,6 +213,20 @@ function SpecNode<T>(props: NodeProps<T>) {
         />
       </Box>
     );
+  } else if (spec.type === "during") {
+    return (
+      <Box label="during">
+        <SpecNode
+          spec={spec.spec}
+          activePath={activePath}
+          path={path}
+          colorMap={colorMap}
+          annotated={child(0)}
+          svgWidth={svgWidth}
+          svgHeight={svgHeight}
+        />
+      </Box>
+    );
   } else if (spec.type === "with-distance") {
     return (
       <Box label="withDistance">
