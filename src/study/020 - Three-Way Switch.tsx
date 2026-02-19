@@ -33,7 +33,10 @@ const draggable: Draggable<State> = ({ state }) => (
 
     {/* Draggable knob */}
     <circle
-      transform={translate(name_to_pos[state.name].x, name_to_pos[state.name].y)}
+      transform={translate(
+        name_to_pos[state.name].x,
+        name_to_pos[state.name].y,
+      )}
       r={16}
       fill={name_to_color[state.name]}
       stroke="white"

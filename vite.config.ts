@@ -21,9 +21,10 @@ function dtsPlugin(): Plugin {
         const { generateDtsBundle } = await import("dts-bundle-generator");
         const path = await import("node:path");
         const filePath = path.resolve(id.slice("dts-bundle:".length));
-        const [result] = generateDtsBundle([
-          { filePath, output: { noBanner: true } },
-        ], { preferredConfigPath: path.resolve("tsconfig.json") });
+        const [result] = generateDtsBundle(
+          [{ filePath, output: { noBanner: true } }],
+          { preferredConfigPath: path.resolve("tsconfig.json") },
+        );
         return `export default ${JSON.stringify(result)};`;
       }
       if (id.startsWith("dts:")) {

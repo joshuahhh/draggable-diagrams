@@ -1,2 +1,4 @@
 *.md
 *.mdx
+
+/src/demos/nool/peggy

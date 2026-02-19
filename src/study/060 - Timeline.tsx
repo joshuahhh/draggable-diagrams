@@ -16,15 +16,23 @@ const initialState: State = {
   ],
 };
 
-const TH = 36, GAP = 6, BW = 80, TW = 340;
+const TH = 36,
+  GAP = 6,
+  BW = 80,
+  TW = 340;
 
 const draggable: Draggable<State> = ({ state, d }) => (
   <g transform={translate(10, 10)}>
     {/* Track backgrounds */}
     {_.range(3).map((t) => (
       <rect
-        y={t * (TH + GAP)} width={TW} height={TH}
-        rx={4} fill="#f3f4f6" stroke="#e5e7eb" stroke-width={1}
+        y={t * (TH + GAP)}
+        width={TW}
+        height={TH}
+        rx={4}
+        fill="#f3f4f6"
+        stroke="#e5e7eb"
+        stroke-width={1}
       />
     ))}
 
@@ -34,19 +42,33 @@ const draggable: Draggable<State> = ({ state, d }) => (
         id={block.id}
         transform={translate(block.pos, block.track * (TH + GAP))}
         data-on-drag={() =>
-          d.closest(_.range(3).map((t) =>
-            d.vary(produce(state, (draft) => { draft.blocks[i].track = t; }), ["blocks", i, "pos"])
-          ))
+          d.closest(
+            _.range(3).map((t) =>
+              d.vary(
+                produce(state, (draft) => {
+                  draft.blocks[i].track = t;
+                }),
+                ["blocks", i, "pos"],
+              ),
+            ),
+          )
         }
       >
         <rect
-          width={BW} height={TH} rx={6} fill={block.color}
+          width={BW}
+          height={TH}
+          rx={6}
+          fill={block.color}
           style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.15))" }}
         />
         <text
-          x={BW / 2} y={TH / 2}
-          text-anchor="middle" dominant-baseline="central"
-          font-size={13} font-weight="600" fill="white"
+          x={BW / 2}
+          y={TH / 2}
+          text-anchor="middle"
+          dominant-baseline="central"
+          font-size={13}
+          font-weight="600"
+          fill="white"
         >
           {block.id}
         </text>

@@ -1,4 +1,4 @@
-import { isDemo, DemoMarked } from "../demo";
+import { DemoMarked, isDemo } from "../demo";
 
 export type Study = {
   id: string;

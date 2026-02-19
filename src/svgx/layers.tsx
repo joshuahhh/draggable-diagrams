@@ -3,7 +3,12 @@ import { Svgx, updateElement, updatePropsDownTree } from ".";
 import { Vec2, Vec2able } from "../math/vec2";
 import { assert, objectEntries } from "../utils";
 import { findByPath } from "./path";
-import { combineTransforms, globalToLocal, localToGlobal, parseTransform } from "./transform";
+import {
+  combineTransforms,
+  globalToLocal,
+  localToGlobal,
+  parseTransform,
+} from "./transform";
 
 export type LayeredSvgx = {
   /**

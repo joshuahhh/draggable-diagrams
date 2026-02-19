@@ -6,12 +6,13 @@
 import "../jsx.d";
 
 export type {
+  DragParams,
   Draggable,
   DraggableProps,
   SetState,
-  DragParams,
 } from "../draggable";
 
+export { lessThan } from "../DragSpec";
 export type {
   DragSpec,
   DragSpecBuilder,
@@ -19,7 +20,6 @@ export type {
   FloatingOptions,
   VaryOptions,
 } from "../DragSpec";
-export { lessThan } from "../DragSpec";
 
 export type { Transition, TransitionLike } from "../transition";
 
@@ -31,4 +31,4 @@ export type { Svgx } from "../svgx";
 
 export type { Vec2able } from "../math/vec2";
 
-export { translate, rotateDeg, rotateRad, scale, path } from "../svgx/helpers";
+export { path, rotateDeg, rotateRad, scale, translate } from "../svgx/helpers";

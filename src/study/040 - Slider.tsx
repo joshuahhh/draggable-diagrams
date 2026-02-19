@@ -7,7 +7,9 @@ type State = { value: number };
 
 const initialState: State = { value: 100 };
 
-const W = 240, H = 6, R = 12;
+const W = 240,
+  H = 6,
+  R = 12;
 
 const draggable: Draggable<State> = ({ state }) => (
   <g transform={translate(30, 60)}>
@@ -20,7 +22,9 @@ const draggable: Draggable<State> = ({ state }) => (
       id="thumb"
       transform={translate(state.value, 0)}
       r={R}
-      fill="white" stroke="#d1d5db" stroke-width={1.5}
+      fill="white"
+      stroke="#d1d5db"
+      stroke-width={1.5}
       style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.15))" }}
     />
   </g>

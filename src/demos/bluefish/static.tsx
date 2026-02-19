@@ -1,8 +1,8 @@
 import { Background, Circle, Ref, StackH, StackV, Text } from "bluefish-js";
-import { bluefish } from "./bluefish";
 import { demo } from "../../demo";
 import { DemoDraggable, DemoNotes } from "../../demo/ui";
 import { Draggable } from "../../draggable";
+import { bluefish } from "./bluefish";
 
 type State = Record<string, never>;
 
@@ -51,7 +51,9 @@ const draggable: Draggable<State> = () =>
 
 export default demo(() => (
   <>
-    <DemoNotes>Not interactive — just renders a static Bluefish diagram as SVG.</DemoNotes>
+    <DemoNotes>
+      Not interactive — just renders a static Bluefish diagram as SVG.
+    </DemoNotes>
     <DemoDraggable
       draggable={draggable}
       initialState={initialState}
