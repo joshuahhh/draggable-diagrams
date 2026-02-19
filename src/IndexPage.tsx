@@ -8,6 +8,13 @@ export function IndexPage() {
 
         <div className="flex flex-col gap-4 items-center">
           <Link
+            to="/study"
+            className="block w-64 px-6 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors no-underline text-center font-medium"
+          >
+            Study
+          </Link>
+
+          <Link
             to="/demos"
             className="block w-64 px-6 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors no-underline text-center font-medium"
           >
@@ -25,9 +32,9 @@ export function IndexPage() {
             href="https://github.com/joshuahhh/draggable-diagrams"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-8 text-lg text-gray-700 hover:text-gray-900 no-underline font-semibold"
+            className="block w-64 px-6 py-4 text-lg text-gray-700 hover:text-gray-900 no-underline"
           >
-            ⭐ Fork me on GitHub! ⭐
+            GitHub
           </a>
         </div>
       </div>

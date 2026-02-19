@@ -8,12 +8,16 @@ import { DocsIndexPage } from "./DocsIndexPage";
 import { DocsPage } from "./DocsPage";
 import "./index.css";
 import { IndexPage } from "./IndexPage";
+import { SingleStudyPage } from "./study/SingleStudyPage";
+import { StudyPage } from "./study/StudyPage";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <HashRouter>
       <Routes>
         {autoRoute("/", IndexPage)}
+        {autoRoute("/study", StudyPage)}
+        {autoRoute("/study/:id", SingleStudyPage)}
         {autoRoute("/docs", DocsIndexPage)}
         {autoRoute("/docs/:slug", DocsPage)}
         {autoRoute("/demos", DemoPage)}
