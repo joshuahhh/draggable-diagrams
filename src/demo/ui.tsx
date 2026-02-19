@@ -73,6 +73,69 @@ const settingsEntries = [
   { key: "showDropZones", label: "Drop zones", mobileHidden: false },
 ] as const;
 
+const settingsIcons: Record<keyof DemoSettings, ReactNode> = {
+  showStateViewer: (
+    <svg width={14} height={14} viewBox="0 0 14 14" className="shrink-0">
+      <text
+        x={7}
+        y={10.5}
+        textAnchor="middle"
+        fontSize={11}
+        fontFamily="ui-monospace, monospace"
+        fill="#64748b"
+        fontWeight={700}
+      >
+        {"{}"}
+      </text>
+    </svg>
+  ),
+  showDebugOverlay: (
+    <svg width={14} height={14} viewBox="0 0 14 14" className="shrink-0">
+      <circle cx={7} cy={7} r={5} fill="magenta" />
+    </svg>
+  ),
+  showTreeView: (
+    <svg width={14} height={14} viewBox="0 0 14 14" className="shrink-0">
+      <rect
+        x={2}
+        y={2}
+        width={10}
+        height={10}
+        rx={3}
+        ry={3}
+        fill="rgba(250, 204, 21, 0.25)"
+        stroke="rgb(250, 204, 21)"
+        strokeWidth={1.5}
+      />
+    </svg>
+  ),
+  showDropZones: (
+    <svg width={14} height={14} viewBox="0 0 14 14" className="shrink-0">
+      <defs>
+        <clipPath id="dz-clip">
+          <rect x={1} y={1} width={12} height={12} rx={2} />
+        </clipPath>
+      </defs>
+      <g clipPath="url(#dz-clip)">
+        <g opacity={0.35}>
+          <path
+            d="M7,7 L17,7 A10,10,0,0,1,2,15.66 Z"
+            fill="rgb(65, 105, 225)"
+          />
+          <path
+            d="M7,7 L2,15.66 A10,10,0,0,1,2,-1.66 Z"
+            fill="rgb(220, 20, 60)"
+          />
+          <path d="M7,7 L2,-1.66 A10,10,0,0,1,17,7 Z" fill="rgb(34, 139, 34)" />
+        </g>
+        <line x1={7} y1={7} x2={17} y2={7} stroke="white" strokeWidth={1} />
+        <line x1={7} y1={7} x2={2} y2={15.66} stroke="white" strokeWidth={1} />
+        <line x1={7} y1={7} x2={2} y2={-1.66} stroke="white" strokeWidth={1} />
+      </g>
+    </svg>
+  ),
+};
+
 export function DemoSettingsBar({
   only,
 }: { only?: (keyof DemoSettings)[] } = {}) {
@@ -87,7 +150,7 @@ export function DemoSettingsBar({
           key={key}
           className={`${
             mobileHidden ? "hidden md:flex" : "flex"
-          } items-center gap-1.5 cursor-pointer text-sm text-slate-600 select-none`}
+          } items-center gap-1 cursor-pointer text-sm text-slate-600 select-none`}
         >
           <input
             type="checkbox"
@@ -96,6 +159,7 @@ export function DemoSettingsBar({
               setSettings((s) => ({ ...s, [key]: e.target.checked }))
             }
           />
+          <span className="ml-0.5">{settingsIcons[key]}</span>
           {label}
         </label>
       ))}
