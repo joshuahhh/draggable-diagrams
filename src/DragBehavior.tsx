@@ -122,8 +122,8 @@ export function dragSpecToBehavior<T extends object>(
   ctx: DragBehaviorInitContext<T>,
 ): DragBehavior<T> {
   switch (spec.type) {
-    case "just":
-      return justBehavior(spec, ctx);
+    case "fixed":
+      return fixedBehavior(spec, ctx);
     case "with-floating":
       return withFloatingBehavior(spec, ctx);
     case "closest":
@@ -157,8 +157,8 @@ export function dragSpecToBehavior<T extends object>(
 
 // # Per-type behavior constructors
 
-function justBehavior<T extends object>(
-  spec: DragSpecData<T> & { type: "just" },
+function fixedBehavior<T extends object>(
+  spec: DragSpecData<T> & { type: "fixed" },
   ctx: DragBehaviorInitContext<T>,
 ): DragBehavior<T> {
   const rendered = renderStateReadOnly(ctx, spec.state);
@@ -174,7 +174,7 @@ function justBehavior<T extends object>(
       rendered,
       dropState: spec.state,
       distance,
-      activePath: "just",
+      activePath: "fixed",
       annotatedSpec,
       debugOverlay: () => (
         <g opacity={0.8}>

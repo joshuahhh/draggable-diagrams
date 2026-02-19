@@ -24,7 +24,7 @@ npm run typecheck # Type check
 |---|---|
 | `src/draggable.tsx` | `Draggable<T>` type, `Drag`, `SetState`, `OnDragPropValue` |
 | `src/DraggableRenderer.tsx` | Low-level component that runs a `Draggable` with drag handling, spring animation |
-| `src/DragSpec.tsx` | `DragSpec<T>` union type + constructors (`between`, `just`, `floating`, `closest`, `vary`, `andThen`, `withSnapRadius`, etc.) |
+| `src/DragSpec.tsx` | `DragSpec<T>` union type + constructors (`between`, `fixed`, `floating`, `closest`, `vary`, `andThen`, `withSnapRadius`, etc.) |
 | `src/demo/ui.tsx` | `DemoDraggable` (wraps `DraggableRenderer` with debug UI), `DemoSettingsProvider`, `DemoSettingsBar`, `ConfigPanel`, `ConfigCheckbox`, `ConfigSelect`, `DemoNotes` |
 | `src/demo/registry.tsx` | Demo registry — auto-discovers demos via `import.meta.glob` |
 | `src/demo/list.ts` | Ordered list of demo IDs for the gallery |
@@ -100,7 +100,7 @@ export default demo(() => (
 | Function | Use |
 |---|---|
 | `between([state1, state2, ...])` | Drag between discrete states (interpolated) |
-| `just(state)` | Always resolve to this state |
+| `fixed(state)` | Always resolve to this state |
 | `vary(state, ["x"], ["y"])` | Continuous numeric variation along paths |
 | `floating(states, { backdrop })` | Float between states with a backdrop |
 | `closest([spec1, spec2])` | Pick whichever spec is closest |

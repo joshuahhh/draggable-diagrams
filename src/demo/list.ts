@@ -47,7 +47,7 @@ export const demoList = [
   "multi-circle-points",
   "node-wires",
   "sprouting-tree",
-  "simplest-just",
+  "weird-floating-vs-fixed",
   "bluefish-static",
   "bluefish-perm",
   "emerge-from",

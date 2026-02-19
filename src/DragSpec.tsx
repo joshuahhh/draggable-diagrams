@@ -10,7 +10,7 @@ import { Many, assert, manyToArray } from "./utils";
 // # DragSpecData
 
 export type DragSpecData<T> =
-  | DragSpecJust<T>
+  | DragSpecFixed<T>
   | DragSpecWithFloating<T>
   | DragSpecClosest<T>
   | DragSpecWithBackground<T>
@@ -25,8 +25,8 @@ export type DragSpecData<T> =
   | DragSpecWithBranchTransition<T>
   | DragSpecWithChaining<T>;
 
-export type DragSpecJust<T> = {
-  type: "just";
+export type DragSpecFixed<T> = {
+  type: "fixed";
   state: T;
 };
 
@@ -280,12 +280,12 @@ export class DragSpecBuilder<T> {
    * This drag behavior simply shows a static view of the given
    * state.
    */
-  just(states: T[]): DragSpec<T>[];
-  just(state: T): DragSpec<T>;
-  just(stateOrStates: T | T[]): DragSpec<T> | DragSpec<T>[] {
+  fixed(states: T[]): DragSpec<T>[];
+  fixed(state: T): DragSpec<T>;
+  fixed(stateOrStates: T | T[]): DragSpec<T> | DragSpec<T>[] {
     if (Array.isArray(stateOrStates))
-      return stateOrStates.map((s) => this.just(s));
-    return attachMethods({ type: "just", state: stateOrStates });
+      return stateOrStates.map((s) => this.fixed(s));
+    return attachMethods({ type: "fixed", state: stateOrStates });
   }
 
   /**
@@ -294,7 +294,7 @@ export class DragSpecBuilder<T> {
    * "ghost" element can be rendered at the original position while
    * dragging. Often used with `closest`.
    *
-   * Note: This is actually the same as d.just(state).withFloating()!
+   * Note: This is actually the same as d.fixed(state).withFloating()!
    */
   floating(states: T[], opts?: FloatingOptions): DragSpec<T>[];
   floating(state: T, opts?: FloatingOptions): DragSpec<T>;
@@ -304,7 +304,7 @@ export class DragSpecBuilder<T> {
   ): DragSpec<T> | DragSpec<T>[] {
     if (Array.isArray(stateOrStates))
       return stateOrStates.map((s) => this.floating(s, opts));
-    return this.just(stateOrStates).withFloating(opts);
+    return this.fixed(stateOrStates).withFloating(opts);
   }
 
   /**

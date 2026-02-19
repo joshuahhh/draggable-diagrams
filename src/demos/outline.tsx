@@ -230,7 +230,7 @@ function renderTree(
           }
           removeKey(stateWithout);
           if (!foundNode) {
-            return d.just(rootState);
+            return d.fixed(rootState);
           }
 
           const statesWith = insertAtAllPositions(stateWithout, foundNode);

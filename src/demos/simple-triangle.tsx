@@ -20,7 +20,7 @@ const SQUARE_SIZE = 40;
 const initialState: State = { posIndex: 0 };
 
 function draggableFactory(
-  mode: "between" | "floating" | "just",
+  mode: "between" | "floating" | "fixed" | "between-with-floating",
 ): Draggable<State> {
   return ({ state, d }) => (
     <g>
@@ -53,8 +53,10 @@ function draggableFactory(
             return d.between(states);
           } else if (mode === "floating") {
             return d.closest(d.floating(states));
-          } else if (mode === "just") {
-            return d.closest(d.just(states));
+          } else if (mode === "fixed") {
+            return d.closest(d.fixed(states));
+          } else if (mode === "between-with-floating") {
+            return d.between(states).withFloating();
           } else {
             assertNever(mode);
           }
@@ -75,7 +77,8 @@ function draggableFactory(
 
 const betweenDraggable = draggableFactory("between");
 const floatingDraggable = draggableFactory("floating");
-const justDraggable = draggableFactory("just");
+const fixedDraggable = draggableFactory("fixed");
+const betweenWithFloatingDraggable = draggableFactory("between-with-floating");
 
 export default demo(
   () => (
@@ -94,14 +97,23 @@ export default demo(
         width={200}
         height={150}
       />
-      <h3 className="text-md font-medium italic mt-6 mb-1">just</h3>
+      <h3 className="text-md font-medium italic mt-6 mb-1">fixed</h3>
       <DemoDraggable
-        draggable={justDraggable}
+        draggable={fixedDraggable}
+        initialState={initialState}
+        width={200}
+        height={150}
+      />
+      <h3 className="text-md font-medium italic mt-6 mb-1">
+        between-with-floating
+      </h3>
+      <DemoDraggable
+        draggable={betweenWithFloatingDraggable}
         initialState={initialState}
         width={200}
         height={150}
       />
     </div>
   ),
-  { tags: ["d.between"] },
+  { tags: ["d.between", "d.floating", "d.fixed", "spec.withFloating"] },
 );

@@ -20,9 +20,9 @@ const draggable: Draggable<State> = ({ state, d }) => (
     height={100}
     data-on-drag={() =>
       d.closest([
-        d.just({ value: 0 }),
+        d.fixed({ value: 0 }),
         d.floating({ value: 1 }, { ghost: { opacity: 0.5 } }),
-        d.just({ value: 2 }),
+        d.fixed({ value: 2 }),
         d.floating({ value: 3 }, { ghost: { opacity: 0.5 } }),
       ])
     }

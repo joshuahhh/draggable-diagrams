@@ -105,7 +105,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
   function endDragSpec(wireId: string, endKey: "from" | "to") {
     const side = endKey === "to" ? "in" : "out";
     const snapSpecs = allPorts(side).map(({ nodeId, port }) =>
-      d.just(
+      d.fixed(
         produce(state, (draft) => {
           draft.wires[wireId][endKey] = { type: "on-port", nodeId, port };
         }),

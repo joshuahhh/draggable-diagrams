@@ -63,11 +63,11 @@ function SpecNode<T>(props: NodeProps<T>) {
   const child = (i: number): AnnotatedSpec<T> | null =>
     annotated?.children[i] ?? null;
 
-  if (spec.type === "just") {
-    const fullPath = path + "just";
+  if (spec.type === "fixed") {
+    const fullPath = path + "fixed";
     const active = activePath === fullPath;
     return (
-      <Box label="just" active={active} color={colorMap?.get(fullPath)}>
+      <Box label="fixed" active={active} color={colorMap?.get(fullPath)}>
         <StateThumbnails
           debug={debug}
           svgWidth={svgWidth}
