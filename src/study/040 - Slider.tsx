@@ -26,6 +26,17 @@ const draggable: Draggable<State> = ({ state }) => (
       stroke-width={1.5}
       style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.15))" }}
     />
+    {/* Value readout */}
+    <text
+      transform={translate(state.value, 28)}
+      textAnchor="middle"
+      fontSize={13}
+      fontFamily="system-ui, sans-serif"
+      fill="#374151"
+      fontWeight={500}
+    >
+      {Math.round(state.value)}
+    </text>
   </g>
 );
 
