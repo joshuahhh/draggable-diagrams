@@ -15,19 +15,19 @@ const initialState: State = {
   ],
 };
 
-const TH = 36,
-  GAP = 6,
-  BW = 80,
-  TW = 340;
+const TRACK_H = 36;
+const GAP = 6;
+const BLOCK_W = 80;
+const TRACK_W = 340;
 
 const draggable: Draggable<State> = ({ state }) => (
   <g transform={translate(10, 10)}>
     {/* Track backgrounds */}
     {_.range(3).map((t) => (
       <rect
-        y={t * (TH + GAP)}
-        width={TW}
-        height={TH}
+        y={t * (TRACK_H + GAP)}
+        width={TRACK_W}
+        height={TRACK_H}
         rx={4}
         fill="#f3f4f6"
         stroke="#e5e7eb"
@@ -37,17 +37,17 @@ const draggable: Draggable<State> = ({ state }) => (
 
     {/* Blocks */}
     {state.blocks.map((block) => (
-      <g transform={translate(block.pos, block.track * (TH + GAP))}>
+      <g transform={translate(block.pos, block.track * (TRACK_H + GAP))}>
         <rect
-          width={BW}
-          height={TH}
+          width={BLOCK_W}
+          height={TRACK_H}
           rx={6}
           fill={block.color}
           style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.15))" }}
         />
         <text
-          x={BW / 2}
-          y={TH / 2}
+          x={BLOCK_W / 2}
+          y={TRACK_H / 2}
           text-anchor="middle"
           dominant-baseline="central"
           font-size={13}

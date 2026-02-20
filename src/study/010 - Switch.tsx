@@ -9,12 +9,15 @@ const initialState: State = { status: "off" };
 
 const draggable: Draggable<State> = ({ state, d }) => (
   <g transform={translate(50, 50)}>
+    {/* Track */}
     <rect
       width={120}
       height={60}
       rx={30}
       fill={state.status === "on" ? "#22c55e" : "#d1d5db"}
     />
+
+    {/* Draggable knob */}
     <circle
       transform={translate(state.status === "on" ? 90 : 30, 30)}
       r={26}

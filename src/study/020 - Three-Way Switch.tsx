@@ -7,13 +7,13 @@ type State = { name: "r" | "g" | "b" };
 
 const initialState: State = { name: "r" };
 
-const name_to_pos = {
+const POS = {
   r: { x: 50, y: 20 },
   g: { x: 16, y: 78 },
   b: { x: 84, y: 78 },
 };
 
-const name_to_color = {
+const COLOR = {
   r: "#ef4444",
   g: "#22c55e",
   b: "#3b82f6",
@@ -24,21 +24,18 @@ const draggable: Draggable<State> = ({ state }) => (
     {/* Target dots */}
     {(["r", "g", "b"] as const).map((name) => (
       <circle
-        transform={translate(name_to_pos[name].x, name_to_pos[name].y)}
+        transform={translate(POS[name].x, POS[name].y)}
         r={16}
-        fill={name_to_color[name]}
+        fill={COLOR[name]}
         opacity={0.25}
       />
     ))}
 
     {/* Draggable knob */}
     <circle
-      transform={translate(
-        name_to_pos[state.name].x,
-        name_to_pos[state.name].y,
-      )}
+      transform={translate(POS[state.name].x, POS[state.name].y)}
       r={16}
-      fill={name_to_color[state.name]}
+      fill={COLOR[state.name]}
       stroke="white"
       stroke-width={3}
       style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))" }}

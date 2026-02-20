@@ -9,14 +9,15 @@ const initialState: State = {
   items: ["Apples", "Bananas", "Cherries", "Dates"],
 };
 
-const W = 160,
-  H = 40,
-  GAP = 8;
+const W = 160;
+const H = 40;
+const GAP = 8;
 
 const draggable: Draggable<State> = ({ state }) => (
   <g transform={translate(20, 20)}>
     {state.items.map((item, i) => (
       <g transform={translate(0, i * (H + GAP))}>
+        {/* Item background */}
         <rect
           width={W}
           height={H}
@@ -25,6 +26,8 @@ const draggable: Draggable<State> = ({ state }) => (
           stroke="#d1d5db"
           stroke-width={1.5}
         />
+
+        {/* Item text */}
         <text
           x={W / 2}
           y={H / 2}

@@ -8,15 +8,13 @@ type State = { angle: number };
 
 const initialState: State = { angle: 0 };
 
-const CX = 200,
-  CY = 120,
-  R = 60;
+const R = 60;
 const TICKS = 12;
 
 const draggable: Draggable<State> = ({ state }) => (
-  <g>
+  <g transform={translate(200, 120)}>
     {/* Dial */}
-    <g transform={translate(CX, CY) + rotateDeg(state.angle - 90)}>
+    <g transform={rotateDeg(state.angle - 90)}>
       <circle
         r={R}
         fill="#f9fafb"
@@ -38,7 +36,7 @@ const draggable: Draggable<State> = ({ state }) => (
     {/* Tick marks */}
     {_.range(TICKS).map((i) => (
       <line
-        transform={translate(CX, CY) + rotateDeg((i * 360) / TICKS)}
+        transform={rotateDeg((i * 360) / TICKS)}
         x1={R + 6}
         y1={0}
         x2={R + 16}
@@ -51,7 +49,7 @@ const draggable: Draggable<State> = ({ state }) => (
 
     {/* Angle readout */}
     <text
-      transform={translate(CX, CY + R + 40)}
+      transform={translate(0, R + 40)}
       textAnchor="middle"
       fontSize={13}
       fontFamily="system-ui, sans-serif"
