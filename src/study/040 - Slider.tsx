@@ -1,6 +1,7 @@
 import { demo } from "../demo";
 import { DemoDraggable } from "../demo/ui";
 import { Draggable } from "../draggable";
+import { lessThan } from "../DragSpec";
 import { translate } from "../svgx/helpers";
 
 type State = { value: number };
@@ -11,7 +12,7 @@ const W = 240;
 const H = 6;
 const R = 12;
 
-const draggable: Draggable<State> = ({ state }) => (
+const draggable: Draggable<State> = ({ state, d }) => (
   <g transform={translate(30, 60)}>
     {/* Track */}
     <rect width={W} height={H} rx={H / 2} fill="#e5e7eb" y={-H / 2} />
@@ -27,6 +28,11 @@ const draggable: Draggable<State> = ({ state }) => (
       stroke="#d1d5db"
       strokeWidth={1.5}
       style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.15))" }}
+      data-on-drag={() =>
+        d.vary(state, [["value"]], {
+          constraint: (s) => [lessThan(0, s.value), lessThan(s.value, W)],
+        })
+      }
     />
 
     {/* Value readout */}
