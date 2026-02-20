@@ -11,10 +11,11 @@ const initialState: State = {
   blocks: [
     { id: "Cats", pos: 10, track: 0, color: "#3b82f6" },
     { id: "Dogs", pos: 100, track: 1, color: "#ef4444" },
-    { id: "Clouds", pos: 50, track: 2, color: "#22c55e" },
+    { id: "Clouds", pos: 50, track: 3, color: "#22c55e" },
   ],
 };
 
+const NUM_TRACKS = 4;
 const TRACK_H = 36;
 const GAP = 6;
 const BLOCK_W = 80;
@@ -23,7 +24,7 @@ const TRACK_W = 340;
 const draggable: Draggable<State> = ({ state }) => (
   <g transform={translate(10, 10)}>
     {/* Track backgrounds */}
-    {_.range(3).map((t) => (
+    {_.range(NUM_TRACKS).map((t) => (
       <rect
         y={t * (TRACK_H + GAP)}
         width={TRACK_W}
@@ -66,6 +67,6 @@ export default demo(() => (
     draggable={draggable}
     initialState={initialState}
     width={370}
-    height={140}
+    height={200}
   />
 ));
