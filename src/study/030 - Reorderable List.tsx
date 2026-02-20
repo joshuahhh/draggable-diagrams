@@ -13,22 +13,6 @@ const W = 160;
 const H = 40;
 const GAP = 8;
 
-/**
- * Produce all arrays resulting from taking the item in `arr` at
- * `fromIdx`, removing it from its original position, and reinserting
- * it at every possible position. */
-// @ts-ignore unused
-function getAllReinsertions<T>(arr: T[], fromIdx: number): T[][] {
-  const result: T[][] = [];
-  for (let toIdx = 0; toIdx < arr.length; toIdx++) {
-    const newArr = [...arr];
-    const item = newArr.splice(fromIdx, 1)[0];
-    newArr.splice(toIdx, 0, item);
-    result.push(newArr);
-  }
-  return result;
-}
-
 const draggable: Draggable<State> = ({ state }) => (
   <g transform={translate(20, 20)}>
     {state.items.map((item, i) => (
@@ -68,3 +52,19 @@ export default demo(() => (
     height={230}
   />
 ));
+
+/**
+ * Produce all arrays resulting from taking the item in `arr` at
+ * `fromIdx`, removing it from its original position, and reinserting
+ * it at every possible position. */
+// @ts-ignore unused
+function getAllReinsertions<T>(arr: T[], fromIdx: number): T[][] {
+  const result: T[][] = [];
+  for (let toIdx = 0; toIdx < arr.length; toIdx++) {
+    const newArr = [...arr];
+    const item = newArr.splice(fromIdx, 1)[0];
+    newArr.splice(toIdx, 0, item);
+    result.push(newArr);
+  }
+  return result;
+}
