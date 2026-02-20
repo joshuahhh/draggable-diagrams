@@ -1,34 +1,40 @@
 import _ from "lodash";
 import { useMemo, useState } from "react";
-import { amb, produceAmb } from "../amb";
+import { amb, runAmb } from "../amb";
 import { demo } from "../demo";
-import { ConfigCheckbox, ConfigPanel, DemoDraggable } from "../demo/ui";
+import {
+  ConfigCheckbox,
+  ConfigPanel,
+  DemoDraggable,
+  DemoNotes,
+} from "../demo/ui";
 import { Draggable } from "../draggable";
 import { Vec2 } from "../math/vec2";
 import { path, rotateDeg, translate } from "../svgx/helpers";
 
 type State = {
   missingSquare: Vec2;
-  boardLevel: number;
 };
 
 const initialState: State = {
-  missingSquare: Vec2(3, 5),
-  boardLevel: 3,
+  missingSquare: Vec2(0, 0),
 };
 
 type Config = {
   snappyMode: boolean;
   mazeMode: boolean;
+  boardLevel: number;
 };
 
 const defaultConfig: Config = {
   snappyMode: false,
   mazeMode: false,
+  boardLevel: 3,
 };
 
-const CELL_SIZE = 40;
-const TROMINO_PADDING = 6;
+const DEFAULT_CELL_SIZE = 40;
+const PADDING_RATIO = 6 / 40;
+const MAX_DIAGRAM_SIZE = 370;
 
 const COLORS = [
   "lightblue",
@@ -39,21 +45,25 @@ const COLORS = [
 ];
 
 function draggableFactory(config: Config): Draggable<State> {
+  const { boardLevel } = config;
+  const cellSize = Math.min(
+    DEFAULT_CELL_SIZE,
+    MAX_DIAGRAM_SIZE / 2 ** boardLevel,
+  );
+  const padding = cellSize * PADDING_RATIO;
   return ({ state, d }) => (
     <g>
-      {drawState(state)}
+      {drawState(state, boardLevel, cellSize)}
       <rect
         id="missing-square"
         data-z-index={1}
-        transform={translate(
-          state.missingSquare.mul(CELL_SIZE).add(TROMINO_PADDING),
-        )}
-        width={CELL_SIZE - 2 * TROMINO_PADDING}
-        height={CELL_SIZE - 2 * TROMINO_PADDING}
+        transform={translate(state.missingSquare.mul(cellSize).add(padding))}
+        width={cellSize - 2 * padding}
+        height={cellSize - 2 * padding}
         fill="black"
         data-on-drag={() => {
           if (config.mazeMode) {
-            const singleRotations = singleRotationStates(state);
+            const singleRotations = singleRotationStates(state, boardLevel);
             return config.snappyMode
               ? d
                   .closest(
@@ -68,9 +78,11 @@ function draggableFactory(config: Config): Draggable<State> {
           } else {
             return config.snappyMode
               ? d.closest(
-                  d.floating(allStates(state), { ghost: { opacity: 0.2 } }),
+                  d.floating(allStates(boardLevel), {
+                    ghost: { opacity: 0.2 },
+                  }),
                 )
-              : d.between(allStates(state));
+              : d.between(allStates(boardLevel));
           }
         }}
       />
@@ -78,17 +90,17 @@ function draggableFactory(config: Config): Draggable<State> {
   );
 }
 
-function allStates(state: State): State[] {
-  return produceAmb(state, (s) => {
-    s.missingSquare = Vec2(
-      amb(_.range(2 ** s.boardLevel)),
-      amb(_.range(2 ** s.boardLevel)),
-    );
-  });
+function allStates(boardLevel: number): State[] {
+  return runAmb(() => ({
+    missingSquare: Vec2(
+      amb(_.range(2 ** boardLevel)),
+      amb(_.range(2 ** boardLevel)),
+    ),
+  }));
 }
 
-function singleRotationStates(state: State): State[] {
-  return _.range(1, state.boardLevel + 1).flatMap((level) => {
+function singleRotationStates(state: State, boardLevel: number): State[] {
+  return _.range(1, boardLevel + 1).flatMap((level) => {
     const fullCount = 2 ** level;
     const halfCount = 2 ** (level - 1);
     const isCenterL = state.missingSquare.x % fullCount === halfCount - 1;
@@ -112,80 +124,89 @@ function singleRotationStates(state: State): State[] {
   });
 }
 
-function drawState(state: State) {
-  if (state.boardLevel === 0) {
+function drawState(state: State, boardLevel: number, cellSize: number) {
+  const padding = cellSize * PADDING_RATIO;
+  if (boardLevel === 0) {
     return (
-      <rect width={CELL_SIZE} height={CELL_SIZE} fill="white" stroke="black" />
+      <rect width={cellSize} height={cellSize} fill="white" stroke="black" />
     );
   }
 
-  const halfCount = 2 ** (state.boardLevel - 1);
+  const halfCount = 2 ** (boardLevel - 1);
   const missingLeft = state.missingSquare.x < halfCount;
   const missingTop = state.missingSquare.y < halfCount;
 
   return (
     <g>
       <g transform={translate(0, 0)}>
-        {drawState({
-          ...state,
-          boardLevel: state.boardLevel - 1,
-          missingSquare:
-            missingLeft && missingTop
-              ? state.missingSquare
-              : Vec2(halfCount - 1, halfCount - 1),
-        })}
+        {drawState(
+          {
+            missingSquare:
+              missingLeft && missingTop
+                ? state.missingSquare
+                : Vec2(halfCount - 1, halfCount - 1),
+          },
+          boardLevel - 1,
+          cellSize,
+        )}
       </g>
-      <g transform={translate(halfCount * CELL_SIZE, 0)}>
-        {drawState({
-          ...state,
-          boardLevel: state.boardLevel - 1,
-          missingSquare:
-            !missingLeft && missingTop
-              ? state.missingSquare.sub(Vec2(halfCount, 0))
-              : Vec2(0, halfCount - 1),
-        })}
+      <g transform={translate(halfCount * cellSize, 0)}>
+        {drawState(
+          {
+            missingSquare:
+              !missingLeft && missingTop
+                ? state.missingSquare.sub(Vec2(halfCount, 0))
+                : Vec2(0, halfCount - 1),
+          },
+          boardLevel - 1,
+          cellSize,
+        )}
       </g>
-      <g transform={translate(0, halfCount * CELL_SIZE)}>
-        {drawState({
-          ...state,
-          boardLevel: state.boardLevel - 1,
-          missingSquare:
-            missingLeft && !missingTop
-              ? state.missingSquare.sub(Vec2(0, halfCount))
-              : Vec2(halfCount - 1, 0),
-        })}
+      <g transform={translate(0, halfCount * cellSize)}>
+        {drawState(
+          {
+            missingSquare:
+              missingLeft && !missingTop
+                ? state.missingSquare.sub(Vec2(0, halfCount))
+                : Vec2(halfCount - 1, 0),
+          },
+          boardLevel - 1,
+          cellSize,
+        )}
       </g>
-      <g transform={translate(halfCount * CELL_SIZE, halfCount * CELL_SIZE)}>
-        {drawState({
-          ...state,
-          boardLevel: state.boardLevel - 1,
-          missingSquare:
-            !missingLeft && !missingTop
-              ? state.missingSquare.sub(Vec2(halfCount, halfCount))
-              : Vec2(0, 0),
-        })}
+      <g transform={translate(halfCount * cellSize, halfCount * cellSize)}>
+        {drawState(
+          {
+            missingSquare:
+              !missingLeft && !missingTop
+                ? state.missingSquare.sub(Vec2(halfCount, halfCount))
+                : Vec2(0, 0),
+          },
+          boardLevel - 1,
+          cellSize,
+        )}
         {/* the tromino! */}
         <path
           d={path(
             "M",
-            [TROMINO_PADDING, TROMINO_PADDING],
+            [padding, padding],
             "L",
-            [TROMINO_PADDING - CELL_SIZE, TROMINO_PADDING],
+            [padding - cellSize, padding],
             "L",
-            [TROMINO_PADDING - CELL_SIZE, CELL_SIZE - TROMINO_PADDING],
+            [padding - cellSize, cellSize - padding],
             "L",
-            [CELL_SIZE - TROMINO_PADDING, CELL_SIZE - TROMINO_PADDING],
+            [cellSize - padding, cellSize - padding],
             "L",
-            [CELL_SIZE - TROMINO_PADDING, TROMINO_PADDING - CELL_SIZE],
+            [cellSize - padding, padding - cellSize],
             "L",
-            [TROMINO_PADDING, TROMINO_PADDING - CELL_SIZE],
+            [padding, padding - cellSize],
             "Z",
           )}
           transform={rotateDeg(
             missingLeft ? (missingTop ? 0 : 270) : missingTop ? 90 : 180,
             [0, 0],
           )}
-          fill={COLORS[state.boardLevel - 1]}
+          fill={COLORS[boardLevel - 1]}
           stroke="black"
         />
       </g>
@@ -201,17 +222,30 @@ export default demo(
 
     const draggable = useMemo(() => draggableFactory(config), [config]);
 
+    const diagramSize = Math.min(
+      2 ** config.boardLevel * DEFAULT_CELL_SIZE,
+      MAX_DIAGRAM_SIZE,
+    );
+
     return (
       <div className="flex flex-col md:flex-row gap-4 items-start">
         <div>
-          <div className="mt-2 mb-4 text-sm text-gray-600">
-            snappy+maze mode still isn't working?
-          </div>
+          <DemoNotes>
+            Inspired by a{" "}
+            <a
+              href="https://www.reddit.com/r/math/comments/gpxwl4/animated_golombs_ltromino_tiling/"
+              className="hover:text-gray-700 hover:underline"
+            >
+              neat Reddit post
+            </a>
+            .
+          </DemoNotes>
           <DemoDraggable
+            key={config.boardLevel}
             draggable={draggable}
             initialState={initialState}
-            width={370}
-            height={370}
+            width={diagramSize}
+            height={diagramSize}
           />
         </div>
         <ConfigPanel>
@@ -228,6 +262,22 @@ export default demo(
             >
               Maze mode
             </ConfigCheckbox>
+            <label className="flex items-center gap-2 text-xs">
+              <span>Board level: {config.boardLevel}</span>
+              <input
+                type="range"
+                min={1}
+                max={4}
+                value={config.boardLevel}
+                onChange={(e) =>
+                  setConfig((c) => ({
+                    ...c,
+                    boardLevel: Number(e.target.value),
+                  }))
+                }
+                className="w-20"
+              />
+            </label>
           </div>
         </ConfigPanel>
       </div>
