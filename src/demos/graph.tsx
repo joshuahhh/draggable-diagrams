@@ -124,7 +124,10 @@ const draggable: Draggable<State> = ({ state, d }) => {
           r={NODE_R}
           fill="black"
           data-on-drag={() =>
-            d.vary(state, ["nodes", key, "x"], ["nodes", key, "y"])
+            d.vary(state, [
+              ["nodes", key, "x"],
+              ["nodes", key, "y"],
+            ])
           }
         />
       ))}

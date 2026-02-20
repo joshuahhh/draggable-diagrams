@@ -24,7 +24,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
           cy={0}
           r={20}
           fill="black"
-          data-on-drag={() => d.vary(state, ["angle"])}
+          data-on-drag={() => d.vary(state, [["angle"]])}
         />
       </g>
     </g>

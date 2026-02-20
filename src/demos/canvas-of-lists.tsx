@@ -81,7 +81,10 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
             transform={translate(row.x, row.y)}
             data-z-index={isDragged ? 10 : 0}
             data-on-drag={() =>
-              d.vary(state, ["rows", rowId, "x"], ["rows", rowId, "y"])
+              d.vary(state, [
+                ["rows", rowId, "x"],
+                ["rows", rowId, "y"],
+              ])
             }
           >
             <rect
@@ -148,15 +151,12 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                       y: 0,
                     };
                   });
-                  return d
-                    .closest(d.floating(statesWith))
-                    .withBackground(
-                      d.vary(
-                        stateWithNewRow,
-                        ["rows", newRowId, "x"],
-                        ["rows", newRowId, "y"],
-                      ),
-                    );
+                  return d.closest(d.floating(statesWith)).withBackground(
+                    d.vary(stateWithNewRow, [
+                      ["rows", newRowId, "x"],
+                      ["rows", newRowId, "y"],
+                    ]),
+                  );
                 }}
               >
                 <rect

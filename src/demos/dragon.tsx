@@ -31,7 +31,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
           stroke="black"
           strokeWidth={4}
           strokeLinecap="round"
-          data-on-drag={() => d.vary(state, ["squareness"])}
+          data-on-drag={() => d.vary(state, [["squareness"]])}
         />,
       ];
     } else {
@@ -55,13 +55,23 @@ const draggable: Draggable<State> = ({ state, d }) => {
         transform={translate(state.from)}
         r={8}
         fill="red"
-        data-on-drag={() => d.vary(state, ["from", "x"], ["from", "y"])}
+        data-on-drag={() =>
+          d.vary(state, [
+            ["from", "x"],
+            ["from", "y"],
+          ])
+        }
       />
       <circle
         transform={translate(state.to)}
         r={8}
         fill="blue"
-        data-on-drag={() => d.vary(state, ["to", "x"], ["to", "y"])}
+        data-on-drag={() =>
+          d.vary(state, [
+            ["to", "x"],
+            ["to", "y"],
+          ])
+        }
       />
     </g>
   );

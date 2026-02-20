@@ -37,7 +37,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
         r={14}
         fill="black"
         data-on-drag={() =>
-          d.vary(state, ["x"], ["y"], {
+          d.vary(state, [["x"], ["y"]], {
             constraint: (s) => lessThan(center.dist2(s), radius ** 2),
           })
         }

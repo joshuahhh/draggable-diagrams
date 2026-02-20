@@ -116,11 +116,10 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
     const freeState = produce(state, (draft) => {
       draft.wires[wireId][endKey] = { type: "free", x: px, y: py };
     });
-    let varySpec = d.vary(
-      freeState,
+    let varySpec = d.vary(freeState, [
       ["wires", wireId, endKey, "x"],
       ["wires", wireId, endKey, "y"],
-    );
+    ]);
     if (
       freeState.wires[wireId].from.type === "free" &&
       freeState.wires[wireId].to.type === "free"
@@ -195,7 +194,10 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
             transform={translate(node.x, node.y)}
             data-z-index={draggedId === `node-${nid}` ? 5 : 1}
             data-on-drag={() =>
-              d.vary(state, ["nodes", nid, "x"], ["nodes", nid, "y"])
+              d.vary(state, [
+                ["nodes", nid, "x"],
+                ["nodes", nid, "y"],
+              ])
             }
           >
             <rect

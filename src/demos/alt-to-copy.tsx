@@ -36,7 +36,10 @@ const draggable: Draggable<State> = ({ state, d, setState }) => (
         }}
         data-on-drag={(dp) => {
           const moveDot = (s: State, dotId: string) =>
-            d.vary(s, ["dots", dotId, "x"], ["dots", dotId, "y"]);
+            d.vary(s, [
+              ["dots", dotId, "x"],
+              ["dots", dotId, "y"],
+            ]);
 
           if (dp.altKey) {
             // Copy: add a new dot at the same position, follow the copy

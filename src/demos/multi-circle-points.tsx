@@ -71,11 +71,10 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
               strokeDasharray={isCircleDragged ? undefined : "6 4"}
               data-z-index={isCircleDragged ? 2 : 1}
               data-on-drag={() =>
-                d.vary(
-                  state,
+                d.vary(state, [
                   ["circles", circleIdx, "x"],
                   ["circles", circleIdx, "y"],
-                )
+                ])
               }
             />
           </g>
@@ -104,8 +103,10 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
 
           return d.vary(
             stateInCircle,
-            ["points", pointIdx, "dx"],
-            ["points", pointIdx, "dy"],
+            [
+              ["points", pointIdx, "dx"],
+              ["points", pointIdx, "dy"],
+            ],
             {
               constraint: (s) => {
                 const p = s.points[pointIdx];

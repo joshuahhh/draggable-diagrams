@@ -48,7 +48,10 @@ const draggable: Draggable<State> = ({ state, d, setState }) => (
           return d.switchToStateAndFollow(
             newState,
             `dot-${copyId}`,
-            d.vary(newState, ["dots", copyId, "x"], ["dots", copyId, "y"]),
+            d.vary(newState, [
+              ["dots", copyId, "x"],
+              ["dots", copyId, "y"],
+            ]),
           );
         }}
       />

@@ -354,13 +354,11 @@ export class DragSpecBuilder<T> {
    * directly. You can usually feel free to set them to an arbitrary
    * value.
    */
-  vary(state: T, ...paramPaths: PathIn<T, number>[]): DragSpec<T>;
   vary(
     state: T,
-    ...args: [...PathIn<T, number>[], VaryOptions<T>]
-  ): DragSpec<T>;
-  vary(state: T, ...args: (PathIn<T, number> | VaryOptions<T>)[]): DragSpec<T> {
-    const { paramPaths, options } = parseVaryArgs<T>(args);
+    paramPaths: PathIn<T, number>[],
+    options?: VaryOptions<T>,
+  ): DragSpec<T> {
     return attachMethods({ type: "vary", state, paramPaths, ...options });
   }
 
@@ -409,25 +407,6 @@ export type VaryOptions<T> = {
    */
   constrainByParams?: boolean;
 };
-
-function parseVaryArgs<T>(args: (PathIn<T, number> | VaryOptions<T>)[]): {
-  paramPaths: PathIn<T, number>[];
-  options: VaryOptions<T>;
-} {
-  const last = args[args.length - 1];
-  if (
-    args.length > 0 &&
-    last &&
-    !Array.isArray(last) &&
-    typeof last === "object"
-  ) {
-    return {
-      paramPaths: args.slice(0, -1) as PathIn<T, number>[],
-      options: last,
-    };
-  }
-  return { paramPaths: args as PathIn<T, number>[], options: {} };
-}
 
 /** Constraint helper: returns a - b, so a < b when result ≤ 0 */
 export function lessThan(a: number, b: number): number {

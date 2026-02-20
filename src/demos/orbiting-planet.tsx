@@ -70,7 +70,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
         data-on-drag={() =>
           d.closest(
             STARS.map((_, starIdx) =>
-              d.vary({ currentStar: starIdx, angle: state.angle }, ["angle"]),
+              d.vary({ currentStar: starIdx, angle: state.angle }, [["angle"]]),
             ),
           )
         }

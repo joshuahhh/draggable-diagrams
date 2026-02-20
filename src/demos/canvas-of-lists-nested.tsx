@@ -153,15 +153,12 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
         }
       });
 
-      return d
-        .closest(d.floating(statesWith))
-        .withBackground(
-          d.vary(
-            stateWithTopRow,
-            ["rows", stateWithTopRow.rows.length - 1, "x"],
-            ["rows", stateWithTopRow.rows.length - 1, "y"],
-          ),
-        );
+      return d.closest(d.floating(statesWith)).withBackground(
+        d.vary(stateWithTopRow, [
+          ["rows", stateWithTopRow.rows.length - 1, "x"],
+          ["rows", stateWithTopRow.rows.length - 1, "y"],
+        ]),
+      );
     };
 
     const effectiveZIndex = isDragged ? zIndexBase + 10 : zIndexBase;

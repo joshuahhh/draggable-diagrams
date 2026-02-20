@@ -23,7 +23,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
         transform={translate(knobPos)}
         r={20}
         fill="black"
-        data-on-drag={() => d.vary(state, ["angle"])}
+        data-on-drag={() => d.vary(state, [["angle"]])}
       />
       <line
         {...center.xy1()}

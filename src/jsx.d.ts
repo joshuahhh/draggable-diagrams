@@ -9,7 +9,7 @@ declare module "react" {
      * Set to a function returning a DragSpec.
      *
      * @example
-     * <circle data-on-drag={() => d.vary(state, ["x"], ["y"])} />
+     * <circle data-on-drag={() => d.vary(state, [["x"], ["y"]])} />
      *
      * @example
      * <rect data-on-drag={() => d.between([state1, state2])} />

@@ -34,7 +34,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
           cy={0}
           r={10}
           fill="black"
-          data-on-drag={() => d.vary(state, ["hours"])}
+          data-on-drag={() => d.vary(state, [["hours"]])}
         />
       </g>
     );

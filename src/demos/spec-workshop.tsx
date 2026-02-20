@@ -476,7 +476,10 @@ function nodeDrag(
       draft.activeSpecId = null;
   });
 
-  const free = d.vary(base, ["nodes", nid, "x"], ["nodes", nid, "y"]);
+  const free = d.vary(base, [
+    ["nodes", nid, "x"],
+    ["nodes", nid, "y"],
+  ]);
 
   if (snaps.length > 0) {
     return d
@@ -803,7 +806,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
           style={{ cursor: "ew-resize" }}
           data-z-index={parentDragged ? 11 : 2}
           data-on-drag={() =>
-            d.vary(state, ["nodes", parentId, "expr", "radius"] as never, {
+            d.vary(state, [["nodes", parentId, "expr", "radius"] as never], {
               constraint: (s: State) => [
                 lessThan(
                   0,

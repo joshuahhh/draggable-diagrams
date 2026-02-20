@@ -101,7 +101,7 @@ export default demo(() => (
 |---|---|
 | `between([state1, state2, ...])` | Drag between discrete states (interpolated) |
 | `fixed(state)` | Always resolve to this state |
-| `vary(state, ["x"], ["y"])` | Continuous numeric variation along paths |
+| `vary(state, [["x"], ["y"]])` | Continuous numeric variation along paths |
 | `floating(states, { backdrop })` | Float between states with a backdrop |
 | `closest([spec1, spec2])` | Pick whichever spec is closest |
 | `andThen(spec, nextState)` | Chain into a new drag on state change. `nextState` can be a `T` or `(previewState: T) => T` |
