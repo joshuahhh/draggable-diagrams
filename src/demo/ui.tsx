@@ -243,7 +243,7 @@ export function DemoDraggable<T extends object>({
                 <>
                   {draggingDebugInfo ? (
                     <div className="flex flex-col gap-2">
-                      <div className="text-xs text-slate-500 font-mono">
+                      <div className="text-xs text-slate-500 font-mono whitespace-nowrap">
                         activePath: {draggingDebugInfo.activePath}
                       </div>
                       <DragSpecTreeView
