@@ -176,8 +176,6 @@ function lerpValue(key: string, valA: any, valB: any, t: number): any {
  * Interpolates transforms and recursively lerps children.
  */
 export function lerpSvgx(a: Svgx, b: Svgx, t: number): Svgx {
-  // console.log("Lerping SVG nodes:", a, b, t);
-
   // Elements should be the same type
   if (a.type !== b.type) {
     throw new ErrorWithJSX(
