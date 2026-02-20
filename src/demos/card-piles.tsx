@@ -151,7 +151,10 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
               data-z-index={0}
               data-on-drag={() =>
                 d
-                  .vary(state, ["piles", pileId, "x"], ["piles", pileId, "y"])
+                  .vary(state, [
+                    ["piles", pileId, "x"],
+                    ["piles", pileId, "y"],
+                  ])
                   .during(recomputePiles)
               }
             />
@@ -176,11 +179,10 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
               data-z-index={isDragged ? 2 : 1}
               data-on-drag={() =>
                 d
-                  .vary(
-                    state,
+                  .vary(state, [
                     ["piles", pileId, "cards", cardId, "dx"],
                     ["piles", pileId, "cards", cardId, "dy"],
-                  )
+                  ])
                   .during(recomputePiles)
               }
             />
