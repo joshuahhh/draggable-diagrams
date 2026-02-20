@@ -30,6 +30,7 @@ const draggable: Draggable<State> = ({ state, d }) => (
   </g>
 );
 
+// Link up the Draggable to the page that displays it
 export default demo(() => (
   <DemoDraggable
     draggable={draggable}
