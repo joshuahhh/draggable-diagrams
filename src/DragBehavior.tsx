@@ -864,7 +864,7 @@ function DistanceLine({
   to: Vec2;
   distance: number;
 }) {
-  const label = distance > 0.5 ? `${Math.round(distance)}px` : "on target";
+  const label = `${Math.round(distance)}px`;
   return (
     <g>
       <line
