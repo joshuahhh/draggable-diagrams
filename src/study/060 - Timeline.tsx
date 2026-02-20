@@ -32,7 +32,7 @@ const draggable: Draggable<State> = ({ state }) => (
         rx={4}
         fill="#f3f4f6"
         stroke="#e5e7eb"
-        stroke-width={1}
+        strokeWidth={1}
       />
     ))}
 
@@ -49,10 +49,10 @@ const draggable: Draggable<State> = ({ state }) => (
         <text
           x={BLOCK_W / 2}
           y={TRACK_H / 2}
-          text-anchor="middle"
-          dominant-baseline="central"
-          font-size={13}
-          font-weight="600"
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize={13}
+          fontWeight="600"
           fill="white"
         >
           {block.id}

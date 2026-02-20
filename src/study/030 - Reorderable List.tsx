@@ -24,16 +24,16 @@ const draggable: Draggable<State> = ({ state }) => (
           rx={6}
           fill="white"
           stroke="#d1d5db"
-          stroke-width={1.5}
+          strokeWidth={1.5}
         />
 
         {/* Item text */}
         <text
           x={W / 2}
           y={H / 2}
-          text-anchor="middle"
-          dominant-baseline="central"
-          font-size={16}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize={16}
           fill="#374151"
         >
           {item}
