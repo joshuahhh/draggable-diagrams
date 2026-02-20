@@ -17,6 +17,7 @@ const GAP = 8;
  * Produce all arrays resulting from taking the item in `arr` at
  * `fromIdx`, removing it from its original position, and reinserting
  * it at every possible position. */
+// @ts-ignore unused
 function getAllReinsertions<T>(arr: T[], fromIdx: number): T[][] {
   const result: T[][] = [];
   for (let toIdx = 0; toIdx < arr.length; toIdx++) {
