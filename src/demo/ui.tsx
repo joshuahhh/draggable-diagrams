@@ -54,11 +54,20 @@ function loadSettings(): DemoSettings {
   return defaultSettings;
 }
 
-export function DemoSettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<DemoSettings>(loadSettings);
+export function DemoSettingsProvider({
+  children,
+  persist = true,
+}: {
+  children: ReactNode;
+  persist?: boolean;
+}) {
+  const [settings, setSettings] = useState<DemoSettings>(
+    persist ? loadSettings : () => defaultSettings,
+  );
   useEffect(() => {
+    if (!persist) return;
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  }, [settings]);
+  }, [settings, persist]);
   return (
     <DemoContext.Provider value={{ settings, setSettings }}>
       {children}

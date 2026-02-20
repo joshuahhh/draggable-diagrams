@@ -30,7 +30,7 @@ export function SingleStudyPage({ id }: { id: string }) {
   const { Component } = study;
 
   return (
-    <DemoSettingsProvider>
+    <DemoSettingsProvider persist={false}>
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <div className="py-10 px-5 max-w-3xl mx-auto w-full">
           <Link
