@@ -787,7 +787,7 @@ function MacroLeftPanel({ config, setConfig }: ConfigPanelProps) {
             Recorded rules ({config.userRules.length})
           </div>
           {config.userRules.map((rule, i) => (
-            <div className="flex items-center justify-between text-xs">
+            <div key={i} className="flex items-center justify-between text-xs">
               <span className="text-purple-700 font-mono">
                 {patternToString(rule.from)} → {patternToString(rule.to)}
               </span>

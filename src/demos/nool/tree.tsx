@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { ReactNode, useMemo, useState } from "react";
+import { Fragment, ReactNode, useMemo, useState } from "react";
 import { demo } from "../../demo";
 import { ConfigCheckbox, ConfigPanel, DemoDraggable } from "../../demo/ui";
 import { Draggable } from "../../draggable";
@@ -357,10 +357,12 @@ const drawPattern = (
       <>
         {topLevel ? "" : "("}
         {pattern.children.length > 0 &&
-          pattern.children.map((child, i) => [
-            i > 0 && <> {opById[pattern.id]} </>,
-            drawPattern(child, false, firstTriggerId),
-          ])}
+          pattern.children.map((child, i) => (
+            <Fragment key={i}>
+              {i > 0 && <> {opById[pattern.id]} </>}
+              {drawPattern(child, false, firstTriggerId)}
+            </Fragment>
+          ))}
         {topLevel ? "" : ")"}
       </>
     );
