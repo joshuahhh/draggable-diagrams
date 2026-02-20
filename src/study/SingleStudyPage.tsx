@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { DemoSettingsBar, DemoSettingsProvider } from "../demo/ui";
 import { OpenInEditor } from "../OpenInEditor";
+import { ApiReference } from "./ApiReference";
 import { studiesById } from "./registry";
 
 export function SingleStudyPage({ id }: { id: string }) {
@@ -55,6 +56,7 @@ export function SingleStudyPage({ id }: { id: string }) {
           <div className="bg-white rounded-lg p-5 shadow-sm">
             <Component />
           </div>
+          <ApiReference studyNumber={study.number} />
         </div>
         <DemoSettingsBar />
       </div>
