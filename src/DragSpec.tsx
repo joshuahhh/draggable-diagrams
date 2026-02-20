@@ -180,7 +180,8 @@ export interface DragSpecMethods<T> {
   ): DragSpec<T>;
 
   /**
-   * Set a transition to be used when dropping an element. By default this is a 200ms
+   * Set a transition to be used when dropping an element. By default
+   * this is 200ms cubic-out.
    */
   withDropTransition(transition?: TransitionLike): DragSpec<T>;
 
@@ -411,4 +412,9 @@ export type VaryOptions<T> = {
 /** Constraint helper: returns a - b, so a < b when result ≤ 0 */
 export function lessThan(a: number, b: number): number {
   return a - b;
+}
+
+/** Constraint helper: returns b - a, so a > b when result ≤ 0 */
+export function moreThan(a: number, b: number): number {
+  return b - a;
 }
