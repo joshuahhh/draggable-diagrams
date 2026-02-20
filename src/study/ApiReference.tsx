@@ -63,8 +63,8 @@ const ref040 = (
     <Entry name="draggedId">
       The <Code>id</Code> of the currently dragged element.
     </Entry>
-    <Entry name='d.vary(state, [["value"]])'>
-      Continuously vary numeric values in state. Each path is an array of keys
+    <Entry name='d.vary(state, ["value"])'>
+      Continuously vary numeric values in state. A path is an array of keys
       pointing to a number. The framework adjusts these values to place the
       dragged element.
     </Entry>
@@ -82,10 +82,10 @@ const ref050 = (
     <Entry name="draggedId">
       The <Code>id</Code> of the currently dragged element.
     </Entry>
-    <Entry name="d.vary(state, [path, ...])">
+    <Entry name="d.vary(state, [path)">
       Continuously vary numeric values. Works for any numeric parameter that
       affects the element's rendered position.{" "}
-      <Code>{'d.vary(state, [["value"]])'}</Code>
+      <Code>{'d.vary(state, ["value"])'}</Code>
     </Entry>
   </>
 );
@@ -103,8 +103,7 @@ const ref060 = (
     </Entry>
     <Entry name="d.vary(state, [path1, path2, ...])">
       Vary multiple numeric values simultaneously. Paths can reach into nested
-      objects and arrays.{" "}
-      <Code>{'d.vary(state, [["nodes", key, "x"], ["nodes", key, "y"]])'}</Code>
+      objects and arrays. <Code>{'d.vary(state, ["nodes", key, "x"])'}</Code>
     </Entry>
   </>
 );
