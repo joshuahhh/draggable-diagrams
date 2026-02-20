@@ -1,7 +1,6 @@
 import { demo } from "../demo";
 import { DemoDraggable } from "../demo/ui";
 import { Draggable } from "../draggable";
-import { lessThan } from "../DragSpec";
 import { translate } from "../svgx/helpers";
 
 type State = { value: number };
@@ -30,7 +29,7 @@ const draggable: Draggable<State> = ({ state, d }) => (
       style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.15))" }}
       data-on-drag={() =>
         d.vary(state, [["value"]], {
-          constraint: (s) => [lessThan(0, s.value), lessThan(s.value, W)],
+          constraint: (s) => [0 - s.value, s.value - W],
         })
       }
     />
