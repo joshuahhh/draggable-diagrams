@@ -16,6 +16,7 @@ import {
   dragSpecToBehavior,
 } from "./DragBehavior";
 import { DragSpec, DragSpecBuilder } from "./DragSpec";
+import { ErrorBoundary } from "./ErrorBoundary";
 import {
   DragParams,
   Draggable,
@@ -746,15 +747,27 @@ const DrawDraggingMode = memoGeneric(
       dragState.springingFrom,
       dragState.result.rendered,
     );
-    const debugOverlay =
-      showDebugOverlay && dragState.result.debugOverlay
-        ? dragState.result.debugOverlay()
-        : null;
     return (
       <>
         {drawLayered(rendered)}
-        {debugOverlay}
+        {showDebugOverlay && (
+          <ErrorBoundary>
+            <DrawDebugOverlay dragState={dragState} />
+          </ErrorBoundary>
+        )}
       </>
     );
+  },
+);
+
+const DrawDebugOverlay = memoGeneric(
+  <T extends object>({
+    dragState,
+  }: {
+    dragState: DragState<T> & { type: "dragging" };
+  }) => {
+    return dragState.result.debugOverlay
+      ? dragState.result.debugOverlay()
+      : null;
   },
 );
