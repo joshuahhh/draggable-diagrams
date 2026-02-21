@@ -2,8 +2,10 @@ import { PrettyPrint } from "@joshuahhh/pretty-print";
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { Link } from "react-router-dom";
@@ -25,6 +27,7 @@ export type DemoSettings = {
   showDropZones: boolean;
   showDebugOverlay: boolean;
   showStateViewer: boolean;
+  showTimingMeter: boolean;
 };
 
 const defaultSettings: DemoSettings = {
@@ -32,6 +35,7 @@ const defaultSettings: DemoSettings = {
   showDropZones: false,
   showDebugOverlay: false,
   showStateViewer: false,
+  showTimingMeter: false,
 };
 
 const DemoContext = createContext<{
@@ -80,6 +84,7 @@ const settingsEntries = [
   { key: "showDebugOverlay", label: "Debug overlay", mobileHidden: false },
   { key: "showTreeView", label: "Spec tree", mobileHidden: true },
   { key: "showDropZones", label: "Drop zones", mobileHidden: false },
+  { key: "showTimingMeter", label: "Timing", mobileHidden: true },
 ] as const;
 
 const settingsIcons: Record<keyof DemoSettings, ReactNode> = {
@@ -143,7 +148,68 @@ const settingsIcons: Record<keyof DemoSettings, ReactNode> = {
       </g>
     </svg>
   ),
+  showTimingMeter: (
+    <svg width={14} height={14} viewBox="0 0 14 14" className="shrink-0">
+      <circle
+        cx={7}
+        cy={7}
+        r={5.5}
+        fill="none"
+        stroke="#64748b"
+        strokeWidth={1.2}
+      />
+      <line
+        x1={7}
+        y1={7}
+        x2={7}
+        y2={3.5}
+        stroke="#64748b"
+        strokeWidth={1.2}
+        strokeLinecap="round"
+      />
+      <line
+        x1={7}
+        y1={7}
+        x2={9.5}
+        y2={7}
+        stroke="#64748b"
+        strokeWidth={1.2}
+        strokeLinecap="round"
+      />
+    </svg>
+  ),
 };
+
+function TimingMeter() {
+  const [msPerFrame, setMsPerFrame] = useState(0);
+  const framesRef = useRef(0);
+  const lastTimeRef = useRef(performance.now());
+
+  const tick = useCallback(() => {
+    framesRef.current++;
+    const now = performance.now();
+    const elapsed = now - lastTimeRef.current;
+    if (elapsed >= 1000) {
+      setMsPerFrame(+(elapsed / framesRef.current).toFixed(1));
+      framesRef.current = 0;
+      lastTimeRef.current = now;
+    }
+  }, []);
+
+  useEffect(() => {
+    let id: number;
+    const loop = () => {
+      tick();
+      id = requestAnimationFrame(loop);
+    };
+    id = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(id);
+  }, [tick]);
+
+  return (
+    <div className="text-xs font-mono text-slate-500">{msPerFrame} ms/f</div>
+  );
+}
 
 export function DemoSettingsBar({
   only,
@@ -187,8 +253,13 @@ export function DemoDraggable<T extends object>({
   width: number;
   height: number;
 }) {
-  const { showTreeView, showDropZones, showDebugOverlay, showStateViewer } =
-    useDemoSettings();
+  const {
+    showTreeView,
+    showDropZones,
+    showDebugOverlay,
+    showStateViewer,
+    showTimingMeter: showTimingMeter,
+  } = useDemoSettings();
   const [debugInfo, setDebugInfo] = useState<DebugDragInfo<T>>({
     type: "idle",
     state: initialState,
@@ -246,8 +317,9 @@ export function DemoDraggable<T extends object>({
               </svg>
             )}
           </div>
-          {(showTreeView || showStateViewer) && (
+          {(showTreeView || showStateViewer || showTimingMeter) && (
             <div className="w-72 shrink-0 flex flex-col gap-2">
+              {showTimingMeter && <TimingMeter />}
               {showTreeView && (
                 <>
                   {draggingDebugInfo ? (
