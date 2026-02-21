@@ -114,6 +114,7 @@ export default demo(() => (
 `vary` uses **numerical optimization**: it varies the specified params to minimize distance between the dragged element's rendered position and the pointer. Key implications:
 
 - **Deep paths work**: `d.vary(state, ["nodes", key, "x"], ["nodes", key, "y"])` for `Record`-based state (see `src/demos/graph.tsx`)
+- **The library tracks all SVG transforms**, including `rotate`. An element inside a `rotateDeg(angle)` group *does* change rendered position when `angle` changes — the library resolves the full transform chain. So you can put `data-on-drag` with `d.vary` directly on elements inside rotated groups; no extra handle elements are needed.
 - **Only params that affect the dragged element's rendered position will have an optimization effect.** If varying a param doesn't change where the dragged element renders, the optimizer ignores it. This means you can't naively vary N items' positions to move them as a group — only the extreme items (affecting the bounding box) would move.
 - **For group movement**, vary a shared position (e.g. a pile's x/y) that all members offset from, rather than varying each member independently (see `src/demos/card-piles.tsx`)
 - The `state` arg to `vary` is the starting state for optimization (not necessarily the current rendered state). The initial param values are used as the optimizer's starting point.
