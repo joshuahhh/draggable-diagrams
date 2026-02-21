@@ -1,11 +1,11 @@
 import { Draggable } from "./draggable";
 import { DragSpecBuilder } from "./DragSpec";
 import { Svgx } from "./svgx";
-import { accumulateTransforms, LayeredSvgx, layerSvg } from "./svgx/layers";
+import { LayeredSvgx, layerSvg } from "./svgx/layers";
 import { assignPaths } from "./svgx/path";
 import { pipe, throwError } from "./utils";
 
-/** Render a state through assignPaths + accumulateTransforms, but stop before layering. */
+/** Render a state through assignPaths, but stop before layering. */
 export function renderDraggableInertUnlayered<T extends object>(
   draggable: Draggable<T>,
   state: T,
@@ -19,7 +19,6 @@ export function renderDraggableInertUnlayered<T extends object>(
       setState: throwError,
     }),
     assignPaths,
-    accumulateTransforms,
   );
 }
 

@@ -195,8 +195,8 @@ describe("findByPath", () => {
 
     const found = findByPath("/", tree);
     expect.assert(found);
-    expect(found.type).toBe("g");
-    expect(getPath(found)).toBe("/");
+    expect(found.element.type).toBe("g");
+    expect(getPath(found.element)).toBe("/");
   });
 
   it("finds child element by numerical path", () => {
@@ -209,7 +209,7 @@ describe("findByPath", () => {
 
     const found = findByPath("/1/", tree);
     expect.assert(found);
-    expect(found.type).toBe("circle");
+    expect(found.element.type).toBe("circle");
   });
 
   it("finds deeply nested element", () => {
@@ -224,7 +224,7 @@ describe("findByPath", () => {
 
     const found = findByPath("/0/1/", tree);
     expect.assert(found);
-    expect(found.type).toBe("circle");
+    expect(found.element.type).toBe("circle");
   });
 
   it("finds element by id-based path", () => {
@@ -237,8 +237,8 @@ describe("findByPath", () => {
 
     const found = findByPath("my-rect/", tree);
     expect.assert(found);
-    expect(found.type).toBe("rect");
-    expect((found.props as any).id).toBe("my-rect");
+    expect(found.element.type).toBe("rect");
+    expect((found.element.props as any).id).toBe("my-rect");
   });
 
   it("finds nested child under id-based path", () => {
@@ -253,7 +253,7 @@ describe("findByPath", () => {
 
     const found = findByPath("container/1/", tree);
     expect.assert(found);
-    expect(found.type).toBe("circle");
+    expect(found.element.type).toBe("circle");
   });
 
   it("returns null when path does not exist", () => {
@@ -276,5 +276,43 @@ describe("findByPath", () => {
 
     const found = findByPath("fake/", tree);
     expect(found).toBe(null);
+  });
+
+  it("returns accumulated transform for nested element", () => {
+    const tree = assignPaths(
+      <g transform="translate(10, 20)">
+        <g transform="rotate(45)">
+          <rect id="r1" />
+        </g>
+      </g>,
+    );
+
+    const found = findByPath("r1/", tree);
+    expect.assert(found);
+    expect(found.accumulatedTransform).toBe("translate(10, 20) rotate(45)");
+  });
+
+  it("returns accumulated transform including element's own transform", () => {
+    const tree = assignPaths(
+      <g transform="translate(10, 20)">
+        <rect id="r1" transform="scale(2)" />
+      </g>,
+    );
+
+    const found = findByPath("r1/", tree);
+    expect.assert(found);
+    expect(found.accumulatedTransform).toBe("translate(10, 20) scale(2)");
+  });
+
+  it("returns empty accumulated transform for root with no transforms", () => {
+    const tree = assignPaths(
+      <g>
+        <rect />
+      </g>,
+    );
+
+    const found = findByPath("/", tree);
+    expect.assert(found);
+    expect(found.accumulatedTransform).toBe("");
   });
 });

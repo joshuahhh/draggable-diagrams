@@ -14,8 +14,6 @@ import { getLocalBounds, pointInBounds } from "./svgx/bounds";
 import { path as svgPath, translate } from "./svgx/helpers";
 import {
   LayeredSvgx,
-  accumulateTransforms,
-  elementLocalToGlobal,
   findByPathInLayered,
   layeredExtract,
   layeredMerge,
@@ -217,10 +215,7 @@ function withFloatingBehavior<T extends object>(
   return (frame) => {
     const innerResult = innerBehavior(frame);
     const layered = innerResult.rendered;
-    // Use the element's transform prop directly rather than
-    // getElementPosition, because lerpSvgx skips data- props so
-    // data-accumulated-transform is stale on interpolated output.
-    // In layered form, the transform prop IS the accumulated transform.
+    // On a layer, the transform prop IS the accumulated transform.
     const draggedElement = layered.byId.get(draggedId);
     const elementPos = draggedElement
       ? localToGlobal(
@@ -451,9 +446,10 @@ function varyBehavior<T extends object>(
       candidateState,
       ctx.draggedId,
     );
-    const element = findByPath(ctx.draggedPath, content);
-    if (!element) return Vec2(Infinity, Infinity);
-    return elementLocalToGlobal(element, ctx.pointerLocal);
+    const found = findByPath(ctx.draggedPath, content);
+    if (!found) return Vec2(Infinity, Infinity);
+    const transforms = parseTransform(found.accumulatedTransform);
+    return localToGlobal(transforms, ctx.pointerLocal);
   };
 
   return (frame) => {
@@ -572,16 +568,6 @@ function withSnapRadiusBehavior<T extends object>(
   };
   return (frame) => {
     const result = subBehavior(frame);
-    // Re-accumulate transforms so getElementPosition reads correct
-    // data-accumulated-transform on composed/interpolated output.
-    // TODO: we don't really need to accumulate transforms on
-    // EVERYTHING...
-    for (const id of result.rendered.byId.keys()) {
-      result.rendered.byId.set(
-        id,
-        accumulateTransforms(result.rendered.byId.get(id)!),
-      );
-    }
     const elementPos = getElementPosition(ctx, result.rendered);
     const dropRendered = getDropRendered(result.dropState);
     const dropElementPos = getElementPosition(ctx, dropRendered);
@@ -861,9 +847,10 @@ function getElementPosition<T extends object>(
   ctx: DragBehaviorInitContext<T>,
   layered: LayeredSvgx,
 ): Vec2 {
-  const element = findByPathInLayered(ctx.draggedPath, layered);
-  if (!element) return Vec2(Infinity, Infinity);
-  return elementLocalToGlobal(element, ctx.pointerLocal);
+  const found = findByPathInLayered(ctx.draggedPath, layered);
+  if (!found) return Vec2(Infinity, Infinity);
+  const transforms = parseTransform(found.accumulatedTransform);
+  return localToGlobal(transforms, ctx.pointerLocal);
 }
 
 function DistanceLine({

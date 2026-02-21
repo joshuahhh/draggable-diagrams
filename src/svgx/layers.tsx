@@ -1,14 +1,8 @@
 import React, { cloneElement, Fragment } from "react";
-import { Svgx, updateElement, updatePropsDownTree } from ".";
-import { Vec2, Vec2able } from "../math/vec2";
+import { FindElementResult, Svgx, updateElement, updatePropsDownTree } from ".";
 import { assert, objectEntries } from "../utils";
 import { findByPath } from "./path";
-import {
-  combineTransforms,
-  globalToLocal,
-  localToGlobal,
-  parseTransform,
-} from "./transform";
+import { combineTransforms } from "./transform";
 
 export type LayeredSvgx = {
   /**
@@ -23,42 +17,11 @@ export type LayeredSvgx = {
   descendents: Map<string, Set<string>> | null;
 };
 
-const accumulatedTransformProp = "data-accumulated-transform";
-
 /**
- * Step 1: Walks the SVG tree and adds data-accumulated-transform to
-   all elements.
- * Accumulates transform attributes from parent <g> nodes.
- */
-export function accumulateTransforms(element: Svgx): Svgx {
-  return walkAndAccumulateTransforms(element, "");
-}
-
-function walkAndAccumulateTransforms(
-  element: Svgx,
-  accumulatedTransform: string,
-): Svgx {
-  const props = element.props as any;
-  const elementTransform = props.transform || "";
-  const newAccumulatedTransform = combineTransforms(
-    accumulatedTransform,
-    elementTransform,
-  );
-
-  return updateElement(
-    element,
-    (child) => walkAndAccumulateTransforms(child, newAccumulatedTransform),
-    {
-      [accumulatedTransformProp as any]: newAccumulatedTransform || undefined,
-    },
-  );
-}
-
-/**
- * Step 2: Partially flattens an SVG tree by pulling nodes with IDs
- * to the top level as separate layers. Reads data-accumulated-transform
- * and sets it as transform for extracted nodes. Returns a map of elements
- * keyed by their id, plus a descendents map tracking parent-child
+ * Partially flattens an SVG tree by pulling nodes with IDs to the
+ * top level as separate layers. Accumulates transforms while walking
+ * and sets them on extracted nodes. Returns a map of elements keyed
+ * by their id, plus a descendents map tracking parent-child
  * relationships.
  * - Key "" contains the root with extracted nodes removed (or is not
  *   set if root has an ID)
@@ -73,6 +36,7 @@ export function layerSvg(element: Svgx): LayeredSvgx {
     byId,
     descendents,
     null,
+    "",
   );
   if (rootWithExtractedRemoved) {
     // we gotta put the root at the beginning of the map
@@ -93,6 +57,7 @@ function extractIdNodes(
   byId: Map<string, Svgx>,
   descendents: Map<string, Set<string>>,
   ancestorId: string | null,
+  accumulatedTransform: string,
 ): Svgx | null {
   const props = element.props as any;
 
@@ -105,9 +70,20 @@ function extractIdNodes(
 
   const currentId = props.id;
   const newAncestorId = currentId || ancestorId;
+  const elementTransform = props.transform || "";
+  const newAccumulatedTransform = combineTransforms(
+    accumulatedTransform,
+    elementTransform,
+  );
 
   const newElement = updateElement(element, (child) =>
-    extractIdNodes(child, byId, descendents, newAncestorId),
+    extractIdNodes(
+      child,
+      byId,
+      descendents,
+      newAncestorId,
+      newAccumulatedTransform,
+    ),
   );
 
   if (currentId) {
@@ -131,9 +107,8 @@ function extractIdNodes(
       }
     }
 
-    const accumulatedTransform = props[accumulatedTransformProp];
     const elementToLayer = cloneElement(newElement, {
-      transform: accumulatedTransform || undefined,
+      transform: newAccumulatedTransform || undefined,
     });
 
     byId.set(currentId, elementToLayer);
@@ -141,29 +116,6 @@ function extractIdNodes(
   } else {
     return newElement;
   }
-}
-
-export function getAccumulatedTransform(element: Svgx): string | undefined {
-  const props = element.props as any;
-  return props[accumulatedTransformProp];
-}
-
-/** Convert a local point to global using an element's accumulated transform. */
-export function elementLocalToGlobal(
-  element: Svgx,
-  localPoint: Vec2able,
-): Vec2 {
-  const transforms = parseTransform(getAccumulatedTransform(element) || "");
-  return localToGlobal(transforms, localPoint);
-}
-
-/** Convert a global point to local using an element's accumulated transform. */
-export function elementGlobalToLocal(
-  element: Svgx,
-  globalPoint: Vec2able,
-): Vec2 {
-  const transforms = parseTransform(getAccumulatedTransform(element) || "");
-  return globalToLocal(transforms, globalPoint);
 }
 
 export function drawLayered(layered: LayeredSvgx): Svgx {
@@ -336,7 +288,7 @@ export function layeredSetAttributes(
 export function findByPathInLayered(
   path: string,
   layered: LayeredSvgx,
-): Svgx | null {
+): FindElementResult | null {
   for (const element of layered.byId.values()) {
     const found = findByPath(path, element);
     if (found) return found;

@@ -30,16 +30,13 @@ import {
 import { Svgx, findElement, updatePropsDownTree } from "./svgx";
 import {
   LayeredSvgx,
-  accumulateTransforms,
   drawLayered,
-  elementGlobalToLocal,
-  getAccumulatedTransform,
   layerSvg,
   layeredExtract,
 } from "./svgx/layers";
 import { lerpLayered } from "./svgx/lerp";
 import { assignPaths, findByPath, getPath } from "./svgx/path";
-import { localToGlobal, parseTransform } from "./svgx/transform";
+import { globalToLocal, localToGlobal, parseTransform } from "./svgx/transform";
 import {
   Transition,
   TransitionLike,
@@ -488,29 +485,30 @@ function processChainNow<T extends object>(
     newState,
     newDraggedId,
   );
-  const element = newDraggedId
+  const found = newDraggedId
     ? findElement(content, (el) => el.props.id === newDraggedId)
     : findByPath(ds.behaviorCtx.draggedPath, content);
 
   assert(
-    !!element,
+    !!found,
     `Chained drag must have a valid dragged element; couldn't find element with id ${newDraggedId}`,
   );
 
   const newDragSpec =
     result.chainNow.followSpec ??
-    getDragSpecCallbackOnElement<T>(element)?.(ds.dragParamsInfo.dragParams);
+    getDragSpecCallbackOnElement<T>(found.element)?.(
+      ds.dragParamsInfo.dragParams,
+    );
   if (!newDragSpec) return null;
 
   const newSpringingFrom = makeSpringingFrom(true, () =>
     runSpring(ds.springingFrom, result.rendered),
   );
 
-  const newDraggedPath = getPath(element);
+  const newDraggedPath = getPath(found.element);
   assert(!!newDraggedPath, "Chained element must have a path");
 
-  const newAccTransform = getAccumulatedTransform(element);
-  const newTransforms = parseTransform(newAccTransform || "");
+  const newTransforms = parseTransform(found.accumulatedTransform);
   const pointerLocal = ds.behaviorCtx.pointerLocal;
   const newPointerStart = localToGlobal(newTransforms, pointerLocal);
 
@@ -618,10 +616,9 @@ function postProcessForInteraction<T extends object>(
   state: T,
   ctx: RenderContext<T>,
 ): LayeredSvgx {
+  const withPaths = assignPaths(content);
   return pipe(
-    content,
-    assignPaths,
-    accumulateTransforms,
+    withPaths,
     (el) =>
       updatePropsDownTree(el, (el) => {
         const dragSpecCallback = getDragSpecCallbackOnElement<T>(el);
@@ -643,7 +640,14 @@ function postProcessForInteraction<T extends object>(
             const draggedPath = getPath(el);
             assert(!!draggedPath, "Dragged element must have a path");
 
-            const pointerLocal = elementGlobalToLocal(el, pointer);
+            // TODO: could instead provide the accumulatedTransform
+            // via updatePropsDownTree?
+            const found = findByPath(draggedPath, withPaths);
+            assert(!!found, "Dragged element must be findable by path");
+            const pointerLocal = globalToLocal(
+              parseTransform(found.accumulatedTransform),
+              pointer,
+            );
 
             const behaviorCtxWithoutFloat = {
               draggable: ctx.draggable,

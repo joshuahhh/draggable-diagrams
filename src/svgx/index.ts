@@ -1,4 +1,5 @@
 import React from "react";
+import { combineTransforms } from "./transform";
 
 // SVGX is our slang for "messing around with SVG represented as
 // React elements, generally provided by an author as JSX".
@@ -47,19 +48,35 @@ export function updateElement(
   return newProps ? React.cloneElement(element, newProps) : element;
 }
 
+export type FindElementResult = {
+  element: Svgx;
+  accumulatedTransform: string;
+};
+
 export function findElement(
   element: Svgx,
   predicate: (el: Svgx) => boolean,
-): Svgx | null {
+  accumulatedTransform: string = "",
+): FindElementResult | null {
+  const elementTransform = (element.props as any).transform || "";
+  const newAccumulatedTransform = combineTransforms(
+    accumulatedTransform,
+    elementTransform,
+  );
+
   if (predicate(element)) {
-    return element;
+    return { element, accumulatedTransform: newAccumulatedTransform };
   }
 
   if (shouldRecurseIntoChildren(element)) {
     const children = React.Children.toArray(element.props.children);
     for (const child of children) {
       if (React.isValidElement(child)) {
-        const found = findElement(child as Svgx, predicate);
+        const found = findElement(
+          child as Svgx,
+          predicate,
+          newAccumulatedTransform,
+        );
         if (found) return found;
       }
     }

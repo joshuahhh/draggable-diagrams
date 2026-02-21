@@ -1,4 +1,4 @@
-import { findElement, Svgx, updateElement } from ".";
+import { findElement, FindElementResult, Svgx, updateElement } from ".";
 import { assert } from "../utils";
 
 const pathPropName = "data-path";
@@ -45,6 +45,6 @@ function assignPathsRecursive(element: Svgx, currentPath: string): Svgx {
 }
 
 // TODO: actually follow paths rather than searching the whole tree
-export function findByPath(path: string, node: Svgx): Svgx | null {
+export function findByPath(path: string, node: Svgx): FindElementResult | null {
   return findElement(node, (el) => getPath(el) === path);
 }

@@ -1,7 +1,6 @@
 import { findElement, Svgx } from ".";
 import { Vec2, Vec2able } from "../math/vec2";
 import { assert, assertDefined } from "../utils";
-import { accumulateTransforms, getAccumulatedTransform } from "./layers";
 import { localToGlobal, parseTransform } from "./transform";
 
 /**
@@ -53,19 +52,14 @@ export function pointRef(elementId: string, localPos: Vec2able): PointRef {
 export function resolvePointRef(ref: PointRef, tree: Svgx): Vec2 {
   assert(!!ref, "PointRef is undefined");
 
-  const accumulated = accumulateTransforms(tree);
-  const element = findElement(
-    accumulated,
-    (el) => el.props.id === ref.elementId,
-  );
+  const found = findElement(tree, (el) => el.props.id === ref.elementId);
 
-  if (!element) {
+  if (!found) {
     throw new Error(
       `Cannot resolve point ref: element with id "${ref.elementId}" not found`,
     );
   }
 
-  const transformStr = getAccumulatedTransform(element) || "";
-  const transforms = parseTransform(transformStr);
+  const transforms = parseTransform(found.accumulatedTransform);
   return localToGlobal(transforms, ref.localPos);
 }
