@@ -211,15 +211,6 @@ export function lerpSvgx(a: Svgx, b: Svgx, t: number): Svgx {
   const transformB = propsB.transform || "";
   const lerpedTransform = lerpTransformString(transformA, transformB, t);
 
-  // Also lerp data-accumulated-transform so position queries stay correct after lerp.
-  // (Without this, behaviors like withSnapRadius had to re-accumulate transforms every frame.)
-  const accTransformA = propsA["data-accumulated-transform"] || "";
-  const accTransformB = propsB["data-accumulated-transform"] || "";
-  const lerpedAccTransform =
-    accTransformA && accTransformB
-      ? lerpTransformString(accTransformA, accTransformB, t)
-      : "";
-
   // Lerp numeric props (x, y, width, height, etc.)
   const lerpedNumericProps: any = {};
   const allPropKeys = new Set([...Object.keys(propsA), ...Object.keys(propsB)]);
@@ -298,9 +289,6 @@ export function lerpSvgx(a: Svgx, b: Svgx, t: number): Svgx {
   return React.cloneElement(a, {
     ...lerpedNumericProps,
     ...(lerpedTransform ? { transform: lerpedTransform } : {}),
-    ...(lerpedAccTransform
-      ? { "data-accumulated-transform": lerpedAccTransform }
-      : {}),
     children: emptyToUndefined(lerpedChildren),
   });
 }

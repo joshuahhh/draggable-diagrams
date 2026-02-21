@@ -14,6 +14,7 @@ import { getLocalBounds, pointInBounds } from "./svgx/bounds";
 import { path as svgPath, translate } from "./svgx/helpers";
 import {
   LayeredSvgx,
+  accumulateTransforms,
   elementLocalToGlobal,
   findByPathInLayered,
   layeredExtract,
@@ -571,6 +572,16 @@ function withSnapRadiusBehavior<T extends object>(
   };
   return (frame) => {
     const result = subBehavior(frame);
+    // Re-accumulate transforms so getElementPosition reads correct
+    // data-accumulated-transform on composed/interpolated output.
+    // TODO: we don't really need to accumulate transforms on
+    // EVERYTHING...
+    for (const id of result.rendered.byId.keys()) {
+      result.rendered.byId.set(
+        id,
+        accumulateTransforms(result.rendered.byId.get(id)!),
+      );
+    }
     const elementPos = getElementPosition(ctx, result.rendered);
     const dropRendered = getDropRendered(result.dropState);
     const dropElementPos = getElementPosition(ctx, dropRendered);
