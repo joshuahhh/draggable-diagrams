@@ -1,8 +1,11 @@
+import { execSync } from "node:child_process";
 import mdx from "@mdx-js/rollup";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 import { qrcodePlugin } from "./vite-plugin-qrcode";
+
+const commitHash = execSync("git rev-parse --short HEAD").toString().trim();
 
 /**
  * Virtual import plugin for type definitions.
@@ -64,5 +67,6 @@ export default defineConfig({
   ],
   define: {
     "process.env": {},
+    __COMMIT_HASH__: JSON.stringify(commitHash),
   },
 });

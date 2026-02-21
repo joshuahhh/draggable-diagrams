@@ -38,6 +38,9 @@ export function IndexPage() {
           </a>
         </div>
       </div>
+      <div className="absolute bottom-4 text-xs text-gray-400 font-mono">
+        {__COMMIT_HASH__}
+      </div>
     </div>
   );
 }
