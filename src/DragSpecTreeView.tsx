@@ -78,11 +78,12 @@ function SpecNode<T>(props: NodeProps<T>) {
   } else if (spec.type === "with-floating") {
     const prefix = path + "with-floating/";
     return (
-      <Box
-        label="withFloating"
-        color={colorMap?.get(path + "with-floating")}
-      >
-        <OutputThumbnail debug={debug} svgWidth={svgWidth} svgHeight={svgHeight} />
+      <Box label="withFloating" color={colorMap?.get(path + "with-floating")}>
+        <OutputThumbnail
+          debug={debug}
+          svgWidth={svgWidth}
+          svgHeight={svgHeight}
+        />
         <SpecNode
           spec={spec.spec}
           activePath={activePath}
@@ -217,7 +218,11 @@ function SpecNode<T>(props: NodeProps<T>) {
   } else if (spec.type === "during") {
     return (
       <Box label="during">
-        <OutputThumbnail debug={debug} svgWidth={svgWidth} svgHeight={svgHeight} />
+        <OutputThumbnail
+          debug={debug}
+          svgWidth={svgWidth}
+          svgHeight={svgHeight}
+        />
         <SpecNode
           spec={spec.spec}
           activePath={activePath}
@@ -260,7 +265,11 @@ function SpecNode<T>(props: NodeProps<T>) {
     }
     return (
       <Box label={label}>
-        <OutputThumbnail debug={debug} svgWidth={svgWidth} svgHeight={svgHeight} />
+        <OutputThumbnail
+          debug={debug}
+          svgWidth={svgWidth}
+          svgHeight={svgHeight}
+        />
         <SpecNode
           spec={spec.spec}
           activePath={activePath}
@@ -281,7 +290,11 @@ function SpecNode<T>(props: NodeProps<T>) {
         active={active}
         color={colorMap?.get(fullPath)}
       >
-        <OutputThumbnail debug={debug} svgWidth={svgWidth} svgHeight={svgHeight} />
+        <OutputThumbnail
+          debug={debug}
+          svgWidth={svgWidth}
+          svgHeight={svgHeight}
+        />
         <Slot label="states">
           <StateThumbnails
             debug={debug}

@@ -1,7 +1,7 @@
-import { execSync } from "node:child_process";
 import mdx from "@mdx-js/rollup";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
+import { execSync } from "node:child_process";
 import { defineConfig, type Plugin } from "vite";
 import { qrcodePlugin } from "./vite-plugin-qrcode";
 
