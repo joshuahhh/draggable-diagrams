@@ -1,5 +1,11 @@
+import { useMemo, useState } from "react";
 import { demo } from "../demo";
-import { DemoDraggable, DemoNotes } from "../demo/ui";
+import {
+  ConfigPanel,
+  ConfigSlider,
+  DemoDraggable,
+  DemoNotes,
+} from "../demo/ui";
 import { Draggable } from "../draggable";
 import { Vec2 } from "../math/vec2";
 import { Svgx } from "../svgx";
@@ -19,85 +25,100 @@ const initialState: State = {
   tilt: 0,
 };
 
-const LEVELS = 7;
-
-const draggable: Draggable<State> = ({ state, d }) => {
-  function dragon(p1: Vec2, p2: Vec2, dir: number, level: number): Svgx[] {
-    if (level == 0) {
-      return [
-        <line
-          transform={translate(p1)}
-          {...p2.sub(p1).xy2()}
-          stroke="black"
-          strokeWidth={4}
-          strokeLinecap="round"
-          data-on-drag={() => d.vary(state, [["squareness"]])}
-        />,
-      ];
-    } else {
-      const mid = p1.mid(p2).add(
-        p2
-          .sub(p1)
-          .mul(state.squareness * dir)
-          .rotateDeg(90 + state.tilt),
-      );
-      return [
-        ...dragon(p1, mid, -1, level - 1),
-        ...dragon(mid, p2, 1, level - 1),
-      ];
+function makeDraggable(levels: number): Draggable<State> {
+  return ({ state, d }) => {
+    function dragon(p1: Vec2, p2: Vec2, dir: number, level: number): Svgx[] {
+      if (level == 0) {
+        return [
+          <line
+            transform={translate(p1)}
+            {...p2.sub(p1).xy2()}
+            stroke="black"
+            strokeWidth={4}
+            strokeLinecap="round"
+            data-on-drag={() => d.vary(state, [["squareness"]])}
+          />,
+        ];
+      } else {
+        const mid = p1.mid(p2).add(
+          p2
+            .sub(p1)
+            .mul(state.squareness * dir)
+            .rotateDeg(90 + state.tilt),
+        );
+        return [
+          ...dragon(p1, mid, -1, level - 1),
+          ...dragon(mid, p2, 1, level - 1),
+        ];
+      }
     }
-  }
 
-  return (
-    <g>
-      {dragon(Vec2(state.from), Vec2(state.to), -1, LEVELS)}
-      <circle
-        transform={translate(state.from)}
-        r={8}
-        fill="red"
-        data-on-drag={() =>
-          d.vary(state, [
-            ["from", "x"],
-            ["from", "y"],
-          ])
-        }
-      />
-      <circle
-        transform={translate(state.to)}
-        r={8}
-        fill="blue"
-        data-on-drag={() =>
-          d.vary(state, [
-            ["to", "x"],
-            ["to", "y"],
-          ])
-        }
-      />
-    </g>
-  );
-};
+    return (
+      <g>
+        {dragon(Vec2(state.from), Vec2(state.to), -1, levels)}
+        <circle
+          transform={translate(state.from)}
+          r={8}
+          fill="red"
+          data-on-drag={() =>
+            d.vary(state, [
+              ["from", "x"],
+              ["from", "y"],
+            ])
+          }
+        />
+        <circle
+          transform={translate(state.to)}
+          r={8}
+          fill="blue"
+          data-on-drag={() =>
+            d.vary(state, [
+              ["to", "x"],
+              ["to", "y"],
+            ])
+          }
+        />
+      </g>
+    );
+  };
+}
 
 export default demo(
-  () => (
-    <div>
-      <DemoNotes>
-        Adapted from{" "}
-        <a
-          href="https://omrelli.ug/g9/"
-          className="hover:text-gray-700 hover:underline"
-        >
-          g9's famous example
-        </a>
-        . Nice performance stress test (which we are failing; try larger
-        "Levels").
-      </DemoNotes>
-      <DemoDraggable
-        draggable={draggable}
-        initialState={initialState}
-        width={400}
-        height={280}
-      />
-    </div>
-  ),
+  () => {
+    const [levels, setLevels] = useState(7);
+    const draggable = useMemo(() => makeDraggable(levels), [levels]);
+    return (
+      <div>
+        <DemoNotes>
+          Adapted from{" "}
+          <a
+            href="https://omrelli.ug/g9/"
+            className="hover:text-gray-700 hover:underline"
+          >
+            g9's famous example
+          </a>
+          . Nice performance stress test (which we are failing; try larger
+          "Levels").
+        </DemoNotes>
+        <div className="flex flex-col md:flex-row gap-4 items-start">
+          <DemoDraggable
+            draggable={draggable}
+            initialState={initialState}
+            width={400}
+            height={280}
+          />
+          <ConfigPanel>
+            <ConfigSlider
+              label="Levels"
+              value={levels}
+              onChange={setLevels}
+              min={1}
+              max={13}
+            />
+          </ConfigPanel>
+        </div>
+      </div>
+    );
+  },
   { tags: ["math"] },
 );

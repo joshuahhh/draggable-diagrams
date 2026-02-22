@@ -393,6 +393,38 @@ export function ConfigCheckbox({
   );
 }
 
+export function ConfigSlider({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step = 1,
+}: {
+  label: string;
+  value: number;
+  onChange: (newValue: number) => void;
+  min: number;
+  max: number;
+  step?: number;
+}) {
+  return (
+    <label className="flex items-start gap-2 text-xs">
+      <span>
+        {label}: {value}
+      </span>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+      />
+    </label>
+  );
+}
+
 export function DemoNotes({ children }: { children?: React.ReactNode }) {
   return <p className="text-sm text-gray-600 mb-4">{children}</p>;
 }
