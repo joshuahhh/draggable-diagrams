@@ -1,14 +1,12 @@
-import { ComponentType } from "react";
-import { DemoMarked, isDemo } from ".";
+import { DemoInfo, isDemo } from ".";
 import { demoList } from "./list";
+import { pathToId } from "./pathToId";
 
 export { demo } from ".";
 export type { DemoInfo, DemoOptions } from ".";
 
-export type Demo = {
+export type Demo = DemoInfo & {
   id: string;
-  Component: ComponentType;
-  tags?: string[];
   sourcePath: string;
 };
 
@@ -16,22 +14,12 @@ const modules = import.meta.glob<{ default: unknown }>("../demos/**/*.tsx", {
   eager: true,
 });
 
-import { pathToId } from "./pathToId";
-
-function markedToDemo(
-  id: string,
-  sourcePath: string,
-  marked: DemoMarked,
-): Demo {
-  return { id, Component: marked.Component, tags: marked.tags, sourcePath };
-}
-
 const demosById = new Map<string, Demo>();
 for (const [path, mod] of Object.entries(modules)) {
   if (!isDemo(mod.default)) continue;
   const id = pathToId(path);
   const sourcePath = path.replace("../demos/", "");
-  demosById.set(id, markedToDemo(id, sourcePath, mod.default));
+  demosById.set(id, { ...mod.default, id, sourcePath });
 }
 
 const listSet = new Set(demoList);
