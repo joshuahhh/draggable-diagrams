@@ -45,6 +45,7 @@ export const demoList = [
   "constrained-slider",
   "constrained-point",
   "multi-circle-points",
+  "multi-circle-points-vanilla",
   "node-wires",
   "sprouting-tree",
   "weird-floating-vs-fixed",
