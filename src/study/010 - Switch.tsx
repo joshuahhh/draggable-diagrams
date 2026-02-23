@@ -19,7 +19,7 @@ const draggable: Draggable<State> = ({ state, d }) => (
 
     {/* Draggable knob */}
     <circle
-      transform={translate(state.status === "on" ? 90 : 30, 30)}
+      transform={state.status === "on" ? translate(90, 30) : translate(30, 30)}
       r={26}
       fill="white"
       stroke="#e5e7eb"
