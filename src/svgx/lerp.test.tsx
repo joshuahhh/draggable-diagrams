@@ -162,8 +162,8 @@ describe("lerpSvgNode", () => {
 
     expect(result).toMatchInlineSnapshot(`
       <rect
-        fill="rgb(111, 88, 0)"
-        stroke="rgb(0, 255, 97)"
+        fill="rgb(161, 108, 0)"
+        stroke="rgb(193, 137, 172)"
       />
     `);
   });
@@ -178,8 +178,8 @@ describe("lerpSvgNode", () => {
       <rect
         style={
           {
-            "backgroundColor": "rgb(0, 255, 97)",
-            "fill": "rgb(111, 88, 0)",
+            "backgroundColor": "rgb(193, 137, 172)",
+            "fill": "rgb(161, 108, 0)",
           }
         }
       />
@@ -214,7 +214,7 @@ describe("lerpSvgNode", () => {
       <rect
         style={
           {
-            "fill": "rgb(238, 0, 209)",
+            "fill": "rgb(193, 0, 136)",
             "opacity": 0.5,
           }
         }
