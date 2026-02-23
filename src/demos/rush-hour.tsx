@@ -163,5 +163,5 @@ export default demo(
       height={350}
     />
   ),
-  { tags: ["d.between"] },
+  { tags: ["d.between", "spec.withSnapRadius", "puzzle"] },
 );

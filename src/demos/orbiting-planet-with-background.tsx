@@ -125,5 +125,12 @@ export default demo(
       height={400}
     />
   ),
-  { tags: ["multiple continuous targets"] },
+  {
+    tags: [
+      "d.vary",
+      "d.closest",
+      "spec.withBackground",
+      "multiple continuous targets",
+    ],
+  },
 );

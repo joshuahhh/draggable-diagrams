@@ -112,4 +112,4 @@ export default demo(() => {
       </ConfigPanel>
     </div>
   );
-});
+}, { tags: ["d.between", "d.floating", "reordering", "control"] });

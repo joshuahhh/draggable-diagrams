@@ -1062,5 +1062,5 @@ export default demo(
       height={CANVAS_H}
     />
   ),
-  { tags: ["d.switchToStateAndFollow", "d.between"] },
+  { tags: ["d.switchToStateAndFollow", "d.between", "d.vary", "d.floating", "spec.withBackground"] },
 );

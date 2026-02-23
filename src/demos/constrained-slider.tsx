@@ -114,5 +114,5 @@ export default demo(
       height={100}
     />
   ),
-  { tags: ["d.vary w/constraint"] },
+  { tags: ["d.vary w/constraint", "control"] },
 );

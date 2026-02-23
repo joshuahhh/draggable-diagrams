@@ -687,5 +687,5 @@ export default demo(
       </div>
     );
   },
-  { tags: ["d.between", "math", "fancy"] },
+  { tags: ["d.between", "math", "fancy", "reordering"] },
 );

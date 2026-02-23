@@ -41,5 +41,5 @@ export default demo(
       height={200}
     />
   ),
-  { tags: ["floating-dynamic"] },
+  { tags: ["d.between", "spec.withFloating"] },
 );

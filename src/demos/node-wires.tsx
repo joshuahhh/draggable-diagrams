@@ -308,5 +308,5 @@ export default demo(
       height={200}
     />
   ),
-  { tags: ["d.switchToStateAndFollow", "spec.andThen"] },
+  { tags: ["d.switchToStateAndFollow", "spec.andThen", "d.vary", "spec.withBackground"] },
 );

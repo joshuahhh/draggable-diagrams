@@ -71,5 +71,5 @@ export default demo(
       />
     </>
   ),
-  { tags: ["d.switchToStateAndFollow", "setState"] },
+  { tags: ["d.switchToStateAndFollow", "d.vary", "setState", "copying"] },
 );

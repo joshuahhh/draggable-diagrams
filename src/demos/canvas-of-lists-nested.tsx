@@ -264,4 +264,4 @@ export default demo(() => (
       height={400}
     />
   </div>
-));
+), { tags: ["d.floating", "d.vary", "spec.withBackground"] });

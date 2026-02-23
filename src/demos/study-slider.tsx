@@ -49,11 +49,14 @@ const draggable: Draggable<State> = ({ state, d }) => (
   </g>
 );
 
-export default demo(() => (
-  <DemoDraggable
-    draggable={draggable}
-    initialState={initialState}
-    width={320}
-    height={130}
-  />
-));
+export default demo(
+  () => (
+    <DemoDraggable
+      draggable={draggable}
+      initialState={initialState}
+      width={320}
+      height={130}
+    />
+  ),
+  { tags: ["d.vary w/constraint", "control"] },
+);

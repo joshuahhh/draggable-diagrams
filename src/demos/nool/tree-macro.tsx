@@ -865,5 +865,5 @@ export default demo(
       </div>
     );
   },
-  { tags: ["d.between"] },
+  { tags: ["d.between", "d.floating", "spec.withBackground"] },
 );

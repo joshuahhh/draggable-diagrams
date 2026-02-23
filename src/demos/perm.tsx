@@ -72,5 +72,5 @@ export default demo(
       height={100}
     />
   ),
-  { tags: ["d.between"] },
+  { tags: ["d.between", "reordering"] },
 );

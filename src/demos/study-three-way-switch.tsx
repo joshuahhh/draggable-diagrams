@@ -46,11 +46,14 @@ const draggable: Draggable<State> = ({ state, d }) => (
   </g>
 );
 
-export default demo(() => (
-  <DemoDraggable
-    draggable={draggable}
-    initialState={initialState}
-    width={200}
-    height={200}
-  />
-));
+export default demo(
+  () => (
+    <DemoDraggable
+      draggable={draggable}
+      initialState={initialState}
+      width={200}
+      height={200}
+    />
+  ),
+  { tags: ["d.between", "control"] },
+);

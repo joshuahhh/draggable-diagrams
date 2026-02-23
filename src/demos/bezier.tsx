@@ -229,4 +229,4 @@ export default demo(() => (
       height={250}
     />
   </div>
-));
+), { tags: ["d.vary"] });

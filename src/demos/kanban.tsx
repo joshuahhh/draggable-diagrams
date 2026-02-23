@@ -173,5 +173,5 @@ export default demo(
       height={200}
     />
   ),
-  { tags: ["d.between"] },
+  { tags: ["d.between", "d.floating", "reordering"] },
 );

@@ -81,5 +81,5 @@ export default demo(
       />
     </>
   ),
-  { tags: ["d.between"] },
+  { tags: ["d.between", "reordering"] },
 );

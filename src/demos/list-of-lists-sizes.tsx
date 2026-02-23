@@ -180,5 +180,5 @@ export default demo(
       />
     </div>
   ),
-  { tags: ["spec.andThen"] },
+  { tags: ["spec.andThen", "d.floating", "spec.withBackground"] },
 );

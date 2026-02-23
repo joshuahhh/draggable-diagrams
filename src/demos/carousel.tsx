@@ -159,5 +159,5 @@ export default demo(
       />
     </div>
   ),
-  { tags: ["setState", "d.between"] },
+  { tags: ["setState", "d.between", "control"] },
 );
