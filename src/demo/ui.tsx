@@ -89,7 +89,7 @@ const settingsEntries = [
 
 const settingsIcons: Record<keyof DemoSettings, ReactNode> = {
   showStateViewer: (
-    <svg width={14} height={14} viewBox="0 0 14 14" className="shrink-0">
+    <svg width={18} height={18} viewBox="0 0 14 14" className="shrink-0">
       <text
         x={7}
         y={10.5}
@@ -104,12 +104,12 @@ const settingsIcons: Record<keyof DemoSettings, ReactNode> = {
     </svg>
   ),
   showDebugOverlay: (
-    <svg width={14} height={14} viewBox="0 0 14 14" className="shrink-0">
+    <svg width={18} height={18} viewBox="0 0 14 14" className="shrink-0">
       <circle cx={7} cy={7} r={5} fill="magenta" />
     </svg>
   ),
   showTreeView: (
-    <svg width={14} height={14} viewBox="0 0 14 14" className="shrink-0">
+    <svg width={18} height={18} viewBox="0 0 14 14" className="shrink-0">
       <rect
         x={2}
         y={2}
@@ -124,7 +124,7 @@ const settingsIcons: Record<keyof DemoSettings, ReactNode> = {
     </svg>
   ),
   showDropZones: (
-    <svg width={14} height={14} viewBox="0 0 14 14" className="shrink-0">
+    <svg width={18} height={18} viewBox="0 0 14 14" className="shrink-0">
       <defs>
         <clipPath id="dz-clip">
           <rect x={1} y={1} width={12} height={12} rx={2} />
@@ -149,7 +149,7 @@ const settingsIcons: Record<keyof DemoSettings, ReactNode> = {
     </svg>
   ),
   showTimingMeter: (
-    <svg width={14} height={14} viewBox="0 0 14 14" className="shrink-0">
+    <svg width={18} height={18} viewBox="0 0 14 14" className="shrink-0">
       <circle
         cx={7}
         cy={7}
@@ -178,6 +178,17 @@ const settingsIcons: Record<keyof DemoSettings, ReactNode> = {
       />
     </svg>
   ),
+};
+
+const settingsActiveColors: Record<
+  keyof DemoSettings,
+  { bg: string; border: string }
+> = {
+  showStateViewer: { bg: "#f1f5f9", border: "#64748b" },
+  showDebugOverlay: { bg: "#fdf4ff", border: "#d946ef" },
+  showTreeView: { bg: "#fffbeb", border: "#f59e0b" },
+  showDropZones: { bg: "#eff6ff", border: "#3b82f6" },
+  showTimingMeter: { bg: "#f1f5f9", border: "#64748b" },
 };
 
 function TimingMeter() {
@@ -219,25 +230,40 @@ export function DemoSettingsBar({
     ? settingsEntries.filter(({ key }) => only.includes(key))
     : settingsEntries;
   return (
-    <div className="sticky bottom-0 bg-white/95 py-3 px-5 border-t border-gray-200 flex gap-5 items-center justify-center shadow-[0_-2px_4px_rgba(0,0,0,0.1)]">
-      {entries.map(({ key, label, mobileHidden }) => (
-        <label
-          key={key}
-          className={`${
-            mobileHidden ? "hidden md:flex" : "flex"
-          } items-center gap-1 cursor-pointer text-sm text-slate-600 select-none`}
-        >
-          <input
-            type="checkbox"
-            checked={settings[key]}
-            onChange={(e) =>
-              setSettings((s) => ({ ...s, [key]: e.target.checked }))
-            }
-          />
-          <span className="ml-0.5">{settingsIcons[key]}</span>
-          {label}
-        </label>
-      ))}
+    <div className="sticky bottom-0 flex justify-center pointer-events-none">
+      <div className="pointer-events-auto bg-white py-2 px-4 rounded-t-xl border border-b-0 border-gray-200 flex gap-1.5 items-center shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
+        {entries.map(({ key, label, mobileHidden }) => {
+          const active = settings[key];
+          const colors = settingsActiveColors[key];
+          return (
+            <button
+              key={key}
+              className={`${
+                mobileHidden ? "hidden md:inline-flex" : "inline-flex"
+              } items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium select-none cursor-pointer`}
+              style={
+                active
+                  ? {
+                      backgroundColor: colors.bg,
+                      borderColor: colors.border,
+                      color: "#374151",
+                    }
+                  : {
+                      backgroundColor: "transparent",
+                      borderColor: "#e2e8f0",
+                      color: "#94a3b8",
+                    }
+              }
+              onClick={() => setSettings((s) => ({ ...s, [key]: !s[key] }))}
+            >
+              <span className="shrink-0" style={{ opacity: active ? 1 : 0.4 }}>
+                {settingsIcons[key]}
+              </span>
+              {label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
