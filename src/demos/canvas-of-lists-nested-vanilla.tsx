@@ -500,7 +500,7 @@ const CanvasOfListsNestedVanilla = () => {
     <div>
       <DemoNotes>
         From-scratch React reimplementation of canvas-of-lists-nested,{" "}
-        <b>without using the draggable library</b>.
+        <b>without using Dragology</b>.
       </DemoNotes>
       <svg
         ref={svgRef}

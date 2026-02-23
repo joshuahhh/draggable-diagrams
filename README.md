@@ -1,4 +1,4 @@
-# Draggables
+# Dragology
 
 ## Getting Started
 

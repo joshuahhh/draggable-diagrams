@@ -243,7 +243,7 @@ const MultiCirclePointsVanilla = () => {
     <div>
       <DemoNotes>
         From-scratch React reimplementation of multi-circle-points,{" "}
-        <b>without using the draggable library</b>.
+        <b>without using Dragology</b>.
       </DemoNotes>
       <svg
         ref={svgRef}
