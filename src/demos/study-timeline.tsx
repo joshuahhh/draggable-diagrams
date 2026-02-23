@@ -60,7 +60,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => (
                         lessThan(0, s.blocks[i].pos),
                         lessThan(s.blocks[i].pos, TRACK_W - BLOCK_W),
                       ],
-                      constrainByParams: true,
+
                     },
                   ),
                 ),
@@ -101,5 +101,5 @@ export default demo(
       height={200}
     />
   ),
-  { tags: ["d.vary", "d.closest", "control"] },
+  { tags: ["d.vary w/constraint", "d.closest", "control"] },
 );

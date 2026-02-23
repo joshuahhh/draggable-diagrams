@@ -1060,7 +1060,7 @@ export default demo(
     tags: [
       "d.switchToStateAndFollow",
       "d.between",
-      "d.vary",
+      "d.vary w/constraint",
       "d.floating",
       "spec.withBackground",
     ],

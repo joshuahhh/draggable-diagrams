@@ -469,21 +469,21 @@ function varyBehavior<T extends object>(
     // distance term finds the closest feasible point to the optimum.
     if (spec.constraint && evalConstraint(resultParams) > 0) {
       const x0 = resultParams.slice();
-      const pos0 = spec.constrainByParams ? null : getElementPos(resultParams);
+      const pos0 = spec.constrainByRender ? getElementPos(resultParams) : null;
       const pullbackFn = (params: number[]) => {
         const g = evalConstraint(params);
         const penalty = g > 0 ? g : 0;
         let dist2: number;
-        if (spec.constrainByParams) {
-          // Parameter-space distance (faster)
+        if (spec.constrainByRender) {
+          // Screen-space distance (more accurate)
+          const pos = getElementPos(params);
+          dist2 = pos.dist2(pos0!);
+        } else {
+          // Parameter-space distance (faster, default)
           dist2 = 0;
           for (let i = 0; i < params.length; i++) {
             dist2 += (params[i] - x0[i]) ** 2;
           }
-        } else {
-          // Screen-space distance (more accurate)
-          const pos = getElementPos(params);
-          dist2 = pos.dist2(pos0!);
         }
         return penalty + 1e-4 * dist2;
       };
