@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { demo } from "../demo";
 import { ConfigPanel, ConfigSlider, DemoDraggable } from "../demo/ui";
 import { Draggable } from "../draggable";
+import { lessThan } from "../DragSpec";
 import { translate } from "../svgx/helpers";
 
 // A simple 3D scene: draggable colored boxes on a ground grid.
@@ -186,10 +187,24 @@ function makeDraggable(
               transform={translate(center.x, center.y)}
               data-z-index={1}
               dragology={() =>
-                d.vary(state, [
-                  ["boxes", key, "x"],
-                  ["boxes", key, "z"],
-                ])
+                d.vary(
+                  state,
+                  [
+                    ["boxes", key, "x"],
+                    ["boxes", key, "z"],
+                  ],
+                  {
+                    constraint: (s) => {
+                      const box = s.boxes[key];
+                      return [
+                        lessThan(-G + box.size, box.x),
+                        lessThan(box.x, G - box.size),
+                        lessThan(-G + box.size, box.z),
+                        lessThan(box.z, G - box.size),
+                      ];
+                    },
+                  },
+                )
               }
             >
               {/* No ids on internal polygons — ids cause extraction from this <g>,
