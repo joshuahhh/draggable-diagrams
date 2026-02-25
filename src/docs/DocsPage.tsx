@@ -1,17 +1,17 @@
 import { ComponentType } from "react";
-import { DemoSettingsBar, DemoSettingsProvider } from "./demo/ui";
-import * as Components from "./docs/components";
-import { LiveEditor } from "./docs/LiveEditor";
-import { MDXPage } from "./docs/MDXPage";
+import { DemoSettingsBar, DemoSettingsProvider } from "../demo/ui";
+import * as Components from "./components";
+import { LiveEditor } from "./LiveEditor";
+import { MDXPage } from "./MDXPage";
 
 // Import all .mdx files from docs directory
-const mdxFiles = import.meta.glob<{ default: ComponentType }>("./docs/*.mdx", {
+const mdxFiles = import.meta.glob<{ default: ComponentType }>("./*.mdx", {
   eager: true,
 });
 
 export function DocsPage({ slug }: { slug: string }) {
   // Convert slug to file path
-  const filePath = `./docs/${slug}.mdx`;
+  const filePath = `./${slug}.mdx`;
   const mdxModule = mdxFiles[filePath];
 
   if (!mdxModule) {

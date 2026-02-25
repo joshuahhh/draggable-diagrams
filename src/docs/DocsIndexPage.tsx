@@ -1,13 +1,13 @@
 import { Link } from "react-router-dom";
 
 // Import all .mdx files from docs directory
-const mdxFiles = import.meta.glob("./docs/*.mdx");
+const mdxFiles = import.meta.glob("./*.mdx");
 
 export function DocsIndexPage() {
   // Extract slugs from file paths
   const slugs = Object.keys(mdxFiles)
     .map((path) => {
-      const match = path.match(/\.\/docs\/(.+)\.mdx$/);
+      const match = path.match(/\.\/(.+)\.mdx$/);
       return match ? match[1] : null;
     })
     .filter((slug): slug is string => slug !== null)
