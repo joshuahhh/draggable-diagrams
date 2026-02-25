@@ -20,6 +20,7 @@ export const demoList = [
   "insert-and-remove-2",
   "tiles",
   "grid-poly",
+  "grid-poly-vary",
   "nool-tree",
   "nool-stage-builder",
   "nool-tree-macro",

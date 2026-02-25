@@ -1,6 +1,6 @@
 // mini Vec2 library by Elliot & Josh
 
-import { assertNever } from "../utils";
+import { assertNever, clamp } from "../utils";
 
 export type Vec2 = Vec2Class;
 
@@ -212,6 +212,16 @@ class Vec2Class {
 
   rotateDeg(angleDeg: number): Vec2 {
     return this.rotateRad((angleDeg * Math.PI) / 180);
+  }
+
+  round(): Vec2 {
+    return Vec2(Math.round(this.x), Math.round(this.y));
+  }
+
+  clamp(a: Vec2able, b: Vec2able): Vec2 {
+    a = Vec2(a);
+    b = Vec2(b);
+    return Vec2(clamp(a.x, b.x, this.x), clamp(a.y, b.y, this.y));
   }
 }
 
