@@ -81,12 +81,23 @@ export default demo(
   () => (
     <>
       <DemoNotes>
-        Re-implementation of grid-poly in a somewhat more traditional way, using{" "}
-        <code>d.vary</code>. <code>spec.during</code> keeps the dragged point
-        inside the grid, and <code>spec.andThen</code> rounds it to the nearest
-        grid point on drop. <code>spec.withSnapRadius</code> works on top of all
-        of this, which is kinda cool because we never enumerate the drop
-        locations!
+        Re-implementation of grid-poly in a somewhat more traditional way:
+        <ol className="list-decimal pl-5 mt-1 space-y-1">
+          <li>
+            <code>d.vary</code> lets x &amp; y be dragged freely.
+          </li>
+          <li>
+            <code>spec.during</code> keeps the dragged point inside the grid.
+          </li>
+          <li>
+            <code>spec.andThen</code> rounds the point to the nearest grid point
+            on drop.
+          </li>
+          <li>
+            <code>spec.withSnapRadius</code> works on top of all of this – which
+            is kinda cool because we never enumerate the drop locations!
+          </li>
+        </ol>
       </DemoNotes>
       <DemoDraggable
         draggable={draggable}
