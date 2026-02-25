@@ -452,7 +452,7 @@ export function ConfigSlider({
 }
 
 export function DemoNotes({ children }: { children?: React.ReactNode }) {
-  return <p className="text-sm text-gray-600 mb-4">{children}</p>;
+  return <div className="text-sm text-gray-600 mb-4">{children}</div>;
 }
 
 export function DemoTags({ children }: { children?: React.ReactNode }) {
