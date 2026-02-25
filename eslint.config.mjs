@@ -4,7 +4,7 @@ import tseslint from "typescript-eslint";
 export default [
   {
     files: ["**/*.{js,jsx,ts,tsx}"],
-    ignores: ["src/demos/nool/peggy/**", "src/math/cobyla.ts"],
+    ignores: ["src/demos/nool/peggy/**", "src/math/cobyla.js"],
     languageOptions: {
       parser: tseslint.parser,
     },

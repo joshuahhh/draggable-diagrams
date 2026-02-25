@@ -1,4 +1,3 @@
-// @ts-nocheck
 /* eslint-disable */
 /*
  Copyright 2008-2025
@@ -1397,15 +1396,6 @@ const Nlp = {
 
 
 
-export function FindMinimum(
-  calcfc: (n: number, m: number, x: Float64Array, con: Float64Array) => number,
-  n: number,
-  m: number,
-  x: number[],
-  rhobeg: number,
-  rhoend: number,
-  iprint: number,
-  maxfun: number,
-): number {
+export function FindMinimum(calcfc, n, m, x, rhobeg, rhoend, iprint, maxfun) {
   return Nlp.FindMinimum(calcfc, n, m, x, rhobeg, rhoend, iprint, maxfun);
 }
