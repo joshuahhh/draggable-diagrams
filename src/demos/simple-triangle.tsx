@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { DemoDraggable } from "../demo/ui";
+import { DemoDraggable, DemoNotes } from "../demo/ui";
 import { Draggable } from "../draggable";
 
 import { demo } from "../demo";
@@ -15,13 +15,24 @@ const POSITIONS = [
   [100, 10],
   [55, 90],
 ] as const;
+const CENTER = [
+  (POSITIONS[0][0] + POSITIONS[1][0] + POSITIONS[2][0]) / 3,
+  (POSITIONS[0][1] + POSITIONS[1][1] + POSITIONS[2][1]) / 3,
+];
 const SQUARE_SIZE = 40;
 
 const initialState: State = { posIndex: 0 };
 
-function draggableFactory(
-  mode: "between" | "floating" | "fixed" | "between-with-floating",
-): Draggable<State> {
+const MODES = [
+  "d.closest(d.fixed(states))",
+  "d.closest(d.fixed(states)).withFloating()",
+  "d.closest(d.floating(states))",
+  "d.between(states)",
+  "d.between(states).withFloating()",
+] as const;
+type Mode = (typeof MODES)[number];
+
+function draggableFactory(mode: Mode): Draggable<State> {
   return ({ state, d }) => (
     <g>
       {/* background positions */}
@@ -49,22 +60,26 @@ function draggableFactory(
             posIndex: i,
           }));
 
-          if (mode === "between") {
-            return d.between(states);
-          } else if (mode === "floating") {
-            return d.closest(d.floating(states));
-          } else if (mode === "fixed") {
-            return d.closest(d.fixed(states));
-          } else if (mode === "between-with-floating") {
-            return d.between(states).withFloating();
-          } else {
-            assertNever(mode);
+          switch (mode) {
+            case "d.closest(d.fixed(states))":
+              return d.closest(d.fixed(states));
+            case "d.closest(d.fixed(states)).withFloating()":
+              return d.closest(d.fixed(states)).withFloating();
+            case "d.closest(d.floating(states))":
+              return d.closest(d.floating(states));
+            case "d.between(states)":
+              return d.between(states);
+            case "d.between(states).withFloating()":
+              return d.between(states).withFloating();
+            default:
+              assertNever(mode);
           }
         }}
       />
+      {/* extra line to see how background interpolates */}
       <line
-        x1={POSITIONS[0][0] + SQUARE_SIZE / 2}
-        y1={POSITIONS[0][1] + SQUARE_SIZE / 2}
+        x1={CENTER[0] + SQUARE_SIZE / 2}
+        y1={CENTER[1] + SQUARE_SIZE / 2}
         x2={POSITIONS[state.posIndex][0] + SQUARE_SIZE / 2}
         y2={POSITIONS[state.posIndex][1] + SQUARE_SIZE / 2}
         stroke="#cbd5e1"
@@ -75,44 +90,30 @@ function draggableFactory(
   );
 }
 
-const betweenDraggable = draggableFactory("between");
-const floatingDraggable = draggableFactory("floating");
-const fixedDraggable = draggableFactory("fixed");
-const betweenWithFloatingDraggable = draggableFactory("between-with-floating");
+const draggables = MODES.map((mode) => draggableFactory(mode));
 
 export default demo(
   () => (
     <div>
-      <h3 className="text-md font-medium italic mt-6 mb-1">between</h3>
-      <DemoDraggable
-        draggable={betweenDraggable}
-        initialState={initialState}
-        width={200}
-        height={150}
-      />
-      <h3 className="text-md font-medium italic mt-6 mb-1">floating</h3>
-      <DemoDraggable
-        draggable={floatingDraggable}
-        initialState={initialState}
-        width={200}
-        height={150}
-      />
-      <h3 className="text-md font-medium italic mt-6 mb-1">fixed</h3>
-      <DemoDraggable
-        draggable={fixedDraggable}
-        initialState={initialState}
-        width={200}
-        height={150}
-      />
-      <h3 className="text-md font-medium italic mt-6 mb-1">
-        between-with-floating
-      </h3>
-      <DemoDraggable
-        draggable={betweenWithFloatingDraggable}
-        initialState={initialState}
-        width={200}
-        height={150}
-      />
+      <DemoNotes>
+        <p>
+          An interface with three states, using different drag specs built on
+          these states.
+        </p>
+      </DemoNotes>
+      {draggables.map((draggable, i) => (
+        <div key={i}>
+          <h3 className="text-md font-medium font-mono mt-6 mb-1">
+            {MODES[i]}
+          </h3>
+          <DemoDraggable
+            draggable={draggable}
+            initialState={initialState}
+            width={200}
+            height={150}
+          />
+        </div>
+      ))}
     </div>
   ),
   { tags: ["d.between", "d.floating", "d.fixed", "spec.withFloating"] },
