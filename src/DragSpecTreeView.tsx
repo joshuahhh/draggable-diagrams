@@ -3,7 +3,7 @@ import { DragSpecData } from "./DragSpec";
 import { RenderedState, getTraceInfo } from "./DragSpecTraceInfo";
 import { LayeredSvgx, drawLayered } from "./svgx/layers";
 import { Transition } from "./transition";
-import { assertNever } from "./utils";
+import { assert, assertNever } from "./utils";
 
 type TreeViewContext = {
   activePath: string;
@@ -13,13 +13,13 @@ type TreeViewContext = {
   thumbHeight: number;
 };
 
-const TreeCtx = createContext<TreeViewContext>({
-  activePath: "",
-  colorMap: null,
-  svgWidth: 0,
-  svgHeight: 0,
-  thumbHeight: 40,
-});
+const TreeViewContext = createContext<TreeViewContext | null>(null);
+
+function useTreeViewContext() {
+  const ctx = useContext(TreeViewContext);
+  assert(ctx !== null, "TreeViewContext not initialized");
+  return ctx;
+}
 
 export function DragSpecTreeView<T>({
   spec,
@@ -37,13 +37,13 @@ export function DragSpecTreeView<T>({
   thumbHeight: number;
 }) {
   return (
-    <TreeCtx.Provider
+    <TreeViewContext.Provider
       value={{ activePath, colorMap, svgWidth, svgHeight, thumbHeight }}
     >
       <div className="text-xs font-mono">
         <SpecNode spec={spec} path="" />
       </div>
-    </TreeCtx.Provider>
+    </TreeViewContext.Provider>
   );
 }
 
@@ -58,7 +58,7 @@ const INACTIVE_BORDER = "rgb(203, 213, 225)";
  * Each node checks whether `activePath` matches or extends its own `path`.
  */
 function SpecNode<T>({ spec, path }: { spec: DragSpecData<T>; path: string }) {
-  const { activePath, colorMap } = useContext(TreeCtx);
+  const { activePath, colorMap } = useTreeViewContext();
 
   if (spec.type === "fixed") {
     const traceInfo = getTraceInfo(spec);
@@ -301,7 +301,7 @@ function StateThumbnails({
   renderedStates: RenderedState[];
   closestIndex?: number;
 }) {
-  const { svgWidth, svgHeight, thumbHeight } = useContext(TreeCtx);
+  const { svgWidth, svgHeight, thumbHeight } = useTreeViewContext();
   if (svgWidth === 0 || svgHeight === 0) return null;
   const h = Math.min(thumbHeight, svgHeight);
   const w = Math.round(h * (svgWidth / svgHeight));
@@ -339,7 +339,7 @@ function StateThumbnails({
 }
 
 function OutputThumbnail({ outputRendered }: { outputRendered: LayeredSvgx }) {
-  const { svgWidth, svgHeight, thumbHeight } = useContext(TreeCtx);
+  const { svgWidth, svgHeight, thumbHeight } = useTreeViewContext();
   if (svgWidth === 0 || svgHeight === 0) return null;
   const h = Math.min(thumbHeight, svgHeight);
   const w = Math.round(h * (svgWidth / svgHeight));
