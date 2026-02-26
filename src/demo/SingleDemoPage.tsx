@@ -1,8 +1,11 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { demosById } from "./registry";
 import { DemoCard, DemoSettingsBar, DemoSettingsProvider } from "./ui";
 
 export function SingleDemoPage({ id }: { id: string }) {
+  const [searchParams] = useSearchParams();
+  const minimal = searchParams.has("minimal");
   const demo = demosById.get(id);
 
   if (!demo) {
@@ -23,6 +26,10 @@ export function SingleDemoPage({ id }: { id: string }) {
     );
   }
 
+  if (minimal) {
+    return <MinimalDemo Component={demo.Component} />;
+  }
+
   return (
     <DemoSettingsProvider>
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -38,6 +45,27 @@ export function SingleDemoPage({ id }: { id: string }) {
           <DemoCard demo={demo} />
         </div>
         <DemoSettingsBar />
+      </div>
+    </DemoSettingsProvider>
+  );
+}
+
+function MinimalDemo({ Component }: { Component: React.ComponentType }) {
+  useEffect(() => {
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "none";
+    return () => {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      document.body.style.overscrollBehavior = "";
+    };
+  }, []);
+
+  return (
+    <DemoSettingsProvider persist={false}>
+      <div className="p-[5px]">
+        <Component />
       </div>
     </DemoSettingsProvider>
   );
