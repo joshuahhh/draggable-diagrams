@@ -454,6 +454,8 @@ function varyBehavior<T extends object>(
     ? manyToArray(spec.constraint(spec.state)).length
     : 0;
 
+  let firstFrame = true;
+
   return (frame) => {
     const n = spec.paramPaths.length;
 
@@ -473,6 +475,17 @@ function varyBehavior<T extends object>(
     // projection), which caused either directional distortion or
     // oscillation feedback loops.
     const constraintMargin = 10 * rhoend;
+
+    // On the first frame, the initial params may be far from optimal
+    // (e.g. starting from [0,0]). Use a large enough trust region to
+    // reach the target. On subsequent frames we're warm-starting from
+    // the previous result, so a small trust region suffices.
+    let rhobeg = 1;
+    if (firstFrame) {
+      const initialPos = getElementPos(x);
+      rhobeg = Math.max(1, initialPos.dist(frame.pointer));
+      firstFrame = false;
+    }
     FindMinimum(
       (_n, _m, xArr, con) => {
         // xArr is a Float64Array — copy into a plain number[]
@@ -498,8 +511,8 @@ function varyBehavior<T extends object>(
       n,
       numConstraints,
       x,
-      1, // rhobeg: initial simplex size (small since we warm-start)
-      rhoend, // rhoend: convergence tolerance
+      rhobeg,
+      rhoend,
       0, // iprint: silent
       200, // maxfun: max evaluations
     );
