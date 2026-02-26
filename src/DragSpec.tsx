@@ -38,7 +38,7 @@ export type FloatingOptions = {
 
 export type DragSpecWithFloating<T> = {
   type: "with-floating";
-  spec: DragSpecData<T>;
+  inner: DragSpecData<T>;
   ghost: SVGProps<SVGElement> | undefined;
   tether: ((dist: number) => number) | undefined;
 };
@@ -57,7 +57,7 @@ export type DragSpecWithBackground<T> = {
 
 export type DragSpecWithSnapRadius<T> = {
   type: "with-snap-radius";
-  spec: DragSpecData<T>;
+  inner: DragSpecData<T>;
   radius: number;
   transition: Transition | false;
   chain: boolean;
@@ -65,19 +65,19 @@ export type DragSpecWithSnapRadius<T> = {
 
 export type DragSpecWithDropTransition<T> = {
   type: "with-drop-transition";
-  spec: DragSpecData<T>;
+  inner: DragSpecData<T>;
   transition: Transition | false;
 };
 
 export type DragSpecWithBranchTransition<T> = {
   type: "with-branch-transition";
-  spec: DragSpecData<T>;
+  inner: DragSpecData<T>;
   transition: Transition | false;
 };
 
 export type DragSpecAndThen<T> = {
   type: "and-then";
-  spec: DragSpecData<T>;
+  inner: DragSpecData<T>;
   andThenState: T | ((previewState: T) => T);
 };
 
@@ -90,7 +90,7 @@ export type DragSpecVary<T> = {
 
 export type DragSpecWithDistance<T> = {
   type: "with-distance";
-  spec: DragSpecData<T>;
+  inner: DragSpecData<T>;
   f: (distance: number) => number;
 };
 
@@ -114,13 +114,13 @@ export type DragSpecDropTarget<T> = {
 
 export type DragSpecWithChaining<T> = {
   type: "with-chaining";
-  spec: DragSpecData<T>;
+  inner: DragSpecData<T>;
   chaining: Chaining<T>;
 };
 
 export type DragSpecDuring<T> = {
   type: "during";
-  spec: DragSpecData<T>;
+  inner: DragSpecData<T>;
   duringFn: (state: T) => T;
 };
 
@@ -234,7 +234,11 @@ export interface DragSpecMethods<T> {
 
 const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
   andThen(state) {
-    return attachMethods({ type: "and-then", spec: this, andThenState: state });
+    return attachMethods({
+      type: "and-then",
+      inner: this,
+      andThenState: state,
+    });
   },
   withBackground(bg, { radius = 50 } = {}) {
     return attachMethods({
@@ -247,7 +251,7 @@ const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
   withSnapRadius(radius, { transition = false, chain = false } = {}) {
     return attachMethods({
       type: "with-snap-radius",
-      spec: this,
+      inner: this,
       radius,
       transition: resolveTransitionLike(transition) ?? false,
       chain,
@@ -256,33 +260,33 @@ const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
   withDropTransition(transition = true) {
     return attachMethods({
       type: "with-drop-transition",
-      spec: this,
+      inner: this,
       transition: resolveTransitionLike(transition),
     });
   },
   withBranchTransition(transition) {
     return attachMethods({
       type: "with-branch-transition",
-      spec: this,
+      inner: this,
       transition: resolveTransitionLike(transition) ?? false,
     });
   },
   withDistance(f) {
-    return attachMethods({ type: "with-distance", spec: this, f });
+    return attachMethods({ type: "with-distance", inner: this, f });
   },
   withFloating({ ghost, tether } = {}) {
     return attachMethods({
       type: "with-floating",
-      spec: this,
+      inner: this,
       ghost: ghost === true ? { opacity: 0.5 } : ghost,
       tether,
     });
   },
   withChaining(chaining = {}) {
-    return attachMethods({ type: "with-chaining", spec: this, chaining });
+    return attachMethods({ type: "with-chaining", inner: this, chaining });
   },
   during(fn) {
-    return attachMethods({ type: "during", spec: this, duringFn: fn });
+    return attachMethods({ type: "during", inner: this, duringFn: fn });
   },
 };
 

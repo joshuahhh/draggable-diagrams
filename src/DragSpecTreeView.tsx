@@ -85,7 +85,7 @@ function SpecNode<T>(props: NodeProps<T>) {
           svgHeight={svgHeight}
         />
         <SpecNode
-          spec={spec.spec}
+          spec={spec.inner}
           activePath={activePath}
           path={prefix}
           colorMap={colorMap}
@@ -205,7 +205,7 @@ function SpecNode<T>(props: NodeProps<T>) {
     return (
       <Box label="andThen">
         <SpecNode
-          spec={spec.spec}
+          spec={spec.inner}
           activePath={activePath}
           path={path}
           colorMap={colorMap}
@@ -224,7 +224,7 @@ function SpecNode<T>(props: NodeProps<T>) {
           svgHeight={svgHeight}
         />
         <SpecNode
-          spec={spec.spec}
+          spec={spec.inner}
           activePath={activePath}
           path={path}
           colorMap={colorMap}
@@ -238,7 +238,7 @@ function SpecNode<T>(props: NodeProps<T>) {
     return (
       <Box label="withDistance">
         <SpecNode
-          spec={spec.spec}
+          spec={spec.inner}
           activePath={activePath}
           path={path}
           colorMap={colorMap}
@@ -271,7 +271,7 @@ function SpecNode<T>(props: NodeProps<T>) {
           svgHeight={svgHeight}
         />
         <SpecNode
-          spec={spec.spec}
+          spec={spec.inner}
           activePath={activePath}
           path={childPrefix}
           colorMap={colorMap}
@@ -311,7 +311,7 @@ function SpecNode<T>(props: NodeProps<T>) {
         label={`withDropTransition (${describeTransition(spec.transition)})`}
       >
         <SpecNode
-          spec={spec.spec}
+          spec={spec.inner}
           activePath={activePath}
           path={prefix}
           colorMap={colorMap}
@@ -344,7 +344,7 @@ function SpecNode<T>(props: NodeProps<T>) {
         label={`withBranchTransition (${describeTransition(spec.transition)})`}
       >
         <SpecNode
-          spec={spec.spec}
+          spec={spec.inner}
           activePath={activePath}
           path={prefix}
           colorMap={colorMap}
@@ -375,7 +375,7 @@ function SpecNode<T>(props: NodeProps<T>) {
     return (
       <Box label="withChaining">
         <SpecNode
-          spec={spec.spec}
+          spec={spec.inner}
           activePath={activePath}
           path={prefix}
           colorMap={colorMap}

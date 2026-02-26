@@ -212,7 +212,7 @@ function withFloatingBehavior<T extends object>(
     "Floating drags require the dragged element to have an id",
   );
   assert(floatLayered !== null, "Floating drags require floatLayered");
-  const innerBehavior = dragSpecToBehavior(spec.spec, ctx);
+  const innerBehavior = dragSpecToBehavior(spec.inner, ctx);
 
   return (frame) => {
     const innerResult = innerBehavior(frame);
@@ -375,7 +375,7 @@ function andThenBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "and-then" },
   ctx: DragBehaviorInitContext<T>,
 ): DragBehavior<T> {
-  const subBehavior = dragSpecToBehavior(spec.spec, ctx);
+  const subBehavior = dragSpecToBehavior(spec.inner, ctx);
   return (frame) => {
     const result = subBehavior(frame);
     return {
@@ -397,7 +397,7 @@ function duringBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "during" },
   ctx: DragBehaviorInitContext<T>,
 ): DragBehavior<T> {
-  const subBehavior = dragSpecToBehavior(spec.spec, ctx);
+  const subBehavior = dragSpecToBehavior(spec.inner, ctx);
   return (frame) => {
     const result = subBehavior(frame);
     const transformedState = spec.duringFn(result.dropState);
@@ -556,7 +556,7 @@ function withDistanceBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "with-distance" },
   ctx: DragBehaviorInitContext<T>,
 ): DragBehavior<T> {
-  const subBehavior = dragSpecToBehavior(spec.spec, ctx);
+  const subBehavior = dragSpecToBehavior(spec.inner, ctx);
   return (frame) => {
     const result = subBehavior(frame);
     const scaledDistance = spec.f(result.distance);
@@ -576,7 +576,7 @@ function withSnapRadiusBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "with-snap-radius" },
   ctx: DragBehaviorInitContext<T>,
 ): DragBehavior<T> {
-  const subBehavior = dragSpecToBehavior(spec.spec, ctx);
+  const subBehavior = dragSpecToBehavior(spec.inner, ctx);
   const radiusSq = spec.radius ** 2;
   // Cache drop-state renders by reference identity — for `between` sub-behaviors
   // the drop state cycles through a small fixed set, so this avoids redundant
@@ -623,7 +623,7 @@ function withDropTransitionBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "with-drop-transition" },
   ctx: DragBehaviorInitContext<T>,
 ): DragBehavior<T> {
-  const subBehavior = dragSpecToBehavior(spec.spec, ctx);
+  const subBehavior = dragSpecToBehavior(spec.inner, ctx);
   return (frame) => {
     const result = subBehavior(frame);
     return {
@@ -643,7 +643,7 @@ function withBranchTransitionBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "with-branch-transition" },
   ctx: DragBehaviorInitContext<T>,
 ): DragBehavior<T> {
-  const subBehavior = dragSpecToBehavior(spec.spec, ctx);
+  const subBehavior = dragSpecToBehavior(spec.inner, ctx);
   return (frame) => {
     const result = subBehavior(frame);
     return {
@@ -870,7 +870,7 @@ function withChainingBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "with-chaining" },
   ctx: DragBehaviorInitContext<T>,
 ): DragBehavior<T> {
-  const subBehavior = dragSpecToBehavior(spec.spec, ctx);
+  const subBehavior = dragSpecToBehavior(spec.inner, ctx);
   return (frame) => {
     const result = subBehavior(frame);
     return {
