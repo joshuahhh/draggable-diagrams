@@ -1,8 +1,25 @@
+import { createContext, useContext } from "react";
 import { DragSpecData } from "./DragSpec";
 import { RenderedState, getTraceInfo } from "./DragSpecTraceInfo";
 import { LayeredSvgx, drawLayered } from "./svgx/layers";
 import { Transition } from "./transition";
 import { assertNever } from "./utils";
+
+type TreeViewContext = {
+  activePath: string;
+  colorMap: Map<string, string> | null;
+  svgWidth: number;
+  svgHeight: number;
+  thumbHeight: number;
+};
+
+const TreeCtx = createContext<TreeViewContext>({
+  activePath: "",
+  colorMap: null,
+  svgWidth: 0,
+  svgHeight: 0,
+  thumbHeight: 40,
+});
 
 export function DragSpecTreeView<T>({
   spec,
@@ -10,24 +27,23 @@ export function DragSpecTreeView<T>({
   colorMap,
   svgWidth,
   svgHeight,
+  thumbHeight,
 }: {
   spec: DragSpecData<T>;
   activePath: string;
-  colorMap?: Map<string, string>;
-  svgWidth?: number;
-  svgHeight?: number;
+  colorMap: Map<string, string> | null;
+  svgWidth: number;
+  svgHeight: number;
+  thumbHeight: number;
 }) {
   return (
-    <div className="text-xs font-mono">
-      <SpecNode
-        spec={spec}
-        activePath={activePath}
-        path=""
-        colorMap={colorMap ?? null}
-        svgWidth={svgWidth ?? 0}
-        svgHeight={svgHeight ?? 0}
-      />
-    </div>
+    <TreeCtx.Provider
+      value={{ activePath, colorMap, svgWidth, svgHeight, thumbHeight }}
+    >
+      <div className="text-xs font-mono">
+        <SpecNode spec={spec} path="" />
+      </div>
+    </TreeCtx.Provider>
   );
 }
 
@@ -36,22 +52,13 @@ const ACTIVE_BORDER = "rgb(250, 204, 21)";
 const INACTIVE_BG = "rgba(148, 163, 184, 0.08)";
 const INACTIVE_BORDER = "rgb(203, 213, 225)";
 
-type NodeProps<T> = {
-  spec: DragSpecData<T>;
-  activePath: string;
-  path: string;
-  colorMap: Map<string, string> | null;
-  svgWidth: number;
-  svgHeight: number;
-};
-
 /**
  * `activePath` is the full, unmodified active path from the root.
  * `path` is the accumulated path of the current node, built top-down.
  * Each node checks whether `activePath` matches or extends its own `path`.
  */
-function SpecNode<T>(props: NodeProps<T>) {
-  const { spec, activePath, path, colorMap, svgWidth, svgHeight } = props;
+function SpecNode<T>({ spec, path }: { spec: DragSpecData<T>; path: string }) {
+  const { activePath, colorMap } = useContext(TreeCtx);
 
   if (spec.type === "fixed") {
     const traceInfo = getTraceInfo(spec);
@@ -60,11 +67,7 @@ function SpecNode<T>(props: NodeProps<T>) {
     return (
       <Box label="fixed" active={active} color={colorMap?.get(fullPath)}>
         {traceInfo && (
-          <StateThumbnails
-            renderedStates={traceInfo.renderedStates}
-            svgWidth={svgWidth}
-            svgHeight={svgHeight}
-          />
+          <StateThumbnails renderedStates={traceInfo.renderedStates} />
         )}
       </Box>
     );
@@ -74,20 +77,9 @@ function SpecNode<T>(props: NodeProps<T>) {
     return (
       <Box label="withFloating" color={colorMap?.get(path + "with-floating")}>
         {traceInfo && (
-          <OutputThumbnail
-            outputRendered={traceInfo.outputRendered}
-            svgWidth={svgWidth}
-            svgHeight={svgHeight}
-          />
+          <OutputThumbnail outputRendered={traceInfo.outputRendered} />
         )}
-        <SpecNode
-          spec={spec.inner}
-          activePath={activePath}
-          path={prefix}
-          colorMap={colorMap}
-          svgWidth={svgWidth}
-          svgHeight={svgHeight}
-        />
+        <SpecNode spec={spec.inner} path={prefix} />
       </Box>
     );
   } else if (spec.type === "vary") {
@@ -123,11 +115,7 @@ function SpecNode<T>(props: NodeProps<T>) {
           </div>
         )}
         {traceInfo && (
-          <StateThumbnails
-            renderedStates={traceInfo.renderedStates}
-            svgWidth={svgWidth}
-            svgHeight={svgHeight}
-          />
+          <StateThumbnails renderedStates={traceInfo.renderedStates} />
         )}
       </Box>
     );
@@ -156,14 +144,7 @@ function SpecNode<T>(props: NodeProps<T>) {
               >
                 {i}
               </div>
-              <SpecNode
-                spec={childSpec}
-                activePath={activePath}
-                path={path + `closest/${i}/`}
-                colorMap={colorMap}
-                svgWidth={svgWidth}
-                svgHeight={svgHeight}
-              />
+              <SpecNode spec={childSpec} path={path + `closest/${i}/`} />
             </div>
           ))}
         </div>
@@ -174,24 +155,10 @@ function SpecNode<T>(props: NodeProps<T>) {
       <Box label={`withBackground (r=${spec.radius})`}>
         <div style={{ display: "flex", flexDirection: "row", gap: 4 }}>
           <Slot label="fg">
-            <SpecNode
-              spec={spec.foreground}
-              activePath={activePath}
-              path={path + "fg/"}
-              colorMap={colorMap}
-              svgWidth={svgWidth}
-              svgHeight={svgHeight}
-            />
+            <SpecNode spec={spec.foreground} path={path + "fg/"} />
           </Slot>
           <Slot label="bg">
-            <SpecNode
-              spec={spec.background}
-              activePath={activePath}
-              path={path + "bg/"}
-              colorMap={colorMap}
-              svgWidth={svgWidth}
-              svgHeight={svgHeight}
-            />
+            <SpecNode spec={spec.background} path={path + "bg/"} />
           </Slot>
         </div>
       </Box>
@@ -199,14 +166,7 @@ function SpecNode<T>(props: NodeProps<T>) {
   } else if (spec.type === "and-then") {
     return (
       <Box label="andThen">
-        <SpecNode
-          spec={spec.inner}
-          activePath={activePath}
-          path={path}
-          colorMap={colorMap}
-          svgWidth={svgWidth}
-          svgHeight={svgHeight}
-        />
+        <SpecNode spec={spec.inner} path={path} />
       </Box>
     );
   } else if (spec.type === "during") {
@@ -214,33 +174,15 @@ function SpecNode<T>(props: NodeProps<T>) {
     return (
       <Box label="during">
         {traceInfo && (
-          <OutputThumbnail
-            outputRendered={traceInfo.outputRendered}
-            svgWidth={svgWidth}
-            svgHeight={svgHeight}
-          />
+          <OutputThumbnail outputRendered={traceInfo.outputRendered} />
         )}
-        <SpecNode
-          spec={spec.inner}
-          activePath={activePath}
-          path={path}
-          colorMap={colorMap}
-          svgWidth={svgWidth}
-          svgHeight={svgHeight}
-        />
+        <SpecNode spec={spec.inner} path={path} />
       </Box>
     );
   } else if (spec.type === "with-distance") {
     return (
       <Box label="withDistance">
-        <SpecNode
-          spec={spec.inner}
-          activePath={activePath}
-          path={path}
-          colorMap={colorMap}
-          svgWidth={svgWidth}
-          svgHeight={svgHeight}
-        />
+        <SpecNode spec={spec.inner} path={path} />
       </Box>
     );
   } else if (spec.type === "with-snap-radius") {
@@ -262,20 +204,9 @@ function SpecNode<T>(props: NodeProps<T>) {
     return (
       <Box label={label}>
         {traceInfo && (
-          <OutputThumbnail
-            outputRendered={traceInfo.outputRendered}
-            svgWidth={svgWidth}
-            svgHeight={svgHeight}
-          />
+          <OutputThumbnail outputRendered={traceInfo.outputRendered} />
         )}
-        <SpecNode
-          spec={spec.inner}
-          activePath={activePath}
-          path={childPrefix}
-          colorMap={colorMap}
-          svgWidth={svgWidth}
-          svgHeight={svgHeight}
-        />
+        <SpecNode spec={spec.inner} path={childPrefix} />
       </Box>
     );
   } else if (spec.type === "between") {
@@ -290,17 +221,11 @@ function SpecNode<T>(props: NodeProps<T>) {
       >
         {traceInfo && (
           <>
-            <OutputThumbnail
-              outputRendered={traceInfo.outputRendered}
-              svgWidth={svgWidth}
-              svgHeight={svgHeight}
-            />
+            <OutputThumbnail outputRendered={traceInfo.outputRendered} />
             <Slot label="states">
               <StateThumbnails
                 renderedStates={traceInfo.renderedStates}
                 closestIndex={traceInfo.closestIndex}
-                svgWidth={svgWidth}
-                svgHeight={svgHeight}
               />
             </Slot>
           </>
@@ -313,14 +238,7 @@ function SpecNode<T>(props: NodeProps<T>) {
       <Box
         label={`withDropTransition (${describeTransition(spec.transition)})`}
       >
-        <SpecNode
-          spec={spec.inner}
-          activePath={activePath}
-          path={prefix}
-          colorMap={colorMap}
-          svgWidth={svgWidth}
-          svgHeight={svgHeight}
-        />
+        <SpecNode spec={spec.inner} path={prefix} />
       </Box>
     );
   } else if (spec.type === "switch-to-state-and-follow") {
@@ -334,11 +252,7 @@ function SpecNode<T>(props: NodeProps<T>) {
         color={colorMap?.get(fullPath)}
       >
         {traceInfo && (
-          <StateThumbnails
-            renderedStates={traceInfo.renderedStates}
-            svgWidth={svgWidth}
-            svgHeight={svgHeight}
-          />
+          <StateThumbnails renderedStates={traceInfo.renderedStates} />
         )}
       </Box>
     );
@@ -348,14 +262,7 @@ function SpecNode<T>(props: NodeProps<T>) {
       <Box
         label={`withBranchTransition (${describeTransition(spec.transition)})`}
       >
-        <SpecNode
-          spec={spec.inner}
-          activePath={activePath}
-          path={prefix}
-          colorMap={colorMap}
-          svgWidth={svgWidth}
-          svgHeight={svgHeight}
-        />
+        <SpecNode spec={spec.inner} path={prefix} />
       </Box>
     );
   } else if (spec.type === "drop-target") {
@@ -369,11 +276,7 @@ function SpecNode<T>(props: NodeProps<T>) {
         color={colorMap?.get(fullPath)}
       >
         {traceInfo && (
-          <StateThumbnails
-            renderedStates={traceInfo.renderedStates}
-            svgWidth={svgWidth}
-            svgHeight={svgHeight}
-          />
+          <StateThumbnails renderedStates={traceInfo.renderedStates} />
         )}
       </Box>
     );
@@ -381,14 +284,7 @@ function SpecNode<T>(props: NodeProps<T>) {
     const prefix = path + "with-chaining/";
     return (
       <Box label="withChaining">
-        <SpecNode
-          spec={spec.inner}
-          activePath={activePath}
-          path={prefix}
-          colorMap={colorMap}
-          svgWidth={svgWidth}
-          svgHeight={svgHeight}
-        />
+        <SpecNode spec={spec.inner} path={prefix} />
       </Box>
     );
   } else {
@@ -398,21 +294,17 @@ function SpecNode<T>(props: NodeProps<T>) {
 
 // # Thumbnail rendering
 
-const THUMB_HEIGHT = 40;
-
 function StateThumbnails({
   renderedStates,
   closestIndex,
-  svgWidth,
-  svgHeight,
 }: {
   renderedStates: RenderedState[];
   closestIndex?: number;
-  svgWidth: number;
-  svgHeight: number;
 }) {
+  const { svgWidth, svgHeight, thumbHeight } = useContext(TreeCtx);
   if (svgWidth === 0 || svgHeight === 0) return null;
-  const thumbW = Math.round(THUMB_HEIGHT * (svgWidth / svgHeight));
+  const h = Math.min(thumbHeight, svgHeight);
+  const w = Math.round(h * (svgWidth / svgHeight));
   return (
     <div
       style={{
@@ -426,13 +318,14 @@ function StateThumbnails({
       {renderedStates.map((rs, i) => (
         <svg
           key={i}
-          width={thumbW}
-          height={THUMB_HEIGHT}
+          width={w}
+          height={h}
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
           style={{
             border: "1px solid rgb(203, 213, 225)",
             borderRadius: 3,
             background: "white",
+            transition: "width 150ms ease, height 150ms ease",
             ...(closestIndex === i
               ? { outline: `2px solid ${ACTIVE_BORDER}`, outlineOffset: -1 }
               : {}),
@@ -445,27 +338,22 @@ function StateThumbnails({
   );
 }
 
-function OutputThumbnail({
-  outputRendered,
-  svgWidth,
-  svgHeight,
-}: {
-  outputRendered: LayeredSvgx;
-  svgWidth: number;
-  svgHeight: number;
-}) {
+function OutputThumbnail({ outputRendered }: { outputRendered: LayeredSvgx }) {
+  const { svgWidth, svgHeight, thumbHeight } = useContext(TreeCtx);
   if (svgWidth === 0 || svgHeight === 0) return null;
-  const thumbW = Math.round(THUMB_HEIGHT * (svgWidth / svgHeight));
+  const h = Math.min(thumbHeight, svgHeight);
+  const w = Math.round(h * (svgWidth / svgHeight));
   return (
     <div style={{ marginTop: 2, marginBottom: 4 }}>
       <svg
-        width={thumbW}
-        height={THUMB_HEIGHT}
+        width={w}
+        height={h}
         viewBox={`0 0 ${svgWidth} ${svgHeight}`}
         style={{
           border: "1px solid rgb(203, 213, 225)",
           borderRadius: 3,
           background: "white",
+          transition: "width 150ms ease, height 150ms ease",
         }}
       >
         {drawLayered(outputRendered)}

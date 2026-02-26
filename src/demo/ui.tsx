@@ -22,7 +22,7 @@ import { Draggable } from "../draggable";
 import { assert } from "../utils";
 import type { Demo } from "./registry";
 
-export type DemoSettings = {
+export type DemoToggleSettings = {
   showTreeView: boolean;
   showDropZones: boolean;
   showDebugOverlay: boolean;
@@ -30,7 +30,13 @@ export type DemoSettings = {
   showTimingMeter: boolean;
 };
 
-const defaultSettings: DemoSettings = {
+export type DemoSettings = DemoToggleSettings & {
+  thumbHeight: number;
+};
+
+const defaultThumbHeight = 40;
+
+const defaultToggles: DemoToggleSettings = {
   showTreeView: false,
   showDropZones: false,
   showDebugOverlay: false,
@@ -40,22 +46,22 @@ const defaultSettings: DemoSettings = {
 
 const DemoContext = createContext<{
   settings: DemoSettings;
-  setSettings: React.Dispatch<React.SetStateAction<DemoSettings>>;
+  setToggles: React.Dispatch<React.SetStateAction<DemoToggleSettings>>;
 }>({
-  settings: defaultSettings,
-  setSettings: () => {},
+  settings: { ...defaultToggles, thumbHeight: defaultThumbHeight },
+  setToggles: () => {},
 });
 
 export const useDemoSettings = () => useContext(DemoContext).settings;
 
 const SETTINGS_KEY = "demo-settings";
 
-function loadSettings(): DemoSettings {
+function loadToggles(): DemoToggleSettings {
   try {
     const stored = localStorage.getItem(SETTINGS_KEY);
-    if (stored) return { ...defaultSettings, ...JSON.parse(stored) };
+    if (stored) return { ...defaultToggles, ...JSON.parse(stored) };
   } catch {}
-  return defaultSettings;
+  return defaultToggles;
 }
 
 export function DemoSettingsProvider({
@@ -65,15 +71,34 @@ export function DemoSettingsProvider({
   children: ReactNode;
   persist?: boolean;
 }) {
-  const [settings, setSettings] = useState<DemoSettings>(
-    persist ? loadSettings : () => defaultSettings,
+  const [toggles, setToggles] = useState<DemoToggleSettings>(
+    persist ? loadToggles : () => defaultToggles,
   );
+  const [thumbHeight, setThumbHeight] = useState(defaultThumbHeight);
+
   useEffect(() => {
     if (!persist) return;
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  }, [settings, persist]);
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(toggles));
+  }, [toggles, persist]);
+
+  // Thumbnail resize: [ / ] keys (registered once here, not per-DemoDraggable)
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.repeat) return;
+      if (e.key === "]") {
+        setThumbHeight((h) => Math.min(h + 10, 200));
+      } else if (e.key === "[") {
+        setThumbHeight((h) => Math.max(h - 10, 12));
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  const settings: DemoSettings = { ...toggles, thumbHeight };
+
   return (
-    <DemoContext.Provider value={{ settings, setSettings }}>
+    <DemoContext.Provider value={{ settings, setToggles }}>
       {children}
     </DemoContext.Provider>
   );
@@ -87,7 +112,7 @@ const settingsEntries = [
   { key: "showTimingMeter", label: "Timing", mobileHidden: true },
 ] as const;
 
-const settingsIcons: Record<keyof DemoSettings, ReactNode> = {
+const settingsIcons: Record<keyof DemoToggleSettings, ReactNode> = {
   showStateViewer: (
     <svg width={18} height={18} viewBox="0 0 14 14" className="shrink-0">
       <text
@@ -181,7 +206,7 @@ const settingsIcons: Record<keyof DemoSettings, ReactNode> = {
 };
 
 const settingsActiveColors: Record<
-  keyof DemoSettings,
+  keyof DemoToggleSettings,
   { bg: string; border: string }
 > = {
   showStateViewer: { bg: "#f1f5f9", border: "#64748b" },
@@ -226,7 +251,7 @@ export function DemoSettingsBar({
   only,
   compact,
 }: { only?: (keyof DemoSettings)[]; compact?: boolean } = {}) {
-  const { settings, setSettings } = useContext(DemoContext);
+  const { settings, setToggles } = useContext(DemoContext);
   const entries = only
     ? settingsEntries.filter(({ key }) => only.includes(key))
     : settingsEntries;
@@ -268,7 +293,7 @@ export function DemoSettingsBar({
                       color: "#94a3b8",
                     }
               }
-              onClick={() => setSettings((s) => ({ ...s, [key]: !s[key] }))}
+              onClick={() => setToggles((s) => ({ ...s, [key]: !s[key] }))}
             >
               <span className="shrink-0" style={{ opacity: active ? 1 : 0.4 }}>
                 {settingsIcons[key]}
@@ -298,7 +323,8 @@ export function DemoDraggable<T extends object>({
     showDropZones,
     showDebugOverlay,
     showStateViewer,
-    showTimingMeter: showTimingMeter,
+    showTimingMeter,
+    thumbHeight,
   } = useDemoSettings();
   const [debugInfo, setDebugInfo] = useState<DebugDragInfo<T>>({
     type: "idle",
@@ -370,9 +396,10 @@ export function DemoDraggable<T extends object>({
                       <DragSpecTreeView
                         spec={draggingDebugInfo.tracedSpec}
                         activePath={draggingDebugInfo.activePath}
-                        colorMap={overlayData?.colorMap}
+                        colorMap={overlayData?.colorMap ?? null}
                         svgWidth={width}
                         svgHeight={height}
+                        thumbHeight={thumbHeight}
                       />
                     </div>
                   ) : (
