@@ -132,7 +132,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
                     });
                     return d
                       .closest(d.floating(statesWith))
-                      .withBackground(d.floating(stateWithout).andThen(state));
+                      .withBackground(d.floating(stateWithout).onDrop(state));
                   }}
                 >
                   <rect
@@ -180,5 +180,5 @@ export default demo(
       />
     </div>
   ),
-  { tags: ["spec.andThen", "d.floating", "spec.withBackground"] },
+  { tags: ["spec.onDrop", "d.floating", "spec.withBackground"] },
 );

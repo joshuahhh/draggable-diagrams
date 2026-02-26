@@ -14,7 +14,7 @@ export type DragSpecData<T> = (
   | DragSpecWithFloating<T>
   | DragSpecClosest<T>
   | DragSpecWithBackground<T>
-  | DragSpecAndThen<T>
+  | DragSpecOnDrop<T>
   | DragSpecVary<T>
   | DragSpecWithDistance<T>
   | DragSpecWithSnapRadius<T>
@@ -76,10 +76,10 @@ export type DragSpecWithBranchTransition<T> = {
   transition: Transition | false;
 };
 
-export type DragSpecAndThen<T> = {
-  type: "and-then";
+export type DragSpecOnDrop<T> = {
+  type: "on-drop";
   inner: DragSpecData<T>;
-  andThenState: T | ((previewState: T) => T);
+  onDropState: T | ((previewState: T) => T);
 };
 
 export type DragSpecVary<T> = {
@@ -155,7 +155,7 @@ export interface DragSpecMethods<T> {
    * the same as before, but dropping will transition into the given
    * state.
    */
-  andThen(state: T | ((previewState: T) => T)): DragSpec<T>;
+  onDrop(state: T | ((previewState: T) => T)): DragSpec<T>;
 
   /**
    * Augment the behavior with a "background" behavior that it will
@@ -228,17 +228,17 @@ export interface DragSpecMethods<T> {
   /**
    * Transform the state on every frame — both the rendered preview
    * and the drop state are re-rendered from the transformed state.
-   * Like `andThen`, but the function's output is actually displayed.
+   * Like `onDrop`, but the function's output is actually displayed.
    */
   during(fn: (state: T) => T): DragSpec<T>;
 }
 
 const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
-  andThen(state) {
+  onDrop(state) {
     return attachMethods({
-      type: "and-then",
+      type: "on-drop",
       inner: this,
-      andThenState: state,
+      onDropState: state,
     });
   },
   withBackground(bg, { radius = 50 } = {}) {

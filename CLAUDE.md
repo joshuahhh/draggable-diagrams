@@ -24,7 +24,7 @@ npm run typecheck # Type check
 |---|---|
 | `src/draggable.tsx` | `Draggable<T>` type, `Drag`, `SetState`, `DragologyPropValue` |
 | `src/DraggableRenderer.tsx` | Low-level component that runs a `Draggable` with drag handling, spring animation |
-| `src/DragSpec.tsx` | `DragSpec<T>` union type + constructors (`between`, `fixed`, `floating`, `closest`, `vary`, `andThen`, `withSnapRadius`, etc.) |
+| `src/DragSpec.tsx` | `DragSpec<T>` union type + constructors (`between`, `fixed`, `floating`, `closest`, `vary`, `onDrop`, `withSnapRadius`, etc.) |
 | `src/demo/ui.tsx` | `DemoDraggable` (wraps `DraggableRenderer` with debug UI), `DemoSettingsProvider`, `DemoSettingsBar`, `ConfigPanel`, `ConfigCheckbox`, `ConfigSelect`, `DemoNotes` |
 | `src/demo/registry.tsx` | Demo registry — auto-discovers demos via `import.meta.glob` |
 | `src/demo/list.ts` | Ordered list of demo IDs for the gallery |
@@ -104,8 +104,8 @@ export default demo(() => (
 | `vary(state, [["x"], ["y"]])` | Continuous numeric variation along paths |
 | `floating(states, { backdrop })` | Float between states with a backdrop |
 | `closest([spec1, spec2])` | Pick whichever spec is closest |
-| `andThen(spec, nextState)` | Chain into a new drag on state change. `nextState` can be a `T` or `(previewState: T) => T` |
-| `during(fn)` | Like `andThen(fn)` but re-renders the transformed state live during drag |
+| `onDrop(spec, nextState)` | Override the drop state. `nextState` can be a `T` or `(previewState: T) => T` |
+| `during(fn)` | Like `onDrop(fn)` but re-renders the transformed state live during drag |
 | `withSnapRadius(spec, radius)` | Snap within radius |
 | `withDropTransition(spec, easing)` | Custom transition on drop |
 
@@ -119,7 +119,7 @@ export default demo(() => (
 - **For group movement**, vary a shared position (e.g. a pile's x/y) that all members offset from, rather than varying each member independently (see `src/demos/card-piles.tsx`)
 - The `state` arg to `vary` is the starting state for optimization (not necessarily the current rendered state). The initial param values are used as the optimizer's starting point.
 - **`during(fn)`** re-renders the transformed state each frame — use it when `vary` produces intermediate states that need cleanup (e.g. recomputing group membership as you drag). See `card-piles.tsx`.
-- **`andThen(fn)`** accepts a function `(previewState: T) => T` to compute the drop state dynamically at drop time, not just a fixed state.
+- **`onDrop(fn)`** accepts a function `(previewState: T) => T` to compute the drop state dynamically at drop time, not just a fixed state.
 
 ### Reference demos for common patterns
 

@@ -64,7 +64,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
                   );
                 }),
               )
-              .andThen(
+              .onDrop(
                 produce((d) => {
                   d.points[idx] = Vec2(d.points[idx]).round();
                 }),
@@ -90,7 +90,7 @@ export default demo(
             <code>spec.during</code> keeps the dragged point inside the grid.
           </li>
           <li>
-            <code>spec.andThen</code> rounds the point to the nearest grid point
+            <code>spec.onDrop</code> rounds the point to the nearest grid point
             on drop.
           </li>
           <li>
@@ -108,5 +108,5 @@ export default demo(
       />
     </>
   ),
-  { tags: ["d.vary", "spec.during", "spec.andThen", "spec.withSnapRadius"] },
+  { tags: ["d.vary", "spec.during", "spec.onDrop", "spec.withSnapRadius"] },
 );

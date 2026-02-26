@@ -16,7 +16,7 @@ export type DragSpecTraceInfoByType = {
   "with-floating": { outputRendered: LayeredSvgx; elementPos: Vec2 };
   closest: { bestIndex: number };
   "with-background": { inForeground: boolean };
-  "and-then": Record<string, never>;
+  "on-drop": Record<string, never>;
   during: { outputRendered: LayeredSvgx };
   vary: { renderedStates: RenderedState[]; currentParams: number[] };
   "with-distance": Record<string, never>;
@@ -216,7 +216,7 @@ export function debugOverlay<T>(
     }
 
     // Passthrough to inner:
-    case "and-then":
+    case "on-drop":
     case "during":
     case "with-distance":
     case "with-snap-radius":

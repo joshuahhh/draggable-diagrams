@@ -362,10 +362,10 @@ function makePickupDrag(
         ]),
         d
           .floating(removeStageHoles(eraseState))
-          .andThen(removeStageHoles(cleanState)),
+          .onDrop(removeStageHoles(cleanState)),
       )
       .withBackground(
-        d.floating(cleanedWithout).andThen({
+        d.floating(cleanedWithout).onDrop({
           ...cleanedWithout,
           voidStack: newVoidStack,
         }),
@@ -512,10 +512,10 @@ function makePaletteDrag(
         ]),
         d
           .floating(removeStageHoles(eraseState))
-          .andThen(removeStageHoles(cleanState)),
+          .onDrop(removeStageHoles(cleanState)),
       )
       .withBackground(
-        d.floating(stateWithout).andThen({
+        d.floating(stateWithout).onDrop({
           ...stateWithout,
           voidStack: newVoidStack,
         }),
@@ -569,7 +569,7 @@ function makeVoidDrag(
           ...stageTargets,
         ]),
       )
-      .withBackground(d.floating(stateWithout).andThen(state));
+      .withBackground(d.floating(stateWithout).onDrop(state));
   };
 }
 
@@ -1265,7 +1265,7 @@ export default demo(
   ),
   {
     tags: [
-      "spec.andThen",
+      "spec.onDrop",
       "setState",
       "d.between",
       "keyboard",

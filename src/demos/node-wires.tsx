@@ -124,7 +124,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
       freeState.wires[wireId].from.type === "free" &&
       freeState.wires[wireId].to.type === "free"
     ) {
-      varySpec = varySpec.andThen(
+      varySpec = varySpec.onDrop(
         produce(freeState, (draft) => {
           delete draft.wires[wireId];
         }),
@@ -311,7 +311,7 @@ export default demo(
   {
     tags: [
       "d.switchToStateAndFollow",
-      "spec.andThen",
+      "spec.onDrop",
       "d.vary",
       "spec.withBackground",
     ],

@@ -93,8 +93,8 @@ export function dragSpecToBehavior<T extends object>(
       return closestBehavior(spec, ctx);
     case "with-background":
       return withBackgroundBehavior(spec, ctx);
-    case "and-then":
-      return andThenBehavior(spec, ctx);
+    case "on-drop":
+      return onDropBehavior(spec, ctx);
     case "during":
       return duringBehavior(spec, ctx);
     case "vary":
@@ -271,8 +271,8 @@ function withBackgroundBehavior<T extends object>(
   };
 }
 
-function andThenBehavior<T extends object>(
-  spec: DragSpecData<T> & { type: "and-then" },
+function onDropBehavior<T extends object>(
+  spec: DragSpecData<T> & { type: "on-drop" },
   ctx: DragBehaviorInitContext<T>,
 ): DragBehavior<T> {
   const subBehavior = dragSpecToBehavior(spec.inner, ctx);
@@ -281,10 +281,10 @@ function andThenBehavior<T extends object>(
     return {
       ...result,
       dropState:
-        typeof spec.andThenState === "function"
-          ? (spec.andThenState as (s: T) => T)(result.dropState)
-          : spec.andThenState,
-      activePath: `and-then/${result.activePath}`,
+        typeof spec.onDropState === "function"
+          ? (spec.onDropState as (s: T) => T)(result.dropState)
+          : spec.onDropState,
+      activePath: `on-drop/${result.activePath}`,
       tracedSpec: { ...spec, inner: result.tracedSpec },
     };
   };

@@ -136,7 +136,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
             return d
               .closest([
                 ...d.floating(rearrangeStates),
-                d.floating(deleteState).andThen(postDeleteState),
+                d.floating(deleteState).onDrop(postDeleteState),
               ])
               .withBackground(d.floating(stateWithout));
           },
@@ -193,5 +193,5 @@ export default demo(
       />
     </div>
   ),
-  { tags: ["spec.andThen", "d.floating", "spec.withBackground"] },
+  { tags: ["spec.onDrop", "d.floating", "spec.withBackground"] },
 );

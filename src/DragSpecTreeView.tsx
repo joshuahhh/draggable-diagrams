@@ -169,10 +169,10 @@ function SpecNode<T>({ spec, path }: { spec: DragSpecData<T>; path: string }) {
         </div>
       </Box>
     );
-  } else if (spec.type === "and-then") {
+  } else if (spec.type === "on-drop") {
     const { childPath } = info(spec);
     return (
-      <Box label="andThen">
+      <Box label="onDrop">
         <SpecNode spec={spec.inner} path={childPath} />
       </Box>
     );
