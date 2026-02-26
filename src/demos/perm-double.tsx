@@ -48,8 +48,8 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                 const draggedColIdx = draggedRow.indexOf(p);
 
                 const states = [];
-                for (const colIdx of _.range(draggedRow.length + 1)) {
-                  for (const rowIdx of _.range(state.rows.length + 1)) {
+                for (const colIdx of _.range(draggedRow.length)) {
+                  for (const rowIdx of _.range(state.rows.length)) {
                     states.push(
                       produce(state, (draft) => {
                         const row = draft.rows[draggedRowIdx];
