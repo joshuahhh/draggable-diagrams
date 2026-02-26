@@ -2,6 +2,7 @@ import { PrettyPrint } from "@joshuahhh/pretty-print";
 import _ from "lodash";
 import { Draggable } from "./draggable";
 import { Chaining, DragSpecData } from "./DragSpec";
+import { setTraceInfo } from "./DragSpecTraceInfo";
 import { ErrorWithJSX } from "./ErrorBoundary";
 import { FindMinimum } from "./math/cobyla";
 import { CoincidentPointsError, Delaunay } from "./math/delaunay";
@@ -63,45 +64,9 @@ export type DragResult<T> = {
    */
   debugOverlay?: () => Svgx;
   /**
-   * A decorated copy of the spec tree with per-node debug info
-   * attached. Built bottom-up by each behavior.
+   * The spec tree with runtime trace info attached via `traceInfo` fields.
    */
-  annotatedSpec?: AnnotatedSpec<T>;
-};
-
-/**
- * A node in the annotated spec tree. Mirrors the DragSpec tree
- * structure, but each node carries debug info produced by its
- * behavior at runtime.
- */
-export type AnnotatedSpec<T> = {
-  /** The original spec node (for reading type, states, params, etc.) */
-  spec: DragSpecData<T>;
-  /** Runtime debug info — which fields are populated depends on spec.type */
-  debug: SpecDebugInfo<T>;
-  /** Annotated children, in order matching the spec's sub-specs */
-  children: AnnotatedSpec<T>[];
-};
-
-export type SpecDebugInfo<T> = {
-  /** Pre-rendered states (between, just, vary, switchToStateAndFollow, dropTarget) */
-  renderedStates?: { layered: LayeredSvgx; position: Vec2 }[];
-  /** The rendered output of this node, when it differs from its child's render */
-  outputRendered?: LayeredSvgx;
-  /** Index of the closest/chosen state (between) */
-  closestIndex?: number;
-  /** Index of the best child (closest) */
-  bestIndex?: number;
-  /** Whether we're in the foreground branch (withBackground) */
-  inForeground?: boolean;
-  /** Whether the snap engaged (withSnapRadius) */
-  snapped?: boolean;
-  /** Whether the pointer is inside the target (dropTarget) */
-  inside?: boolean;
-  /** Current parameter values (vary) */
-  currentParams?: number[];
-  /** The drop state for this node */
-  dropState?: T;
+  tracedSpec: DragSpecData<T>;
 };
 
 /**
@@ -168,11 +133,9 @@ function fixedBehavior<T extends object>(
 ): DragBehavior<T> {
   const rendered = renderStateReadOnly(ctx, spec.state);
   const elementPos = getElementPosition(ctx, rendered);
-  const annotatedSpec: AnnotatedSpec<T> = {
-    spec,
-    debug: { renderedStates: [{ layered: rendered, position: elementPos }] },
-    children: [],
-  };
+  const tracedSpec = setTraceInfo(spec, {
+    renderedStates: [{ layered: rendered, position: elementPos }],
+  });
   return (frame) => {
     const distance = frame.pointer.dist(elementPos);
     return {
@@ -180,7 +143,7 @@ function fixedBehavior<T extends object>(
       dropState: spec.state,
       distance,
       activePath: "fixed",
-      annotatedSpec,
+      tracedSpec,
       debugOverlay: () => (
         <g opacity={0.8}>
           <circle
@@ -267,11 +230,10 @@ function withFloatingBehavior<T extends object>(
       dropState: innerResult.dropState,
       distance,
       activePath: `with-floating/${innerResult.activePath}`,
-      annotatedSpec: {
-        spec,
-        debug: { outputRendered: rendered },
-        children: innerResult.annotatedSpec ? [innerResult.annotatedSpec] : [],
-      },
+      tracedSpec: setTraceInfo(
+        { ...spec, inner: innerResult.tracedSpec },
+        { outputRendered: rendered },
+      ),
       debugOverlay: () => (
         <g opacity={0.8}>
           <circle cx={elementPos.x} cy={elementPos.y} r={5} fill="magenta" />
@@ -298,13 +260,10 @@ function closestBehavior<T extends object>(
     return {
       ...best,
       activePath: `closest/${bestIdx}/${best.activePath}`,
-      annotatedSpec: {
-        spec,
-        debug: { bestIndex: bestIdx },
-        children: subResults.flatMap((r) =>
-          r.annotatedSpec ? [r.annotatedSpec] : [],
-        ),
-      },
+      tracedSpec: setTraceInfo(
+        { ...spec, specs: subResults.map((r) => r.tracedSpec) },
+        { bestIndex: bestIdx },
+      ),
       debugOverlay: () => (
         <g>
           {subResults.map((r, i) => {
@@ -338,14 +297,14 @@ function withBackgroundBehavior<T extends object>(
       return {
         ...bgResult,
         activePath: `bg/${bgResult.activePath}`,
-        annotatedSpec: {
-          spec,
-          debug: { inForeground: false },
-          children: [
-            foregroundResult.annotatedSpec,
-            bgResult.annotatedSpec,
-          ].filter((c): c is AnnotatedSpec<T> => c != null),
-        },
+        tracedSpec: setTraceInfo(
+          {
+            ...spec,
+            foreground: foregroundResult.tracedSpec,
+            background: bgResult.tracedSpec,
+          },
+          { inForeground: false },
+        ),
         debugOverlay:
           fgDebug || bgDebug
             ? () => (
@@ -360,13 +319,10 @@ function withBackgroundBehavior<T extends object>(
     return {
       ...foregroundResult,
       activePath: `fg/${foregroundResult.activePath}`,
-      annotatedSpec: {
-        spec,
-        debug: { inForeground: true },
-        children: foregroundResult.annotatedSpec
-          ? [foregroundResult.annotatedSpec]
-          : [],
-      },
+      tracedSpec: setTraceInfo(
+        { ...spec, foreground: foregroundResult.tracedSpec },
+        { inForeground: true },
+      ),
     };
   };
 }
@@ -384,11 +340,7 @@ function andThenBehavior<T extends object>(
         typeof spec.andThenState === "function"
           ? (spec.andThenState as (s: T) => T)(result.dropState)
           : spec.andThenState,
-      annotatedSpec: {
-        spec,
-        debug: {},
-        children: result.annotatedSpec ? [result.annotatedSpec] : [],
-      },
+      tracedSpec: { ...spec, inner: result.tracedSpec },
     };
   };
 }
@@ -412,11 +364,10 @@ function duringBehavior<T extends object>(
       rendered,
       dropState: transformedState,
       distance: frame.pointer.dist(elementPos),
-      annotatedSpec: {
-        spec,
-        debug: { outputRendered: rendered },
-        children: result.annotatedSpec ? [result.annotatedSpec] : [],
-      },
+      tracedSpec: setTraceInfo(
+        { ...spec, inner: result.tracedSpec },
+        { outputRendered: rendered },
+      ),
     };
   };
 }
@@ -530,14 +481,10 @@ function varyBehavior<T extends object>(
       dropState: newState,
       distance,
       activePath: "vary",
-      annotatedSpec: {
-        spec,
-        debug: {
-          renderedStates: [{ layered: rendered, position: achievedPos }],
-          currentParams: resultParams.slice(),
-        },
-        children: [],
-      },
+      tracedSpec: setTraceInfo(spec, {
+        renderedStates: [{ layered: rendered, position: achievedPos }],
+        currentParams: resultParams.slice(),
+      }),
       debugOverlay: () => (
         <g opacity={0.8}>
           <circle {...achievedPos.cxy()} r={5} fill="magenta" />
@@ -563,11 +510,7 @@ function withDistanceBehavior<T extends object>(
     return {
       ...result,
       distance: scaledDistance,
-      annotatedSpec: {
-        spec,
-        debug: {},
-        children: result.annotatedSpec ? [result.annotatedSpec] : [],
-      },
+      tracedSpec: { ...spec, inner: result.tracedSpec },
     };
   };
 }
@@ -610,11 +553,10 @@ function withSnapRadiusBehavior<T extends object>(
       activePath,
       activePathTransition: spec.transition || undefined,
       chainNow: spec.chain && snapped ? {} : undefined,
-      annotatedSpec: {
-        spec,
-        debug: { snapped, outputRendered: rendered },
-        children: result.annotatedSpec ? [result.annotatedSpec] : [],
-      },
+      tracedSpec: setTraceInfo(
+        { ...spec, inner: result.tracedSpec },
+        { snapped, outputRendered: rendered },
+      ),
     };
   };
 }
@@ -630,11 +572,7 @@ function withDropTransitionBehavior<T extends object>(
       ...result,
       dropTransition: spec.transition,
       activePath: `with-drop-transition/${result.activePath}`,
-      annotatedSpec: {
-        spec,
-        debug: {},
-        children: result.annotatedSpec ? [result.annotatedSpec] : [],
-      },
+      tracedSpec: { ...spec, inner: result.tracedSpec },
     };
   };
 }
@@ -650,11 +588,7 @@ function withBranchTransitionBehavior<T extends object>(
       ...result,
       activePathTransition: spec.transition,
       activePath: `with-branch-transition/${result.activePath}`,
-      annotatedSpec: {
-        spec,
-        debug: {},
-        children: result.annotatedSpec ? [result.annotatedSpec] : [],
-      },
+      tracedSpec: { ...spec, inner: result.tracedSpec },
     };
   };
 }
@@ -731,18 +665,14 @@ function betweenBehavior<T extends object>(
       dropState: closest.state,
       distance: projection.dist,
       activePath: "between",
-      annotatedSpec: {
-        spec,
-        debug: {
-          renderedStates: renderedStates.map((rs) => ({
-            layered: rs.layered,
-            position: rs.position,
-          })),
-          closestIndex,
-          outputRendered: rendered,
-        },
-        children: [],
-      },
+      tracedSpec: setTraceInfo(spec, {
+        renderedStates: renderedStates.map((rs) => ({
+          layered: rs.layered,
+          position: rs.position,
+        })),
+        closestIndex,
+        outputRendered: rendered,
+      }),
       debugOverlay: () => (
         <g>
           {/* Delaunay triangulation edges */}
@@ -802,11 +732,9 @@ function switchToStateAndFollowBehavior<T extends object>(
     distance: 0,
     activePath: "switch-to-state-and-follow",
     chainNow: { draggedId: spec.draggedId, followSpec: spec.followSpec },
-    annotatedSpec: {
-      spec,
-      debug: { renderedStates: [{ layered: rendered, position: elementPos }] },
-      children: [],
-    },
+    tracedSpec: setTraceInfo(spec, {
+      renderedStates: [{ layered: rendered, position: elementPos }],
+    }),
   });
 }
 
@@ -842,14 +770,10 @@ function dropTargetBehavior<T extends object>(
       dropState: spec.state,
       distance,
       activePath: "drop-target",
-      annotatedSpec: {
-        spec,
-        debug: {
-          renderedStates: [{ layered: rendered, position: Vec2(0, 0) }],
-          inside,
-        },
-        children: [],
-      },
+      tracedSpec: setTraceInfo(spec, {
+        renderedStates: [{ layered: rendered, position: Vec2(0, 0) }],
+        inside,
+      }),
       debugOverlay: () => (
         <g opacity={0.8}>
           <polygon
@@ -877,11 +801,7 @@ function withChainingBehavior<T extends object>(
       ...result,
       chainNow: result.chainNow ?? spec.chaining,
       activePath: `with-chaining/${result.activePath}`,
-      annotatedSpec: {
-        spec,
-        debug: {},
-        children: result.annotatedSpec ? [result.annotatedSpec] : [],
-      },
+      tracedSpec: { ...spec, inner: result.tracedSpec },
     };
   };
 }

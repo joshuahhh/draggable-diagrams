@@ -9,7 +9,7 @@ import { Many, assert, manyToArray } from "./utils";
 
 // # DragSpecData
 
-export type DragSpecData<T> =
+export type DragSpecData<T> = (
   | DragSpecFixed<T>
   | DragSpecWithFloating<T>
   | DragSpecClosest<T>
@@ -24,7 +24,8 @@ export type DragSpecData<T> =
   | DragSpecDropTarget<T>
   | DragSpecWithBranchTransition<T>
   | DragSpecWithChaining<T>
-  | DragSpecDuring<T>;
+  | DragSpecDuring<T>
+) & { traceInfo?: unknown };
 
 export type DragSpecFixed<T> = {
   type: "fixed";

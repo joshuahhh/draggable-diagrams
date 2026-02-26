@@ -1,6 +1,6 @@
-import { AnnotatedSpec, SpecDebugInfo } from "./DragBehavior";
-import { DragSpec, DragSpecData } from "./DragSpec";
-import { drawLayered } from "./svgx/layers";
+import { DragSpecData } from "./DragSpec";
+import { RenderedState, getTraceInfo } from "./DragSpecTraceInfo";
+import { LayeredSvgx, drawLayered } from "./svgx/layers";
 import { Transition } from "./transition";
 import { assertNever } from "./utils";
 
@@ -8,14 +8,12 @@ export function DragSpecTreeView<T>({
   spec,
   activePath,
   colorMap,
-  annotatedSpec,
   svgWidth,
   svgHeight,
 }: {
-  spec: DragSpec<T>;
-  activePath: string | null;
+  spec: DragSpecData<T>;
+  activePath: string;
   colorMap?: Map<string, string>;
-  annotatedSpec?: AnnotatedSpec<T>;
   svgWidth?: number;
   svgHeight?: number;
 }) {
@@ -26,7 +24,6 @@ export function DragSpecTreeView<T>({
         activePath={activePath}
         path=""
         colorMap={colorMap ?? null}
-        annotated={annotatedSpec ?? null}
         svgWidth={svgWidth ?? 0}
         svgHeight={svgHeight ?? 0}
       />
@@ -41,10 +38,9 @@ const INACTIVE_BORDER = "rgb(203, 213, 225)";
 
 type NodeProps<T> = {
   spec: DragSpecData<T>;
-  activePath: string | null;
+  activePath: string;
   path: string;
   colorMap: Map<string, string> | null;
-  annotated: AnnotatedSpec<T> | null;
   svgWidth: number;
   svgHeight: number;
 };
@@ -55,47 +51,47 @@ type NodeProps<T> = {
  * Each node checks whether `activePath` matches or extends its own `path`.
  */
 function SpecNode<T>(props: NodeProps<T>) {
-  const { spec, activePath, path, colorMap, annotated, svgWidth, svgHeight } =
-    props;
-  const debug = annotated?.debug ?? null;
-
-  /** Helper: get annotated child by index */
-  const child = (i: number): AnnotatedSpec<T> | null =>
-    annotated?.children[i] ?? null;
+  const { spec, activePath, path, colorMap, svgWidth, svgHeight } = props;
 
   if (spec.type === "fixed") {
+    const traceInfo = getTraceInfo(spec);
     const fullPath = path + "fixed";
     const active = activePath === fullPath;
     return (
       <Box label="fixed" active={active} color={colorMap?.get(fullPath)}>
-        <StateThumbnails
-          debug={debug}
-          svgWidth={svgWidth}
-          svgHeight={svgHeight}
-        />
+        {traceInfo && (
+          <StateThumbnails
+            renderedStates={traceInfo.renderedStates}
+            svgWidth={svgWidth}
+            svgHeight={svgHeight}
+          />
+        )}
       </Box>
     );
   } else if (spec.type === "with-floating") {
+    const traceInfo = getTraceInfo(spec);
     const prefix = path + "with-floating/";
     return (
       <Box label="withFloating" color={colorMap?.get(path + "with-floating")}>
-        <OutputThumbnail
-          debug={debug}
-          svgWidth={svgWidth}
-          svgHeight={svgHeight}
-        />
+        {traceInfo && (
+          <OutputThumbnail
+            outputRendered={traceInfo.outputRendered}
+            svgWidth={svgWidth}
+            svgHeight={svgHeight}
+          />
+        )}
         <SpecNode
           spec={spec.inner}
           activePath={activePath}
           path={prefix}
           colorMap={colorMap}
-          annotated={child(0)}
           svgWidth={svgWidth}
           svgHeight={svgHeight}
         />
       </Box>
     );
   } else if (spec.type === "vary") {
+    const traceInfo = getTraceInfo(spec);
     const fullPath = path + "vary";
     const active = activePath === fullPath;
     const paramNames = spec.paramPaths.map((p) => {
@@ -126,11 +122,13 @@ function SpecNode<T>(props: NodeProps<T>) {
             constraint: {constraintSrc}
           </div>
         )}
-        <StateThumbnails
-          debug={debug}
-          svgWidth={svgWidth}
-          svgHeight={svgHeight}
-        />
+        {traceInfo && (
+          <StateThumbnails
+            renderedStates={traceInfo.renderedStates}
+            svgWidth={svgWidth}
+            svgHeight={svgHeight}
+          />
+        )}
       </Box>
     );
   } else if (spec.type === "closest") {
@@ -163,7 +161,6 @@ function SpecNode<T>(props: NodeProps<T>) {
                 activePath={activePath}
                 path={path + `closest/${i}/`}
                 colorMap={colorMap}
-                annotated={child(i)}
                 svgWidth={svgWidth}
                 svgHeight={svgHeight}
               />
@@ -182,7 +179,6 @@ function SpecNode<T>(props: NodeProps<T>) {
               activePath={activePath}
               path={path + "fg/"}
               colorMap={colorMap}
-              annotated={child(0)}
               svgWidth={svgWidth}
               svgHeight={svgHeight}
             />
@@ -193,7 +189,6 @@ function SpecNode<T>(props: NodeProps<T>) {
               activePath={activePath}
               path={path + "bg/"}
               colorMap={colorMap}
-              annotated={child(1)}
               svgWidth={svgWidth}
               svgHeight={svgHeight}
             />
@@ -209,26 +204,27 @@ function SpecNode<T>(props: NodeProps<T>) {
           activePath={activePath}
           path={path}
           colorMap={colorMap}
-          annotated={child(0)}
           svgWidth={svgWidth}
           svgHeight={svgHeight}
         />
       </Box>
     );
   } else if (spec.type === "during") {
+    const traceInfo = getTraceInfo(spec);
     return (
       <Box label="during">
-        <OutputThumbnail
-          debug={debug}
-          svgWidth={svgWidth}
-          svgHeight={svgHeight}
-        />
+        {traceInfo && (
+          <OutputThumbnail
+            outputRendered={traceInfo.outputRendered}
+            svgWidth={svgWidth}
+            svgHeight={svgHeight}
+          />
+        )}
         <SpecNode
           spec={spec.inner}
           activePath={activePath}
           path={path}
           colorMap={colorMap}
-          annotated={child(0)}
           svgWidth={svgWidth}
           svgHeight={svgHeight}
         />
@@ -242,13 +238,13 @@ function SpecNode<T>(props: NodeProps<T>) {
           activePath={activePath}
           path={path}
           colorMap={colorMap}
-          annotated={child(0)}
           svgWidth={svgWidth}
           svgHeight={svgHeight}
         />
       </Box>
     );
   } else if (spec.type === "with-snap-radius") {
+    const traceInfo = getTraceInfo(spec);
     const snappedPrefix = path + "with-snap-radius[snapped]/";
     const normalPrefix = path + "with-snap-radius/";
     const snapped = activePath?.startsWith(snappedPrefix);
@@ -265,23 +261,25 @@ function SpecNode<T>(props: NodeProps<T>) {
     }
     return (
       <Box label={label}>
-        <OutputThumbnail
-          debug={debug}
-          svgWidth={svgWidth}
-          svgHeight={svgHeight}
-        />
+        {traceInfo && (
+          <OutputThumbnail
+            outputRendered={traceInfo.outputRendered}
+            svgWidth={svgWidth}
+            svgHeight={svgHeight}
+          />
+        )}
         <SpecNode
           spec={spec.inner}
           activePath={activePath}
           path={childPrefix}
           colorMap={colorMap}
-          annotated={child(0)}
           svgWidth={svgWidth}
           svgHeight={svgHeight}
         />
       </Box>
     );
   } else if (spec.type === "between") {
+    const traceInfo = getTraceInfo(spec);
     const fullPath = path + "between";
     const active = activePath === fullPath;
     return (
@@ -290,18 +288,23 @@ function SpecNode<T>(props: NodeProps<T>) {
         active={active}
         color={colorMap?.get(fullPath)}
       >
-        <OutputThumbnail
-          debug={debug}
-          svgWidth={svgWidth}
-          svgHeight={svgHeight}
-        />
-        <Slot label="states">
-          <StateThumbnails
-            debug={debug}
-            svgWidth={svgWidth}
-            svgHeight={svgHeight}
-          />
-        </Slot>
+        {traceInfo && (
+          <>
+            <OutputThumbnail
+              outputRendered={traceInfo.outputRendered}
+              svgWidth={svgWidth}
+              svgHeight={svgHeight}
+            />
+            <Slot label="states">
+              <StateThumbnails
+                renderedStates={traceInfo.renderedStates}
+                closestIndex={traceInfo.closestIndex}
+                svgWidth={svgWidth}
+                svgHeight={svgHeight}
+              />
+            </Slot>
+          </>
+        )}
       </Box>
     );
   } else if (spec.type === "with-drop-transition") {
@@ -315,13 +318,13 @@ function SpecNode<T>(props: NodeProps<T>) {
           activePath={activePath}
           path={prefix}
           colorMap={colorMap}
-          annotated={child(0)}
           svgWidth={svgWidth}
           svgHeight={svgHeight}
         />
       </Box>
     );
   } else if (spec.type === "switch-to-state-and-follow") {
+    const traceInfo = getTraceInfo(spec);
     const fullPath = path + "switch-to-state-and-follow";
     const active = activePath === fullPath;
     return (
@@ -330,11 +333,13 @@ function SpecNode<T>(props: NodeProps<T>) {
         active={active}
         color={colorMap?.get(fullPath)}
       >
-        <StateThumbnails
-          debug={debug}
-          svgWidth={svgWidth}
-          svgHeight={svgHeight}
-        />
+        {traceInfo && (
+          <StateThumbnails
+            renderedStates={traceInfo.renderedStates}
+            svgWidth={svgWidth}
+            svgHeight={svgHeight}
+          />
+        )}
       </Box>
     );
   } else if (spec.type === "with-branch-transition") {
@@ -348,13 +353,13 @@ function SpecNode<T>(props: NodeProps<T>) {
           activePath={activePath}
           path={prefix}
           colorMap={colorMap}
-          annotated={child(0)}
           svgWidth={svgWidth}
           svgHeight={svgHeight}
         />
       </Box>
     );
   } else if (spec.type === "drop-target") {
+    const traceInfo = getTraceInfo(spec);
     const fullPath = path + "drop-target";
     const active = activePath === fullPath;
     return (
@@ -363,11 +368,13 @@ function SpecNode<T>(props: NodeProps<T>) {
         active={active}
         color={colorMap?.get(fullPath)}
       >
-        <StateThumbnails
-          debug={debug}
-          svgWidth={svgWidth}
-          svgHeight={svgHeight}
-        />
+        {traceInfo && (
+          <StateThumbnails
+            renderedStates={traceInfo.renderedStates}
+            svgWidth={svgWidth}
+            svgHeight={svgHeight}
+          />
+        )}
       </Box>
     );
   } else if (spec.type === "with-chaining") {
@@ -379,7 +386,6 @@ function SpecNode<T>(props: NodeProps<T>) {
           activePath={activePath}
           path={prefix}
           colorMap={colorMap}
-          annotated={child(0)}
           svgWidth={svgWidth}
           svgHeight={svgHeight}
         />
@@ -394,16 +400,18 @@ function SpecNode<T>(props: NodeProps<T>) {
 
 const THUMB_HEIGHT = 40;
 
-function StateThumbnails<T>({
-  debug,
+function StateThumbnails({
+  renderedStates,
+  closestIndex,
   svgWidth,
   svgHeight,
 }: {
-  debug: SpecDebugInfo<T> | null;
+  renderedStates: RenderedState[];
+  closestIndex?: number;
   svgWidth: number;
   svgHeight: number;
 }) {
-  if (!debug?.renderedStates || svgWidth === 0 || svgHeight === 0) return null;
+  if (svgWidth === 0 || svgHeight === 0) return null;
   const thumbW = Math.round(THUMB_HEIGHT * (svgWidth / svgHeight));
   return (
     <div
@@ -415,7 +423,7 @@ function StateThumbnails<T>({
         marginTop: 2,
       }}
     >
-      {debug.renderedStates.map((rs, i) => (
+      {renderedStates.map((rs, i) => (
         <svg
           key={i}
           width={thumbW}
@@ -425,7 +433,7 @@ function StateThumbnails<T>({
             border: "1px solid rgb(203, 213, 225)",
             borderRadius: 3,
             background: "white",
-            ...(debug.closestIndex === i
+            ...(closestIndex === i
               ? { outline: `2px solid ${ACTIVE_BORDER}`, outlineOffset: -1 }
               : {}),
           }}
@@ -438,15 +446,15 @@ function StateThumbnails<T>({
 }
 
 function OutputThumbnail({
-  debug,
+  outputRendered,
   svgWidth,
   svgHeight,
 }: {
-  debug: SpecDebugInfo<unknown> | null;
+  outputRendered: LayeredSvgx;
   svgWidth: number;
   svgHeight: number;
 }) {
-  if (!debug?.outputRendered || svgWidth === 0 || svgHeight === 0) return null;
+  if (svgWidth === 0 || svgHeight === 0) return null;
   const thumbW = Math.round(THUMB_HEIGHT * (svgWidth / svgHeight));
   return (
     <div style={{ marginTop: 2, marginBottom: 4 }}>
@@ -460,7 +468,7 @@ function OutputThumbnail({
           background: "white",
         }}
       >
-        {drawLayered(debug.outputRendered)}
+        {drawLayered(outputRendered)}
       </svg>
     </div>
   );
