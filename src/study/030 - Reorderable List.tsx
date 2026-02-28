@@ -54,17 +54,13 @@ export default demo(() => (
 ));
 
 /**
- * Produce all arrays resulting from taking the item in `arr` at
- * `fromIdx`, removing it from its original position, and reinserting
- * it at every possible position. */
+ * Produce a new array from `arr` by removing the item at `fromIdx`
+ * and inserting it at `toIdx`.
+ */
 // @ts-ignore unused
-function getAllReinsertions<T>(arr: T[], fromIdx: number): T[][] {
-  const result: T[][] = [];
-  for (let toIdx = 0; toIdx < arr.length; toIdx++) {
-    const newArr = [...arr];
-    const item = newArr.splice(fromIdx, 1)[0];
-    newArr.splice(toIdx, 0, item);
-    result.push(newArr);
-  }
-  return result;
+function moveItem<T>(arr: T[], fromIdx: number, toIdx: number): T[] {
+  const newArr = [...arr];
+  const item = newArr.splice(fromIdx, 1)[0];
+  newArr.splice(toIdx, 0, item);
+  return newArr;
 }

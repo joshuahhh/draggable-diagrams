@@ -14,21 +14,6 @@ const W = 160;
 const H = 40;
 const GAP = 8;
 
-/**
- * Produce all arrays resulting from taking the item in `arr` at
- * `fromIdx`, removing it from its original position, and reinserting
- * it at every possible position. */
-function getAllReinsertions<T>(arr: T[], fromIdx: number): T[][] {
-  const result: T[][] = [];
-  for (let toIdx = 0; toIdx < arr.length; toIdx++) {
-    const newArr = [...arr];
-    const item = newArr.splice(fromIdx, 1)[0];
-    newArr.splice(toIdx, 0, item);
-    result.push(newArr);
-  }
-  return result;
-}
-
 function makeDraggable(
   useFloating: boolean,
   useSnapRadius: boolean,
@@ -43,12 +28,12 @@ function makeDraggable(
             transform={translate(0, i * (H + GAP))}
             data-z-index={isDragged ? 1 : 0}
             dragology={() => {
-              const reinsertions = getAllReinsertions(state.items, i).map(
-                (items) => ({ items }),
-              );
+              const newStates = state.items.map((_item, j) => ({
+                items: moveItem(state.items, i, j),
+              }));
               let spec = useFloating
-                ? d.closest(reinsertions).withFloating()
-                : d.between(reinsertions);
+                ? d.closest(newStates).withFloating()
+                : d.between(newStates);
               if (useSnapRadius) {
                 spec = spec.withSnapRadius(10);
               }
@@ -125,3 +110,15 @@ export default demo(
     ],
   },
 );
+
+/**
+ * Produce a new array from `arr` by removing the item at `fromIdx`
+ * and inserting it at `toIdx`.
+ */
+// @ts-ignore unused
+function moveItem<T>(arr: T[], fromIdx: number, toIdx: number): T[] {
+  const newArr = [...arr];
+  const item = newArr.splice(fromIdx, 1)[0];
+  newArr.splice(toIdx, 0, item);
+  return newArr;
+}

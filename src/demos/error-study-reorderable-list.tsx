@@ -13,27 +13,16 @@ const W = 160;
 const H = 40;
 const GAP = 8;
 
-function getAllReinsertions<T>(arr: T[], fromIdx: number): T[][] {
-  const result: T[][] = [];
-  for (let toIdx = 0; toIdx < arr.length; toIdx++) {
-    const newArr = [...arr];
-    const item = newArr.splice(fromIdx, 1)[0];
-    newArr.splice(toIdx, 0, item);
-    result.push(newArr);
-  }
-  return result;
-}
-
 const draggable: Draggable<State> = ({ state, d }) => (
   <g transform={translate(20, 20)}>
     {state.items.map((item, i) => (
       <g
         transform={translate(0, i * (H + GAP))}
         dragology={() => {
-          const reinsertions = getAllReinsertions(state.items, i).map(
-            (items) => ({ items }),
-          );
-          return d.between(reinsertions);
+          const newStates = state.items.map((_item, j) => ({
+            items: moveItem(state.items, i, j),
+          }));
+          return d.between(newStates);
         }}
       >
         <rect
@@ -79,3 +68,15 @@ export default demo(
     cardClassName: "ring-2 ring-red-300",
   },
 );
+
+/**
+ * Produce a new array from `arr` by removing the item at `fromIdx`
+ * and inserting it at `toIdx`.
+ */
+// @ts-ignore unused
+function moveItem<T>(arr: T[], fromIdx: number, toIdx: number): T[] {
+  const newArr = [...arr];
+  const item = newArr.splice(fromIdx, 1)[0];
+  newArr.splice(toIdx, 0, item);
+  return newArr;
+}
