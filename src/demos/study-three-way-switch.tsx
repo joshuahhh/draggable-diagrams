@@ -38,9 +38,16 @@ const draggable: Draggable<State> = ({ state, d }) => (
       fill={COLOR[state.name]}
       stroke="white"
       strokeWidth={3}
-      style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))" }}
+      filter="url(#shadow)"
       dragology={() => d.between({ name: "r" }, { name: "g" }, { name: "b" })}
     />
+
+    {/* Drop-shadow filter */}
+    <defs>
+      <filter id="shadow" x="-100%" y="-100%" width="300%" height="300%">
+        <feDropShadow dx="0" dy="2" stdDeviation="4" floodOpacity="0.2" />
+      </filter>
+    </defs>
   </g>
 );
 

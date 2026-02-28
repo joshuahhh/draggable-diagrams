@@ -39,6 +39,13 @@ const timelineDraggable: Draggable<State> = ({ state, embed }) => (
 
     {/* Blocks */}
     {state.blocks.map((_block, i) => embed(blockDraggable, ["blocks", i]))}
+
+    {/* Drop-shadow filter */}
+    <defs>
+      <filter id="shadow" x="-100%" y="-100%" width="300%" height="300%">
+        <feDropShadow dx="0" dy="1" stdDeviation="2" floodOpacity="0.15" />
+      </filter>
+    </defs>
   </g>
 );
 
@@ -69,7 +76,7 @@ const blockDraggable: Draggable<Block> = ({ state, d, draggedId }) => {
         height={TRACK_H}
         rx={6}
         fill={state.color}
-        style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.15))" }}
+        filter="url(#shadow)"
       />
       <text
         x={BLOCK_W / 2}

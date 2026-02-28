@@ -20,7 +20,7 @@ const draggable: Draggable<State> = ({ state, d }) => (
         fill="#f9fafb"
         stroke="#d1d5db"
         strokeWidth={2}
-        style={{ filter: "drop-shadow(0 0 4px rgba(0,0,0,0.15))" }}
+        filter="url(#shadow)"
         dragology={() => d.vary(state, [["angle"]])}
       />
       <line
@@ -59,6 +59,13 @@ const draggable: Draggable<State> = ({ state, d }) => (
     >
       {Math.round(state.angle)}°
     </text>
+
+    {/* Drop-shadow filter */}
+    <defs>
+      <filter id="shadow" x="-100%" y="-100%" width="300%" height="300%">
+        <feDropShadow dx="0" dy="0" stdDeviation="4" floodOpacity="0.15" />
+      </filter>
+    </defs>
   </g>
 );
 

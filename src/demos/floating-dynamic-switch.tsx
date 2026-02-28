@@ -22,13 +22,20 @@ const draggable: Draggable<State> = ({ state, d }) => (
       fill="white"
       stroke="#e5e7eb"
       strokeWidth={1}
-      style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.15))" }}
+      filter="url(#shadow)"
       dragology={() =>
         d.between({ status: "off" }, { status: "on" }).withFloating({
           tether: (dist) => Math.sqrt(dist) / 4,
         })
       }
     />
+
+    {/* Drop-shadow filter */}
+    <defs>
+      <filter id="shadow" x="-100%" y="-100%" width="300%" height="300%">
+        <feDropShadow dx="0" dy="1" stdDeviation="2" floodOpacity="0.15" />
+      </filter>
+    </defs>
   </g>
 );
 

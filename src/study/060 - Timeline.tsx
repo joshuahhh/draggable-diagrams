@@ -44,7 +44,7 @@ const draggable: Draggable<State> = ({ state }) => (
           height={TRACK_H}
           rx={6}
           fill={block.color}
-          style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.15))" }}
+          filter="url(#shadow)"
         />
         <text
           x={BLOCK_W / 2}
@@ -59,6 +59,13 @@ const draggable: Draggable<State> = ({ state }) => (
         </text>
       </g>
     ))}
+
+    {/* Drop-shadow filter */}
+    <defs>
+      <filter id="shadow" x="-100%" y="-100%" width="300%" height="300%">
+        <feDropShadow dx="0" dy="1" stdDeviation="2" floodOpacity="0.15" />
+      </filter>
+    </defs>
   </g>
 );
 
