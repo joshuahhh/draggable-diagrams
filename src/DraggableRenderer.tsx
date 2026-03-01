@@ -151,9 +151,10 @@ export function DraggableRenderer<T extends object>({
       springingFrom: null,
     },
   );
+  useEffect(() => {
+    onDragStateChange?.(dragState);
+  }, [dragState, onDragStateChange]);
   const pointerRef = useRef<Vec2 | undefined>(undefined);
-  const onDragStateChangeRef = useRef(onDragStateChange);
-  onDragStateChangeRef.current = onDragStateChange;
 
   const [svgElem, setSvgElem] = useState<SVGSVGElement | null>(null);
 
@@ -178,7 +179,6 @@ export function DraggableRenderer<T extends object>({
       );
       if (result) {
         setDragState(result);
-        onDragStateChangeRef.current?.(result);
       }
     }),
   );
@@ -206,7 +206,6 @@ export function DraggableRenderer<T extends object>({
         if (d.len2() > pending.threshold * pending.threshold) {
           setPointerFromEvent(e);
           setDragState(pending.dragState);
-          onDragStateChangeRef.current?.(pending.dragState);
         }
       } else {
         // Dragging: track pointer
@@ -242,7 +241,6 @@ export function DraggableRenderer<T extends object>({
         ),
       };
       setDragState(newState);
-      onDragStateChangeRef.current?.(newState);
     });
 
     const onKeyChange = catchToRenderError((e: KeyboardEvent) => {
@@ -280,7 +278,6 @@ export function DraggableRenderer<T extends object>({
         { ...ds.dragParamsInfo, dragParams: newParams },
       );
       setDragState(newDragState);
-      onDragStateChangeRef.current?.(newDragState);
     });
 
     document.addEventListener("pointermove", onPointerMove);
@@ -307,7 +304,6 @@ export function DraggableRenderer<T extends object>({
       catchToRenderError,
       setPointerFromEvent,
       setDragState,
-      onDragStateChangeRef,
       dragThreshold,
     }),
     [
@@ -570,9 +566,6 @@ type RenderContext<T extends object> = {
   catchToRenderError: CatchToRenderError;
   setPointerFromEvent: (e: globalThis.PointerEvent) => Vec2;
   setDragState: (ds: DragState<T>) => void;
-  onDragStateChangeRef: React.RefObject<
-    ((dragState: DragState<T>) => void) | undefined
-  >;
   dragThreshold: number;
 };
 
@@ -642,7 +635,6 @@ function postProcessForInteraction<T extends object>(
               (!el.props.onClick && !el.props.onDoubleClick)
             ) {
               ctx.setDragState(draggingState);
-              ctx.onDragStateChangeRef.current?.(draggingState);
             } else {
               // Stay idle with pending — DOM is preserved, clicks still work.
               ctx.setDragState({
@@ -699,7 +691,6 @@ const DrawIdleMode = memoGeneric(
               ),
             };
             ctx.setDragState(newDragState);
-            ctx.onDragStateChangeRef.current?.(newDragState);
           },
         ),
         isTracking: false,
