@@ -15,7 +15,7 @@ import {
   useDropZoneData,
 } from "../DragSpecDropZones";
 import { DragSpecTreeView } from "../DragSpecTreeView";
-import { DraggableRenderer, type DragState } from "../DraggableRenderer";
+import { DraggableRenderer, type DragStatus } from "../DraggableRenderer";
 import { ErrorBoundary } from "../ErrorBoundary";
 import { OpenInEditor } from "../OpenInEditor";
 import { Draggable } from "../draggable";
@@ -327,12 +327,12 @@ export function DemoDraggable<T extends object>({
     showTimingMeter,
     thumbHeight,
   } = useDemoSettings();
-  const [dragState, setDragState] = useState<DragState<T> | null>(null);
+  const [status, setStatus] = useState<DragStatus<T> | null>(null);
 
-  const draggingState = dragState?.type === "dragging" ? dragState : null;
+  const draggingStatus = status?.type === "dragging" ? status : null;
 
   const { data: overlayData, computing: overlayComputing } = useDropZoneData(
-    showDropZones ? draggingState : null,
+    showDropZones ? draggingStatus : null,
     width,
     height,
   );
@@ -347,7 +347,7 @@ export function DemoDraggable<T extends object>({
               initialState={initialState}
               width={width}
               height={height}
-              onDragStateChange={setDragState}
+              onDragStatusChange={setStatus}
               showDebugOverlay={showDebugOverlay}
             />
             {showDropZones && overlayData && (
@@ -386,14 +386,14 @@ export function DemoDraggable<T extends object>({
               {showTimingMeter && <TimingMeter />}
               {showTreeView && (
                 <>
-                  {draggingState ? (
+                  {draggingStatus ? (
                     <div className="flex flex-col gap-2">
                       <div className="text-xs text-slate-500 font-mono whitespace-nowrap">
-                        activePath: {draggingState.result.activePath}
+                        activePath: {draggingStatus.result.activePath}
                       </div>
                       <DragSpecTreeView
-                        spec={draggingState.result.tracedSpec}
-                        activePath={draggingState.result.activePath}
+                        spec={draggingStatus.result.tracedSpec}
+                        activePath={draggingStatus.result.activePath}
                         colorMap={overlayData?.colorMap ?? null}
                         svgWidth={width}
                         svgHeight={height}
@@ -407,13 +407,13 @@ export function DemoDraggable<T extends object>({
                   )}
                 </>
               )}
-              {showStateViewer && dragState && (
+              {showStateViewer && status && (
                 <ErrorBoundary>
                   <PrettyPrint
                     value={
-                      dragState.type === "dragging"
-                        ? dragState.result.dropState
-                        : dragState.state
+                      status.type === "dragging"
+                        ? status.result.dropState
+                        : status.state
                     }
                     precision={2}
                     style={{ fontSize: "11px" }}
