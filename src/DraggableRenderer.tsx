@@ -117,11 +117,11 @@ export type DragState<T extends object> = {
 
 // # Component
 
-interface DraggableRendererProps<T extends object> {
+interface DraggableRendererBaseProps<T extends object> {
   draggable: Draggable<T>;
-  initialState: T;
   width?: number;
   height?: number;
+  onStateChange?: (state: T) => void;
   onDragStateChange?: (dragState: DragState<T>) => void;
   showDebugOverlay?: boolean;
   /**
@@ -133,28 +133,97 @@ interface DraggableRendererProps<T extends object> {
   dragThreshold?: number;
 }
 
+type DraggableRendererProps<T extends object> = DraggableRendererBaseProps<T> &
+  (
+    | { state: T; initialState?: undefined }
+    | { state?: undefined; initialState: T }
+  );
+
 export function DraggableRenderer<T extends object>({
-  draggable,
+  state,
   initialState,
+  ...rest
+}: DraggableRendererProps<T>) {
+  assert(
+    !(state !== undefined && initialState !== undefined),
+    "DraggableRenderer: provide either 'state' or 'initialState', not both",
+  );
+  if (state !== undefined) {
+    return <DraggableRendererControlled {...rest} state={state} />;
+  }
+  return (
+    <DraggableRendererUncontrolled {...rest} initialState={initialState!} />
+  );
+}
+
+function DraggableRendererUncontrolled<T extends object>({
+  initialState,
+  onStateChange,
+  ...rest
+}: DraggableRendererBaseProps<T> & { initialState: T }) {
+  const [state, setState] = useState(initialState);
+  const handleStateChange = useCallback(
+    (newState: T) => {
+      setState(newState);
+      onStateChange?.(newState);
+    },
+    [onStateChange],
+  );
+  return (
+    <DraggableRendererControlled
+      {...rest}
+      state={state}
+      onStateChange={handleStateChange}
+    />
+  );
+}
+
+function DraggableRendererControlled<T extends object>({
+  draggable,
+  state,
   width,
   height,
+  onStateChange,
   onDragStateChange,
   showDebugOverlay,
   dragThreshold = 2,
-}: DraggableRendererProps<T>) {
+}: DraggableRendererBaseProps<T> & { state: T }) {
   const catchToRenderError = useCatchToRenderError();
 
   const [dragState, setDragState, dragStateRef] = useStateWithRef<DragState<T>>(
     {
       type: "idle",
-      state: initialState,
+      state,
       springingFrom: null,
     },
   );
+
+  // Sync internal idle state from props.state changes (with spring animation).
+  const [prevPropState, setPrevPropState] = useState(state);
+  if (state !== prevPropState) {
+    setPrevPropState(state);
+    if (dragState.type === "idle" && dragState.state !== state) {
+      const currentRendered = renderDraggableInert(
+        draggable,
+        dragState.state,
+        null,
+        false,
+      );
+      const currentVisual = runSpring(dragState.springingFrom, currentRendered);
+      setDragState({
+        ...dragState,
+        state,
+        springingFrom: makeSpringingFrom(true, () => currentVisual),
+      });
+    }
+  }
+
   useEffect(() => {
     onDragStateChange?.(dragState);
   }, [dragState, onDragStateChange]);
   const pointerRef = useRef<Vec2 | undefined>(undefined);
+  const onStateChangeRef = useRef(onStateChange);
+  onStateChangeRef.current = onStateChange;
 
   const [svgElem, setSvgElem] = useState<SVGSVGElement | null>(null);
 
@@ -235,12 +304,13 @@ export function DraggableRenderer<T extends object>({
 
       const newState: DragState<T> = {
         type: "idle",
-        state: dropState,
+        state: ds.startState,
         springingFrom: makeSpringingFrom(result.dropTransition, () =>
           runSpring(ds.springingFrom, result.rendered),
         ),
       };
       setDragState(newState);
+      onStateChangeRef.current?.(dropState);
     });
 
     const onKeyChange = catchToRenderError((e: KeyboardEvent) => {
@@ -304,12 +374,14 @@ export function DraggableRenderer<T extends object>({
       catchToRenderError,
       setPointerFromEvent,
       setDragState,
+      onStateChange,
       dragThreshold,
     }),
     [
       catchToRenderError,
       draggable,
       dragThreshold,
+      onStateChange,
       setDragState,
       setPointerFromEvent,
     ],
@@ -566,6 +638,7 @@ type RenderContext<T extends object> = {
   catchToRenderError: CatchToRenderError;
   setPointerFromEvent: (e: globalThis.PointerEvent) => Vec2;
   setDragState: (ds: DragState<T>) => void;
+  onStateChange?: (state: T) => void;
   dragThreshold: number;
 };
 
@@ -691,6 +764,7 @@ const DrawIdleMode = memoGeneric(
               ),
             };
             ctx.setDragState(newDragState);
+            ctx.onStateChange?.(resolved);
           },
         ),
         isTracking: false,
