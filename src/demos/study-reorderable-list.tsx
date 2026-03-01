@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { demo } from "../demo";
-import { ConfigCheckbox, ConfigPanel, DemoDraggable } from "../demo/ui";
+import { ConfigCheckbox, ConfigPanel, DemoDraggable, DemoWithConfig } from "../demo/ui";
 import { Draggable } from "../draggable";
 import { translate } from "../svgx/helpers";
 
@@ -77,7 +77,7 @@ export default demo(
       [useFloating, useSnapRadius],
     );
     return (
-      <div className="flex flex-col md:flex-row gap-4 items-start">
+      <DemoWithConfig>
         <DemoDraggable
           draggable={draggable}
           initialState={initialState}
@@ -96,7 +96,7 @@ export default demo(
             onChange={setUseSnapRadius}
           />
         </ConfigPanel>
-      </div>
+      </DemoWithConfig>
     );
   },
   {

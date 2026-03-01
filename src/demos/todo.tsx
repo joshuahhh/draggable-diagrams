@@ -2,7 +2,7 @@ import { produce } from "immer";
 import _ from "lodash";
 import { useMemo, useState } from "react";
 import { demo } from "../demo";
-import { ConfigCheckbox, ConfigPanel, DemoDraggable } from "../demo/ui";
+import { ConfigCheckbox, ConfigPanel, DemoDraggable, DemoWithConfig } from "../demo/ui";
 import { Draggable, SetState } from "../draggable";
 import { Svgx } from "../svgx";
 import { translate } from "../svgx/helpers";
@@ -184,7 +184,7 @@ export default demo(
     const draggable = useMemo(() => draggableFactory(config), [config]);
 
     return (
-      <div className="flex flex-col md:flex-row gap-4 items-start">
+      <DemoWithConfig>
         <div>
           <DemoDraggable
             draggable={draggable}
@@ -201,7 +201,7 @@ export default demo(
             Use <span className="font-mono">floating</span>
           </ConfigCheckbox>
         </ConfigPanel>
-      </div>
+      </DemoWithConfig>
     );
   },
   {

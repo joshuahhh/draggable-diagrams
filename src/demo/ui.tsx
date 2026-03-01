@@ -601,6 +601,18 @@ function TagNodeView({
   );
 }
 
+export function DemoWithConfig({ children }: { children: React.ReactNode }) {
+  const { showTreeView, showStateViewer, showTimingMeter } = useDemoSettings();
+  const debugOpen = showTreeView || showStateViewer || showTimingMeter;
+  return (
+    <div
+      className={`flex flex-col ${debugOpen ? "" : "md:flex-row"} gap-4 items-start`}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function ConfigPanel({
   title = "Options",
   children,
@@ -609,7 +621,7 @@ export function ConfigPanel({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-gray-50 rounded p-3 shrink-0 md:ml-auto md:sticky md:top-4">
+    <div className="bg-gray-50 rounded p-3 shrink-0 md:sticky md:top-4">
       <div className="text-xs font-medium text-gray-700 mb-2">{title}</div>
       <div className="flex flex-col gap-2">{children}</div>
     </div>

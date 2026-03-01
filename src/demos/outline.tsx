@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { demo } from "../demo";
-import { ConfigCheckbox, ConfigPanel, DemoDraggable } from "../demo/ui";
+import { ConfigCheckbox, ConfigPanel, DemoDraggable, DemoWithConfig } from "../demo/ui";
 import { Draggable } from "../draggable";
 import { type DragSpecBuilder } from "../DragSpec";
 import { Svgx } from "../svgx";
@@ -369,7 +369,7 @@ export default demo(
     const draggable = useMemo(() => draggableFactory(config), [config]);
 
     return (
-      <div className="flex flex-col md:flex-row gap-4 items-start">
+      <DemoWithConfig>
         <div>
           <h3 className="text-md font-medium italic mt-6 mb-1">simple</h3>
           <DemoDraggable
@@ -401,7 +401,7 @@ export default demo(
             Use <span className="font-mono">floating</span>
           </ConfigCheckbox>
         </ConfigPanel>
-      </div>
+      </DemoWithConfig>
     );
   },
   {

@@ -5,7 +5,7 @@ import { produce } from "immer";
 import _ from "lodash";
 import { useMemo, useState } from "react";
 import { demo } from "../../demo";
-import { ConfigCheckbox, ConfigPanel, DemoDraggable } from "../../demo/ui";
+import { ConfigCheckbox, ConfigPanel, DemoDraggable, DemoWithConfig } from "../../demo/ui";
 import { Draggable, DragologyPropValue } from "../../draggable";
 import { DragSpecBuilder } from "../../DragSpec";
 import { Svgx } from "../../svgx";
@@ -853,7 +853,7 @@ export default demo(
     const [config, setConfig] = useState<Config>(defaultConfig);
     const draggable = useMemo(() => makeDraggable(config), [config]);
     return (
-      <div className="flex flex-col md:flex-row gap-4 items-start">
+      <DemoWithConfig>
         <DemoDraggable
           draggable={draggable}
           initialState={state1}
@@ -864,7 +864,7 @@ export default demo(
           <MacroLeftPanel config={config} setConfig={setConfig} />
           <MacroConfigPanel config={config} setConfig={setConfig} />
         </ConfigPanel>
-      </div>
+      </DemoWithConfig>
     );
   },
   {

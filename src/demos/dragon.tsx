@@ -6,6 +6,7 @@ import {
   DemoDraggable,
   DemoLink,
   DemoNotes,
+  DemoWithConfig,
 } from "../demo/ui";
 import { Draggable } from "../draggable";
 import { Vec2 } from "../math/vec2";
@@ -108,7 +109,7 @@ export default demo(
           . Nice performance stress test (which we are failing; try larger
           "Levels").
         </DemoNotes>
-        <div className="flex flex-col md:flex-row gap-4 items-start">
+        <DemoWithConfig>
           <DemoDraggable
             draggable={draggable}
             initialState={initialState}
@@ -124,7 +125,7 @@ export default demo(
               max={13}
             />
           </ConfigPanel>
-        </div>
+        </DemoWithConfig>
       </div>
     );
   },

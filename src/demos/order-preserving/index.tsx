@@ -9,6 +9,7 @@ import {
   DemoDraggable,
   DemoLink,
   DemoNotes,
+  DemoWithConfig,
 } from "../../demo/ui";
 import { Draggable } from "../../draggable";
 import { type DragSpecBuilder } from "../../DragSpec";
@@ -643,7 +644,7 @@ export default demo(
           Featuring multi-drag from{" "}
           <DemoLink href="https://elliot.website/">Elliot Evans</DemoLink>.
         </DemoNotes>
-        <div className="flex flex-col md:flex-row gap-4 items-start">
+        <DemoWithConfig>
           <div>
             <h3 className="text-md font-medium italic mt-6 mb-1">3→3</h3>
             <DemoDraggable
@@ -674,7 +675,7 @@ export default demo(
               Show traditional representation
             </ConfigCheckbox>
           </ConfigPanel>
-        </div>
+        </DemoWithConfig>
       </div>
     );
   },

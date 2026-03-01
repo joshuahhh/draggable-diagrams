@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { demo } from "../demo";
-import { ConfigCheckbox, ConfigPanel, DemoDraggable } from "../demo/ui";
+import { ConfigCheckbox, ConfigPanel, DemoDraggable, DemoWithConfig } from "../demo/ui";
 import { Draggable } from "../draggable";
 import { translate } from "../svgx/helpers";
 
@@ -247,7 +247,7 @@ export default demo(
     const draggable = useMemo(() => draggableFactory(config), [config]);
 
     return (
-      <div className="flex flex-col md:flex-row gap-4 items-start">
+      <DemoWithConfig>
         <DemoDraggable
           draggable={draggable}
           initialState={initialState}
@@ -262,7 +262,7 @@ export default demo(
             Compact layout
           </ConfigCheckbox>
         </ConfigPanel>
-      </div>
+      </DemoWithConfig>
     );
   },
   { tags: ["spec.withSnapRadius [w/chain]", "d.between"] },

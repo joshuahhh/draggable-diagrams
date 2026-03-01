@@ -9,6 +9,7 @@ import {
   DemoDraggable,
   DemoLink,
   DemoNotes,
+  DemoWithConfig,
 } from "../demo/ui";
 import { Draggable } from "../draggable";
 import { Vec2 } from "../math/vec2";
@@ -224,7 +225,7 @@ export default demo(
     );
 
     return (
-      <div className="flex flex-col md:flex-row gap-4 items-start">
+      <DemoWithConfig>
         <div>
           <DemoNotes>
             Inspired by a{" "}
@@ -262,7 +263,7 @@ export default demo(
             max={4}
           />
         </ConfigPanel>
-      </div>
+      </DemoWithConfig>
     );
   },
   {

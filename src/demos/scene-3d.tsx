@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { demo } from "../demo";
-import { ConfigPanel, ConfigSlider, DemoDraggable } from "../demo/ui";
+import { ConfigPanel, ConfigSlider, DemoDraggable, DemoWithConfig } from "../demo/ui";
 import { Draggable } from "../draggable";
 import { lessThan } from "../DragSpec";
 import { translate } from "../svgx/helpers";
@@ -243,7 +243,7 @@ export default demo(
     );
 
     return (
-      <div className="flex flex-col md:flex-row gap-4 items-start">
+      <DemoWithConfig>
         <DemoDraggable
           draggable={draggable}
           initialState={initialState}
@@ -283,7 +283,7 @@ export default demo(
             max={30}
           />
         </ConfigPanel>
-      </div>
+      </DemoWithConfig>
     );
   },
   { tags: ["d.vary", "3d", "camera"] },
