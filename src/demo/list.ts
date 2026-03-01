@@ -69,4 +69,5 @@ export const demoList = [
   "study-timeline-substate",
   "study-timeline-embed",
   "error-study-reorderable-list",
+  "chess"
 ];
