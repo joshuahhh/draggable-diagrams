@@ -123,8 +123,15 @@ export function pipe(arg: unknown, ...fns: Array<(arg: unknown) => unknown>) {
   return fns.reduce((acc, fn) => fn(acc), arg);
 }
 
+/**
+ * Many<T> is convenient sugar for T[] which automatically flattens
+ * nested arrays and turns undefined/null/false into [].
+ */
 export type Many<T> = T | Many<T>[] | undefined | null | false;
 
+/**
+ * Turn a Many<T> into a T[].
+ */
 export function manyToArray<T>(a: Many<T>): T[] {
   const result: T[] = [];
   function helper(a: Many<T>) {
@@ -140,8 +147,19 @@ export function manyToArray<T>(a: Many<T>): T[] {
   return result;
 }
 
+/**
+ * ManyReader<T, S> is convenient sugar for (s: S) => T[]. Like
+ * Many<T>, it automatically flattens nested arrays and turns
+ * undefined/null/false into []. It also evaluates any functions that
+ * take an S input.
+ *
+ * (Note that this means T cannot overlap with function types!)
+ */
 export type ManyReader<T, S> = Many<T | ((s: S) => ManyReader<T, S>)>;
 
+/**
+ * Turn a ManyReader<T, S> into a T[], given the S value to read.
+ */
 export function manyReaderToArray<T, S>(a: ManyReader<T, S>, s: S): T[] {
   const result: T[] = [];
   function helper(a: ManyReader<T, S>) {
