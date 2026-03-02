@@ -125,7 +125,7 @@ export function pipe(arg: unknown, ...fns: Array<(arg: unknown) => unknown>) {
 
 export type Many<T> = T | Many<T>[] | undefined | null | false;
 
-export function manyToArray<T>(arr: Many<T>): T[] {
+export function manyToArray<T>(a: Many<T>): T[] {
   const result: T[] = [];
   function helper(a: Many<T>) {
     if (a === undefined || a === null || a === false) {
@@ -136,7 +136,26 @@ export function manyToArray<T>(arr: Many<T>): T[] {
       result.push(a);
     }
   }
-  helper(arr);
+  helper(a);
+  return result;
+}
+
+export type ManyReader<T, S> = Many<T | ((s: S) => ManyReader<T, S>)>;
+
+export function manyReaderToArray<T, S>(a: ManyReader<T, S>, s: S): T[] {
+  const result: T[] = [];
+  function helper(a: ManyReader<T, S>) {
+    for (const leaf of manyToArray(a)) {
+      // Casts below correspond to the assumption that T doesn't
+      // overlap with function types
+      if (typeof leaf === "function") {
+        helper((leaf as (s: S) => ManyReader<T, S>)(s));
+      } else {
+        result.push(leaf as T);
+      }
+    }
+  }
+  helper(a);
   return result;
 }
 

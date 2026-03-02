@@ -5,7 +5,7 @@ import {
   TransitionLike,
   resolveTransitionLike,
 } from "./transition";
-import { Many, assert, manyToArray } from "./utils";
+import { Many, ManyReader, assert, manyToArray } from "./utils";
 
 // # DragSpecData
 
@@ -87,8 +87,7 @@ export type DragSpecVary<T> = {
   type: "vary";
   state: T;
   paramPaths: PathIn<T, number>[];
-  constraint?(state: T): Many<number>;
-  pin?(state: T): Many<number>;
+  options: VaryOptions<T>;
 };
 
 export type DragSpecChangeDistance<T> = {
@@ -385,7 +384,12 @@ export class DragSpecBuilder<T> {
     paramPaths: PathIn<T, number>[],
     options?: VaryOptions<T>,
   ): DragSpec<T> {
-    return attachMethods({ type: "vary", state, paramPaths, ...options });
+    return attachMethods({
+      type: "vary",
+      state,
+      paramPaths,
+      options: options ?? {},
+    });
   }
 
   /**
@@ -444,13 +448,13 @@ export type VaryOptions<T> = {
    * will be constrained to be negative. You can use `lessThan(a, b)`
    * to express a < b constraints.
    */
-  constraint?: (state: T) => Many<number>;
+  constraint?: ManyReader<number, T>;
   /**
    * A pin function returns one or more numbers that will be
    * constrained to remain constant throughout the drag. (This is a
    * convenience built on top of `constraint`.)
    */
-  pin?: (state: T) => Many<number>;
+  pin?: ManyReader<number, T>;
 };
 
 export { and, equal, lessThan, moreThan } from "./math/optimization";

@@ -1,7 +1,8 @@
 import { demo } from "../demo";
-import { DemoDraggable } from "../demo/ui";
+import { DemoDraggable, DemoNotes } from "../demo/ui";
 import { Draggable } from "../draggable";
-import { moreThan } from "../DragSpec";
+import { lessThan, moreThan } from "../DragSpec";
+import { PathIn } from "../paths";
 import { translate } from "../svgx/helpers";
 
 type State = {
@@ -13,12 +14,25 @@ type State = {
 
 const initialState: State = { x: 80, y: 60, w: 200, h: 140 };
 
-const MIN_W = 40;
-const MIN_H = 30;
+const WIDTH = 400;
+const HEIGHT = 300;
 const HANDLE_HIT = 14;
 const CORNER_SIZE = 18;
 
-const bigEnough = (s: State) => [moreThan(s.w, MIN_W), moreThan(s.h, MIN_H)];
+const PARAMS: PathIn<State, number>[] = [["x"], ["y"], ["w"], ["h"]];
+const L = (s: State) => s.x;
+const R = (s: State) => s.x + s.w;
+const T = (s: State) => s.y;
+const B = (s: State) => s.y + s.h;
+
+const constraint = (s: State) => [
+  moreThan(s.w, 40),
+  moreThan(s.h, 30),
+  moreThan(L(s), 0),
+  moreThan(T(s), 0),
+  lessThan(R(s), WIDTH),
+  lessThan(B(s), HEIGHT),
+];
 
 const draggable: Draggable<State> = ({ state, d }) => {
   const { x, y, w, h } = state;
@@ -48,12 +62,12 @@ const draggable: Draggable<State> = ({ state, d }) => {
         strokeWidth={2}
         rx={6}
         style={{ cursor: "grab" }}
-        dragology={() => d.vary(state, [["x"], ["y"]])}
+        dragology={() => d.vary(state, [["x"], ["y"]], { constraint })}
       />
 
       {/* ---- Edges ---- */}
 
-      {/* Top edge — resize by moving top */}
+      {/* Top edge */}
       <g className="rect-demo-zone">
         <rect
           id="handle-top"
@@ -63,10 +77,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
           fill="transparent"
           style={{ cursor: "ns-resize" }}
           dragology={() =>
-            d.vary(state, [["y"], ["h"]], {
-              pin: (s) => s.y + s.h,
-              constraint: bigEnough,
-            })
+            d.vary(state, PARAMS, { pin: [B, L, R], constraint })
           }
         />
         <line
@@ -81,7 +92,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
         />
       </g>
 
-      {/* Bottom edge — resize height */}
+      {/* Bottom edge */}
       <g className="rect-demo-zone">
         <rect
           id="handle-bottom"
@@ -91,9 +102,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
           fill="transparent"
           style={{ cursor: "ns-resize" }}
           dragology={() =>
-            d.vary(state, [["h"]], {
-              constraint: bigEnough,
-            })
+            d.vary(state, PARAMS, { pin: [T, L, R], constraint })
           }
         />
         <line
@@ -108,7 +117,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
         />
       </g>
 
-      {/* Left edge — resize by moving left */}
+      {/* Left edge */}
       <g className="rect-demo-zone">
         <rect
           id="handle-left"
@@ -118,10 +127,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
           fill="transparent"
           style={{ cursor: "ew-resize" }}
           dragology={() =>
-            d.vary(state, [["x"], ["w"]], {
-              pin: (s) => s.x + s.w,
-              constraint: bigEnough,
-            })
+            d.vary(state, PARAMS, { pin: [T, R, B], constraint })
           }
         />
         <line
@@ -136,7 +142,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
         />
       </g>
 
-      {/* Right edge — resize width */}
+      {/* Right edge */}
       <g className="rect-demo-zone">
         <rect
           id="handle-right"
@@ -146,9 +152,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
           fill="transparent"
           style={{ cursor: "ew-resize" }}
           dragology={() =>
-            d.vary(state, [["w"]], {
-              constraint: bigEnough,
-            })
+            d.vary(state, PARAMS, { pin: [T, L, B], constraint })
           }
         />
         <line
@@ -174,12 +178,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
           height={CORNER_SIZE}
           fill="transparent"
           style={{ cursor: "nwse-resize" }}
-          dragology={() =>
-            d.vary(state, [["x"], ["y"], ["w"], ["h"]], {
-              pin: (s) => [s.x + s.w, s.y + s.h],
-              constraint: bigEnough,
-            })
-          }
+          dragology={() => d.vary(state, PARAMS, { pin: [R, B], constraint })}
         />
         <circle
           className="rect-demo-vis"
@@ -198,12 +197,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
           height={CORNER_SIZE}
           fill="transparent"
           style={{ cursor: "nesw-resize" }}
-          dragology={() =>
-            d.vary(state, [["y"], ["w"], ["h"]], {
-              pin: (s) => s.y + s.h,
-              constraint: bigEnough,
-            })
-          }
+          dragology={() => d.vary(state, PARAMS, { pin: [L, B], constraint })}
         />
         <circle
           className="rect-demo-vis"
@@ -222,12 +216,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
           height={CORNER_SIZE}
           fill="transparent"
           style={{ cursor: "nesw-resize" }}
-          dragology={() =>
-            d.vary(state, [["x"], ["w"], ["h"]], {
-              pin: (s) => s.x + s.w,
-              constraint: bigEnough,
-            })
-          }
+          dragology={() => d.vary(state, PARAMS, { pin: [T, R], constraint })}
         />
         <circle
           className="rect-demo-vis"
@@ -237,7 +226,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
         />
       </g>
 
-      {/* Bottom-right corner — resize width & height */}
+      {/* Bottom-right corner */}
       <g className="rect-demo-zone">
         <rect
           id="handle-br"
@@ -249,11 +238,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
           height={CORNER_SIZE}
           fill="transparent"
           style={{ cursor: "nwse-resize" }}
-          dragology={() =>
-            d.vary(state, [["w"], ["h"]], {
-              constraint: bigEnough,
-            })
-          }
+          dragology={() => d.vary(state, PARAMS, { pin: [T, L], constraint })}
         />
         <circle
           className="rect-demo-vis"
@@ -268,12 +253,20 @@ const draggable: Draggable<State> = ({ state, d }) => {
 
 export default demo(
   () => (
-    <DemoDraggable
-      draggable={draggable}
-      initialState={initialState}
-      width={400}
-      height={300}
-    />
+    <>
+      <DemoNotes>
+        Your basic move-and-resize rectangle. Implementation is a little funky
+        though: Every resize handle controls all four parameters (x, y, w, h),
+        but with appropriate <code>pin</code> constraints to control its
+        effects.
+      </DemoNotes>
+      <DemoDraggable
+        draggable={draggable}
+        initialState={initialState}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+    </>
   ),
   { tags: ["d.vary [w/constraint] [w/pin]"] },
 );

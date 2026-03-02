@@ -28,7 +28,13 @@ import { lerpLayered, lerpLayered3 } from "./svgx/lerp";
 import { findByPath } from "./svgx/path";
 import { globalToLocal, localToGlobal, parseTransform } from "./svgx/transform";
 import { Transition } from "./transition";
-import { assert, assertNever, Many, manyToArray, pipe } from "./utils";
+import {
+  assert,
+  assertNever,
+  ManyReader,
+  manyReaderToArray,
+  pipe,
+} from "./utils";
 
 /**
  * A "drag behavior" defines the ongoing behavior of a drag – what is
@@ -345,22 +351,27 @@ function varyBehavior<T extends object>(
     return localToGlobal(found.accumulatedTransform, ctx.pointerLocal);
   };
 
+  const { constraint, pin } = spec.options;
+
   // Bake pins into the constraint function: evaluate pin at the
   // initial state to capture targets, then add equal() constraints.
-  const pinTargets = spec.pin ? manyToArray(spec.pin(spec.state)) : undefined;
-  const constraint = spec.pin
-    ? (s: T): Many<number> => {
-        const pinCurrent = manyToArray(spec.pin!(s));
-        return [
-          spec.constraint?.(s),
-          pinCurrent.map((v, i) => [v - pinTargets![i], pinTargets![i] - v]),
-        ];
-      }
-    : spec.constraint;
+  const pinTargets = pin ? manyReaderToArray(pin, spec.state) : undefined;
+  const constraintWithPin: ManyReader<number, T> = pin
+    ? [
+        constraint,
+        (s) => {
+          const pinCurrent = manyReaderToArray(pin, s);
+          return pinCurrent.map((v, i) => [
+            v - pinTargets![i],
+            pinTargets![i] - v,
+          ]);
+        },
+      ]
+    : constraint;
 
   // Pre-compute constraint count (flatten a dummy call to count entries)
-  const numConstraints = constraint
-    ? manyToArray(constraint(spec.state)).length
+  const numConstraints = constraintWithPin
+    ? manyReaderToArray(constraintWithPin, spec.state).length
     : 0;
 
   const initialParams = spec.paramPaths.map((path) =>
@@ -368,8 +379,9 @@ function varyBehavior<T extends object>(
   );
   const minimizer = new DistanceMinimizer(initialParams, numConstraints);
 
-  const constraintsFn = constraint
-    ? (params: number[]) => manyToArray(constraint(stateFromParams(params)))
+  const constraintsFn = constraintWithPin
+    ? (params: number[]) =>
+        manyReaderToArray(constraintWithPin, stateFromParams(params))
     : undefined;
 
   return (frame) => {
