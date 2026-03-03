@@ -6,9 +6,8 @@ export type Vec2 = Vec2Class;
 
 export type Vec2able =
   | Vec2
-  | [number, number, ...any]
-  | readonly [number, number, ...any]
   | { x: number; y: number }
+  | ArrayWithTwoNumbers
   | number;
 
 export function Vec2(xy: Vec2able): Vec2;
@@ -31,9 +30,20 @@ export function Vec2(xOrXY: number | Vec2able, y?: number): Vec2 {
   }
 }
 
-function isArrayWithTwoNumbers(
-  value: unknown,
-): value is [number, number, ...any] | readonly [number, number, ...any] {
+export namespace Vec2 {
+  export function polarRad(r: number, angleRad: number): Vec2 {
+    return Vec2(r, 0).rotateRad(angleRad);
+  }
+  export function polarDeg(r: number, angleDeg: number): Vec2 {
+    return Vec2(r, 0).rotateDeg(angleDeg);
+  }
+}
+
+type ArrayWithTwoNumbers =
+  | [number, number, ...any]
+  | readonly [number, number, ...any];
+
+function isArrayWithTwoNumbers(value: unknown): value is ArrayWithTwoNumbers {
   return (
     Array.isArray(value) &&
     value.length === 2 &&
