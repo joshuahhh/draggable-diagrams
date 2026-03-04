@@ -11,6 +11,7 @@
 - bug: nool-stage-builder: fill up holes, so there's no place to go – error!
 - feature: demo "reset" button
 - feature: scene-3d: drag to rotate
+- tesselation: figure out how to make d.closest([]).whenFar(...) work (empty closest)
 
 ## meh
 - memoize a lot of rendering of states? (but only if it's actually a problem; no premature stuff!)

@@ -65,6 +65,7 @@ export const demoList = [
   "spec-workshop",
   "floating-dynamic-switch",
   "card-piles",
+  "tessellation",
   "study-switch",
   "study-three-way-switch",
   "study-reorderable-list",
