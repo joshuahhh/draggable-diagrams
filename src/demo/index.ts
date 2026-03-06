@@ -3,6 +3,7 @@ import { ComponentType } from "react";
 export type DemoOptions = {
   tags?: string[];
   cardClassName?: string;
+  hideByDefault?: boolean;
 };
 
 export type DemoInfo = {

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Demo, listedDemos, unlistedDemos } from "./registry";
 import { tagMatches } from "./tags";
@@ -10,18 +11,28 @@ function hasTag(demo: Demo, filter: string) {
 export function DemoPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tagFilter = searchParams.get("tag");
+  const [showHidden, setShowHidden] = useState(false);
 
   const onTagClick = (label: string) =>
     setSearchParams(tagFilter === label ? {} : { tag: label }, {
       replace: false,
     });
 
+  const visibleListedDemos = showHidden
+    ? listedDemos
+    : listedDemos.filter((d) => !d.hideByDefault);
   const filteredDemos = tagFilter
-    ? listedDemos.filter((d) => hasTag(d, tagFilter))
-    : listedDemos;
+    ? visibleListedDemos.filter((d) => hasTag(d, tagFilter))
+    : visibleListedDemos;
+  const visibleUnlisted = showHidden
+    ? unlistedDemos
+    : unlistedDemos.filter((d) => !d.hideByDefault);
   const filteredUnlisted = tagFilter
-    ? unlistedDemos.filter((d) => hasTag(d, tagFilter))
-    : unlistedDemos;
+    ? visibleUnlisted.filter((d) => hasTag(d, tagFilter))
+    : visibleUnlisted;
+  const hiddenCount =
+    listedDemos.filter((d) => d.hideByDefault).length +
+    unlistedDemos.filter((d) => d.hideByDefault).length;
 
   return (
     <DemoSettingsProvider>
@@ -54,7 +65,13 @@ export function DemoPage() {
                 Unlisted
               </h2>
               {filteredUnlisted.map((demo) => (
-                <div key={demo.id} id={demo.id}>
+                <div
+                  key={demo.id}
+                  id={demo.id}
+                  className={
+                    demo.hideByDefault ? "ring-2 ring-red-300 rounded-lg" : ""
+                  }
+                >
                   <DemoCard demo={demo} linkTitle onTagClick={onTagClick} />
                 </div>
               ))}
@@ -69,11 +86,29 @@ export function DemoPage() {
             </h2>
           )}
           {filteredDemos.map((demo) => (
-            <div key={demo.id} id={demo.id}>
+            <div
+              key={demo.id}
+              id={demo.id}
+              className={
+                demo.hideByDefault ? "ring-2 ring-red-300 rounded-lg" : ""
+              }
+            >
               <DemoCard demo={demo} linkTitle onTagClick={onTagClick} />
             </div>
           ))}
         </div>
+        {hiddenCount > 0 && (
+          <div className="px-5 pb-5 max-w-3xl mx-auto w-full">
+            <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showHidden}
+                onChange={(e) => setShowHidden(e.target.checked)}
+              />
+              Show hidden demos ({hiddenCount})
+            </label>
+          </div>
+        )}
         <DemoSettingsBar />
       </div>
     </DemoSettingsProvider>

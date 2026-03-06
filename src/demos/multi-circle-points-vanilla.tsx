@@ -309,5 +309,5 @@ const MultiCirclePointsVanilla = () => {
 
 export default demo(MultiCirclePointsVanilla, {
   tags: ["vanilla"],
-  cardClassName: "ring-2 ring-red-300",
+  hideByDefault: true,
 });

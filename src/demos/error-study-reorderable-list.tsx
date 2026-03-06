@@ -65,7 +65,7 @@ export default demo(
   ),
   {
     tags: ["error"],
-    cardClassName: "ring-2 ring-red-300",
+    hideByDefault: true,
   },
 );
 

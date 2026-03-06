@@ -560,5 +560,5 @@ const CanvasOfListsNestedVanilla = () => {
 
 export default demo(CanvasOfListsNestedVanilla, {
   tags: ["vanilla"],
-  cardClassName: "ring-2 ring-red-300",
+  hideByDefault: true,
 });
