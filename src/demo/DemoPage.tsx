@@ -111,6 +111,7 @@ export function DemoPage() {
             </label>
           </div>
         )}
+        <div className="pb-14" />
         <DemoSettingsBar />
       </div>
     </DemoSettingsProvider>

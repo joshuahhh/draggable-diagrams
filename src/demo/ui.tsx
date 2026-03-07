@@ -258,7 +258,7 @@ export function DemoSettingsBar({
     : settingsEntries;
   return (
     <div
-      className={`${compact ? "fixed" : "sticky"} bottom-0 left-0 right-0 flex justify-center pointer-events-none`}
+      className={`fixed bottom-0 left-0 right-0 flex justify-center pointer-events-none`}
     >
       <div
         className={`pointer-events-auto bg-white border border-gray-200 flex items-center shadow-[0_-4px_12px_rgba(0,0,0,0.08)] ${

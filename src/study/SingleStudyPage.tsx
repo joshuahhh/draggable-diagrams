@@ -58,6 +58,7 @@ export function SingleStudyPage({ id }: { id: string }) {
           </div>
           <ApiReference studyNumber={study.number} />
         </div>
+        <div className="pb-14" />
         <DemoSettingsBar />
       </div>
     </DemoSettingsProvider>

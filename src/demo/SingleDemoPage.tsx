@@ -50,6 +50,7 @@ export function SingleDemoPage({ id }: { id: string }) {
             }
           />
         </div>
+        <div className="pb-14" />
         <DemoSettingsBar />
       </div>
     </DemoSettingsProvider>

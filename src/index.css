@@ -3,4 +3,5 @@
 :root {
   user-select: none;
   -webkit-user-select: none;
+  @apply bg-gray-50;
 }
