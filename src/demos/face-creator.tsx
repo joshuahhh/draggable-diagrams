@@ -1,5 +1,12 @@
+import { useMemo, useState } from "react";
 import { demo } from "../demo";
-import { DemoDraggable, DemoNotes } from "../demo/ui";
+import {
+  ConfigPanel,
+  ConfigSelect,
+  DemoDraggable,
+  DemoNotes,
+  DemoWithConfig,
+} from "../demo/ui";
 import { Draggable } from "../draggable";
 import { lessThan, moreThan } from "../DragSpec";
 import { PathIn } from "../paths";
@@ -11,9 +18,20 @@ const FACE_CY = 180;
 const FACE_R = 120;
 
 const EYE_R = 12;
-const EYE_MARGIN = 8;
-const FACE_MARGIN = 10;
+const FACE_STROKE = 3;
+const MOUTH_STROKE = 4;
+// Eyes must stay fully inside face edge (accounting for radii and strokes)
+const FACE_MARGIN = EYE_R + FACE_STROKE / 2 + 2;
+// Mouth curve must clear eyes (eye radius + half mouth stroke + gap)
+const EYE_MARGIN = EYE_R + MOUTH_STROKE / 2 + 4;
+// Minimum gap between eye line and mouth endpoints
+const EYE_MOUTH_GAP = EYE_R + MOUTH_STROKE / 2 + 4;
 const MIN_EYE_SPACING = EYE_R + 5;
+
+// The lowest the mouth can go (face bottom minus margin)
+const FACE_BOTTOM = FACE_CY + FACE_R - FACE_MARGIN;
+
+type CouplingMode = "none" | "free" | "coupled";
 
 type State = {
   eyeY: number;
@@ -105,20 +123,14 @@ function allConstraints(s: State): number[] {
   const ml = mouthLeft(s);
   const mr = mouthRight(s);
 
-  // Eyes inside face
   results.push(lessThan(dist(le, faceCenter), FACE_R - FACE_MARGIN));
   results.push(lessThan(dist(re, faceCenter), FACE_R - FACE_MARGIN));
-  // Eye minimum spacing
   results.push(moreThan(s.eyeDx, MIN_EYE_SPACING));
-  // Endpoints inside face
   results.push(lessThan(dist(ml, faceCenter), FACE_R - FACE_MARGIN));
   results.push(lessThan(dist(mr, faceCenter), FACE_R - FACE_MARGIN));
-  // Eyes above mouth
-  results.push(lessThan(s.eyeY, s.mouthEy));
-  // Mouth minimum width
+  results.push(lessThan(s.eyeY + EYE_MOUTH_GAP, s.mouthEy));
   results.push(moreThan(s.mouthDx, 10));
 
-  // Curve point constraints
   const N = 8;
   for (let i = 0; i <= N; i++) {
     const t = i / N;
@@ -128,7 +140,6 @@ function allConstraints(s: State): number[] {
     results.push(moreThan(dist(pt, re), EYE_R + EYE_MARGIN));
     results.push(moreThan(pt.y, s.eyeY));
   }
-  // X-monotonicity
   for (let i = 0; i < N; i++) {
     const pt1 = evalMouthBezier(s, i / N);
     const pt2 = evalMouthBezier(s, (i + 1) / N);
@@ -147,191 +158,232 @@ const ENDPOINT_R = 6;
 const PIN_R = 5;
 const PIN_X = FACE_CX + FACE_R + 18;
 
-const draggable: Draggable<State> = ({ state, d, draggedId }) => {
-  const ml = mouthLeft(state);
-  const mr = mouthRight(state);
-  const le = leftEye(state);
-  const re = rightEye(state);
-  const eyesPinned = state.pinned.eyes;
-  const mouthPinned = state.pinned.mouth;
+function makeDraggable(couplingMode: CouplingMode): Draggable<State> {
+  return ({ state, d, draggedId }) => {
+    const ml = mouthLeft(state);
+    const mr = mouthRight(state);
+    const le = leftEye(state);
+    const re = rightEye(state);
+    const eyesPinned = state.pinned.eyes;
+    const mouthPinned = state.pinned.mouth;
 
-  function eyeDragology() {
-    const paths: PathIn<State, number>[] = [["eyeY"], ["eyeDx"]];
-    if (!mouthPinned) paths.push(["mouthEy"]);
-    return d.vary(state, paths, { constraint: allConstraints });
-  }
+    function eyeDragology() {
+      const paths: PathIn<State, number>[] = [["eyeY"], ["eyeDx"]];
+      if (!mouthPinned) {
+        paths.push(["mouthEy"]);
+        // "free": COBYLA also varies CP offsets (may drift)
+        if (couplingMode === "free") {
+          paths.push(["cp1dx"], ["cp1dy"], ["cp2dx"], ["cp2dy"]);
+        }
+      }
+      const spec = d.vary(state, paths, { constraint: allConstraints });
+      // "coupled": deterministic scaling — CP offsets scale with available space
+      if (couplingMode === "coupled" && !mouthPinned) {
+        const origSpace = FACE_BOTTOM - state.mouthEy;
+        const origCp1dy = state.cp1dy;
+        const origCp2dy = state.cp2dy;
+        return spec.during((s) => {
+          const newSpace = FACE_BOTTOM - s.mouthEy;
+          const scale = origSpace > 0 ? newSpace / origSpace : 1;
+          return { ...s, cp1dy: origCp1dy * scale, cp2dy: origCp2dy * scale };
+        });
+      }
+      return spec;
+    }
 
-  function endpointDragology() {
-    const paths: PathIn<State, number>[] = [["mouthDx"], ["mouthEy"]];
-    if (!eyesPinned) paths.push(["eyeY"]);
-    return d.vary(state, paths, { constraint: allConstraints });
-  }
+    function endpointDragology() {
+      const paths: PathIn<State, number>[] = [["mouthDx"], ["mouthEy"]];
+      if (!eyesPinned) paths.push(["eyeY"]);
+      return d.vary(state, paths, { constraint: allConstraints });
+    }
 
-  function curveDragology(t: number) {
-    const paths: PathIn<State, number>[] =
-      t < 0.4
-        ? [["cp1dx"], ["cp1dy"]]
-        : t > 0.6
-          ? [["cp2dx"], ["cp2dy"]]
-          : [["cp1dx"], ["cp1dy"], ["cp2dx"], ["cp2dy"]];
-    if (!eyesPinned) paths.push(["eyeY"]);
-    return d.vary(state, paths, { constraint: allConstraints });
-  }
+    function curveDragology(t: number) {
+      const paths: PathIn<State, number>[] =
+        t < 0.4
+          ? [["cp1dx"], ["cp1dy"]]
+          : t > 0.6
+            ? [["cp2dx"], ["cp2dy"]]
+            : [["cp1dx"], ["cp1dy"], ["cp2dx"], ["cp2dy"]];
+      if (!eyesPinned) paths.push(["eyeY"]);
+      return d.vary(state, paths, { constraint: allConstraints });
+    }
 
-  return (
-    <g>
-      {/* Face outline */}
-      <circle
-        id="face"
-        cx={FACE_CX}
-        cy={FACE_CY}
-        r={FACE_R}
-        fill="#ffe0b2"
-        stroke="#e6a756"
-        strokeWidth={3}
-        data-z-index={0}
-      />
+    return (
+      <g>
+        {/* Face outline */}
+        <circle
+          id="face"
+          cx={FACE_CX}
+          cy={FACE_CY}
+          r={FACE_R}
+          fill="#ffe0b2"
+          stroke="#e6a756"
+          strokeWidth={3}
+          data-z-index={0}
+        />
 
-      {/* Eyes */}
-      <circle
-        id="left-eye"
-        transform={translate(le.x, le.y)}
-        r={EYE_R}
-        fill="#333"
-        data-z-index={1}
-        dragology={eyeDragology}
-      />
-      <circle
-        id="right-eye"
-        transform={translate(re.x, re.y)}
-        r={EYE_R}
-        fill="#333"
-        data-z-index={1}
-        dragology={eyeDragology}
-      />
+        {/* Eyes */}
+        <circle
+          id="left-eye"
+          transform={translate(le.x, le.y)}
+          r={EYE_R}
+          fill="#333"
+          data-z-index={1}
+          dragology={eyeDragology}
+        />
+        <circle
+          id="right-eye"
+          transform={translate(re.x, re.y)}
+          r={EYE_R}
+          fill="#333"
+          data-z-index={1}
+          dragology={eyeDragology}
+        />
 
-      {/* Mouth curve */}
-      <path
-        id="mouth"
-        d={mouthPath(state)}
-        fill="none"
-        stroke="#c0392b"
-        strokeWidth={4}
-        strokeLinecap="round"
-        style={{ pointerEvents: "none" }}
-        data-z-index={1}
-      />
+        {/* Mouth curve */}
+        <path
+          id="mouth"
+          d={mouthPath(state)}
+          fill="none"
+          stroke="#c0392b"
+          strokeWidth={4}
+          strokeLinecap="round"
+          style={{ pointerEvents: "none" }}
+          data-z-index={1}
+        />
 
-      {/* Drag handles along the mouth curve */}
-      {tValues.map((t) => {
-        const pt = evalMouthBezier(state, t);
-        const id = `mouth-${t}`;
-        const isDragged = draggedId === id;
-        return (
+        {/* Drag handles along the mouth curve */}
+        {tValues.map((t) => {
+          const pt = evalMouthBezier(state, t);
+          const id = `mouth-${t}`;
+          const isDragged = draggedId === id;
+          return (
+            <circle
+              id={id}
+              transform={translate(pt.x, pt.y)}
+              r={isDragged ? 8 : 14}
+              fill={isDragged ? "rgba(192, 57, 43, 0.4)" : "transparent"}
+              data-z-index={2}
+              dragology={() => curveDragology(t)}
+            />
+          );
+        })}
+
+        {/* Mouth endpoint handles */}
+        <circle
+          id="mouth-endpoint-left"
+          transform={translate(ml.x, ml.y)}
+          r={ENDPOINT_R}
+          fill={draggedId === "mouth-endpoint-left" ? "#e74c3c" : "#c0392b"}
+          stroke="#7f1d1d"
+          strokeWidth={1.5}
+          data-z-index={3}
+          dragology={endpointDragology}
+        />
+        <circle
+          id="mouth-endpoint-right"
+          transform={translate(mr.x, mr.y)}
+          r={ENDPOINT_R}
+          fill={draggedId === "mouth-endpoint-right" ? "#e74c3c" : "#c0392b"}
+          stroke="#7f1d1d"
+          strokeWidth={1.5}
+          data-z-index={3}
+          dragology={endpointDragology}
+        />
+
+        {/* Pin toggles */}
+        <g id="pin-eyes" data-z-index={4}>
           <circle
-            id={id}
-            transform={translate(pt.x, pt.y)}
-            r={isDragged ? 8 : 14}
-            fill={isDragged ? "rgba(192, 57, 43, 0.4)" : "transparent"}
-            data-z-index={2}
-            dragology={() => curveDragology(t)}
+            transform={translate(PIN_X, state.eyeY)}
+            r={PIN_R}
+            fill={eyesPinned ? "#666" : "transparent"}
+            stroke={eyesPinned ? "#666" : "#ccc"}
+            strokeWidth={1.5}
+            dragology={() =>
+              d.fixed({
+                ...state,
+                pinned: { ...state.pinned, eyes: !eyesPinned },
+              })
+            }
           />
-        );
-      })}
-
-      {/* Mouth endpoint handles */}
-      <circle
-        id="mouth-endpoint-left"
-        transform={translate(ml.x, ml.y)}
-        r={ENDPOINT_R}
-        fill={draggedId === "mouth-endpoint-left" ? "#e74c3c" : "#c0392b"}
-        stroke="#7f1d1d"
-        strokeWidth={1.5}
-        data-z-index={3}
-        dragology={endpointDragology}
-      />
-      <circle
-        id="mouth-endpoint-right"
-        transform={translate(mr.x, mr.y)}
-        r={ENDPOINT_R}
-        fill={draggedId === "mouth-endpoint-right" ? "#e74c3c" : "#c0392b"}
-        stroke="#7f1d1d"
-        strokeWidth={1.5}
-        data-z-index={3}
-        dragology={endpointDragology}
-      />
-
-      {/* Pin toggles — always render both circle and line, toggle opacity */}
-      <g id="pin-eyes" data-z-index={4}>
-        <circle
-          transform={translate(PIN_X, state.eyeY)}
-          r={PIN_R}
-          fill={eyesPinned ? "#666" : "transparent"}
-          stroke={eyesPinned ? "#666" : "#ccc"}
-          strokeWidth={1.5}
-          dragology={() =>
-            d.fixed({
-              ...state,
-              pinned: { ...state.pinned, eyes: !eyesPinned },
-            })
-          }
-        />
-        <line
-          x1={PIN_X}
-          y1={state.eyeY - PIN_R + 1}
-          x2={PIN_X}
-          y2={state.eyeY + PIN_R + 3}
-          stroke="#666"
-          strokeWidth={1.5}
-          strokeLinecap="round"
-          opacity={eyesPinned ? 1 : 0}
-        />
+          <line
+            x1={PIN_X}
+            y1={state.eyeY - PIN_R + 1}
+            x2={PIN_X}
+            y2={state.eyeY + PIN_R + 3}
+            stroke="#666"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            opacity={eyesPinned ? 1 : 0}
+          />
+        </g>
+        <g id="pin-mouth" data-z-index={4}>
+          <circle
+            transform={translate(PIN_X, state.mouthEy)}
+            r={PIN_R}
+            fill={mouthPinned ? "#666" : "transparent"}
+            stroke={mouthPinned ? "#666" : "#ccc"}
+            strokeWidth={1.5}
+            dragology={() =>
+              d.fixed({
+                ...state,
+                pinned: { ...state.pinned, mouth: !mouthPinned },
+              })
+            }
+          />
+          <line
+            x1={PIN_X}
+            y1={state.mouthEy - PIN_R + 1}
+            x2={PIN_X}
+            y2={state.mouthEy + PIN_R + 3}
+            stroke="#666"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            opacity={mouthPinned ? 1 : 0}
+          />
+        </g>
       </g>
-      <g id="pin-mouth" data-z-index={4}>
-        <circle
-          transform={translate(PIN_X, state.mouthEy)}
-          r={PIN_R}
-          fill={mouthPinned ? "#666" : "transparent"}
-          stroke={mouthPinned ? "#666" : "#ccc"}
-          strokeWidth={1.5}
-          dragology={() =>
-            d.fixed({
-              ...state,
-              pinned: { ...state.pinned, mouth: !mouthPinned },
-            })
-          }
-        />
-        <line
-          x1={PIN_X}
-          y1={state.mouthEy - PIN_R + 1}
-          x2={PIN_X}
-          y2={state.mouthEy + PIN_R + 3}
-          stroke="#666"
-          strokeWidth={1.5}
-          strokeLinecap="round"
-          opacity={mouthPinned ? 1 : 0}
-        />
-      </g>
-    </g>
-  );
+    );
+  };
+}
+
+const couplingModes: readonly CouplingMode[] = ["none", "free", "coupled"];
+const couplingLabels: Record<CouplingMode, string> = {
+  none: "None — rigid push only",
+  free: "Free — COBYLA varies curve shape",
+  coupled: "Coupled — curve scales with space",
 };
 
 export default demo(
-  () => (
-    <div>
-      <DemoNotes>
-        Drag eyes to move them vertically or adjust spacing. Drag anywhere on the
-        mouth to reshape it, or drag endpoint dots to reposition. Unpinned
-        features get pushed out of the way. Click the indicators on the right to
-        pin/unpin.
-      </DemoNotes>
-      <DemoDraggable
-        draggable={draggable}
-        initialState={initialState}
-        width={400}
-        height={350}
-      />
-    </div>
-  ),
+  () => {
+    const [couplingMode, setCouplingMode] = useState<CouplingMode>("none");
+    const draggable = useMemo(() => makeDraggable(couplingMode), [couplingMode]);
+    return (
+      <DemoWithConfig>
+        <div>
+          <DemoNotes>
+            Drag eyes to move/space them. Drag the mouth curve or endpoints.
+            Unpinned features get pushed. Click indicators on the right to
+            pin/unpin.
+          </DemoNotes>
+          <DemoDraggable
+            draggable={draggable}
+            initialState={initialState}
+            width={400}
+            height={350}
+          />
+        </div>
+        <ConfigPanel>
+          <ConfigSelect
+            label="Eye→mouth coupling"
+            value={couplingMode}
+            onChange={setCouplingMode}
+            options={couplingModes}
+            stringifyOption={(m) => couplingLabels[m]}
+          />
+        </ConfigPanel>
+      </DemoWithConfig>
+    );
+  },
   { tags: ["d.vary"] },
 );
