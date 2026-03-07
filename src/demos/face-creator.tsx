@@ -128,8 +128,16 @@ function allConstraints(s: State): number[] {
   results.push(moreThan(s.eyeDx, MIN_EYE_SPACING));
   results.push(lessThan(dist(ml, faceCenter), FACE_R - FACE_MARGIN));
   results.push(lessThan(dist(mr, faceCenter), FACE_R - FACE_MARGIN));
-  results.push(lessThan(s.eyeY + EYE_MOUTH_GAP, s.mouthEy));
   results.push(moreThan(s.mouthDx, 10));
+
+  // CP offset magnitude limit (prevents sharp cusps)
+  const MAX_CP_OFFSET = 100;
+  results.push(
+    lessThan(Math.sqrt(s.cp1dx ** 2 + s.cp1dy ** 2), MAX_CP_OFFSET),
+  );
+  results.push(
+    lessThan(Math.sqrt(s.cp2dx ** 2 + s.cp2dy ** 2), MAX_CP_OFFSET),
+  );
 
   const N = 8;
   for (let i = 0; i <= N; i++) {
@@ -138,7 +146,6 @@ function allConstraints(s: State): number[] {
     results.push(lessThan(dist(pt, faceCenter), FACE_R - FACE_MARGIN));
     results.push(moreThan(dist(pt, le), EYE_R + EYE_MARGIN));
     results.push(moreThan(dist(pt, re), EYE_R + EYE_MARGIN));
-    results.push(moreThan(pt.y, s.eyeY));
   }
   for (let i = 0; i < N; i++) {
     const pt1 = evalMouthBezier(s, i / N);
