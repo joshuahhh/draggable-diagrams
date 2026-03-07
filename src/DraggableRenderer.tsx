@@ -110,7 +110,6 @@ export type DragStatus<T extends object> = {
       spec: DragSpec<T>;
       behaviorCtx: DragBehaviorInitContext<T>;
       pointerStart: Vec2;
-      draggedId: string | null;
       result: DragResult<T>;
       dragParamsInfo: DragParamsInfo<T>;
     }
@@ -533,7 +532,7 @@ function processChainNow<T extends object>(
     return null;
 
   const newState = result.dropState;
-  const newDraggedId = result.chainNow.draggedId ?? status.draggedId;
+  const newDraggedId = result.chainNow.draggedId ?? status.behaviorCtx.draggedId;
   const content = renderDraggableInertUnlayered(
     status.behaviorCtx.draggable,
     newState,
@@ -639,7 +638,6 @@ function initDrag<T extends object>(
     spec,
     behaviorCtx,
     pointerStart,
-    draggedId,
     result,
     springingFrom,
     dragParamsInfo,
