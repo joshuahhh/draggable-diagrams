@@ -47,15 +47,17 @@ export function DemoPage() {
           <h1 className="text-3xl font-normal text-gray-800">Demos</h1>
         </div>
         {tagFilter && (
-          <div className="flex items-center gap-2 px-5 pb-3 max-w-3xl mx-auto w-full">
-            <span className="text-sm text-gray-400">Filtering by</span>
-            <DemoTag tag={tagFilter} />
-            <button
-              onClick={() => setSearchParams({})}
-              className="text-xs text-gray-400 hover:text-gray-600"
-            >
-              clear
-            </button>
+          <div className="sticky top-0 left-0 right-0 z-10 flex justify-center pointer-events-none py-2">
+            <div className="pointer-events-auto bg-white border border-gray-200 flex items-center gap-2 py-1.5 px-3 rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
+              <span className="text-sm text-gray-400">Filtering by</span>
+              <DemoTag tag={tagFilter} />
+              <button
+                onClick={() => setSearchParams({})}
+                className="text-xs text-gray-400 hover:text-gray-600"
+              >
+                clear
+              </button>
+            </div>
           </div>
         )}
         {filteredUnlisted.length > 0 && (
