@@ -904,7 +904,7 @@ export default demo(
             onChange={setScaleCurve}
           />
           <ConfigCheckbox
-            label="Eyes above mouth"
+            label="Keep eyes above mouth"
             value={eyesAboveMouth}
             onChange={setEyesAboveMouth}
           />
@@ -914,7 +914,7 @@ export default demo(
             onChange={(v) => setConstrainFaceShape(!v)}
           />
           <ConfigCheckbox
-            label="Elastic face"
+            label="Features move face"
             value={expandFace}
             onChange={setExpandFace}
           />
