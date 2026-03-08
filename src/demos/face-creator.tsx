@@ -355,17 +355,39 @@ function shapeConstraints(s: State): number[] {
   return results;
 }
 
-// Prevents cusps/self-intersections by ensuring CPs stay in the correct quadrant.
+// Constraints for face drags only: radii limits, no feature-inside-face checks.
+// Omitting feature constraints lets COBYLA freely shrink the face,
+// then .during() clamps features inside (same pattern as eye-mouth push).
+function faceOnlyConstraints(s: State): number[] {
+  return [
+    moreThan(s.faceRx, 40),
+    moreThan(s.faceRyTop, 40),
+    moreThan(s.faceRyBot, 40),
+  ];
+}
+
+// Prevents self-intersections/loops by checking that the outline's angle
+// from center progresses monotonically (the outline stays star-shaped).
+const FACE_SHAPE_SAMPLES_PER_SEG = 8;
 function faceShapeConstraints(s: State): number[] {
   const segs = faceSegments(s);
-  return [
-    // Top-right: cp1 to the right of p0, cp2 above p3
-    lessThan(segs[0].p0.x, segs[0].cp1.x),
-    lessThan(segs[0].cp2.y, segs[0].p3.y),
-    // Bottom-right: cp1 below p0, cp2 to the right of p3
-    lessThan(segs[1].p0.y, segs[1].cp1.y),
-    lessThan(segs[1].p3.x, segs[1].cp2.x),
-  ];
+  const angles: number[] = [];
+  for (const seg of segs) {
+    for (let i = 0; i < FACE_SHAPE_SAMPLES_PER_SEG; i++) {
+      const t = i / FACE_SHAPE_SAMPLES_PER_SEG;
+      const pt = evalBezier(seg, t);
+      angles.push(Math.atan2(pt.y - FACE_CY, pt.x - FACE_CX));
+    }
+  }
+  const results: number[] = [];
+  const n = angles.length;
+  for (let i = 0; i < n; i++) {
+    let diff = angles[(i + 1) % n] - angles[i];
+    if (diff < -Math.PI) diff += 2 * Math.PI;
+    // Each angular step must be positive (clockwise in screen coords)
+    results.push(moreThan(diff, 0));
+  }
+  return results;
 }
 
 // ── Push / clamp helpers ───────────────────────────────────────────
@@ -630,12 +652,26 @@ function makeDraggable(
     }
 
     function faceConstraint(s: State): number[] {
-      const base = shapeConstraints(s);
+      const base = faceOnlyConstraints(s);
       return constrainFaceShape ? [...base, ...faceShapeConstraints(s)] : base;
     }
 
     function faceDuring(s: State): State {
-      return clampInsideFace(s);
+      let result = s;
+      if (!mouthPinned && !eyesPinned) {
+        result = eyesAboveMouth
+          ? pushMouthBelowEyes(result)
+          : pushMouthAway(result);
+        result = pushEyesAway(result);
+      } else if (!mouthPinned) {
+        result = eyesAboveMouth
+          ? pushMouthBelowEyes(result)
+          : pushMouthAway(result);
+      } else if (!eyesPinned) {
+        result = pushEyesAway(result);
+      }
+      if (eyesAboveMouth) result = clampEyesAboveCurve(result);
+      return clampInsideFace(result);
     }
 
     function faceTopDragology() {
