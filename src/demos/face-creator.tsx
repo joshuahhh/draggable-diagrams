@@ -1,5 +1,12 @@
+import { useMemo, useState } from "react";
 import { demo } from "../demo";
-import { DemoDraggable, DemoNotes } from "../demo/ui";
+import {
+  ConfigCheckbox,
+  ConfigPanel,
+  DemoDraggable,
+  DemoNotes,
+  DemoWithConfig,
+} from "../demo/ui";
 import { Draggable } from "../draggable";
 import { lessThan, moreThan } from "../DragSpec";
 import { PathIn } from "../paths";
@@ -216,7 +223,8 @@ const ENDPOINT_R = 6;
 const PIN_R = 5;
 const PIN_X = FACE_CX + FACE_R + 18;
 
-const draggable: Draggable<State> = ({ state, d, draggedId }) => {
+function makeDraggable(scaleCurve: boolean): Draggable<State> {
+  return ({ state, d, draggedId }) => {
     const ml = mouthLeft(state);
     const mr = mouthRight(state);
     const le = leftEye(state);
@@ -252,7 +260,28 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
       const spec = d.vary(state, [["mouthDx"], ["mouthEy"]], {
         constraint: shapeConstraints,
       });
-      return state.pinned.eyes ? spec : spec.during(pushEyesAway);
+      const origDx = state.mouthDx;
+      const origEy = state.mouthEy;
+      const origCp1dx = state.cp1dx;
+      const origCp1dy = state.cp1dy;
+      const origCp2dx = state.cp2dx;
+      const origCp2dy = state.cp2dy;
+      return spec.during((s) => {
+        const pushed = eyesPinned ? s : pushEyesAway(s);
+        if (!scaleCurve) return pushed;
+        const dxScale = origDx > 0 ? pushed.mouthDx / origDx : 1;
+        const faceBottom = FACE_CY + FACE_R - FACE_MARGIN;
+        const origSpace = faceBottom - origEy;
+        const newSpace = faceBottom - pushed.mouthEy;
+        const vyScale = origSpace > 0 ? newSpace / origSpace : 1;
+        return {
+          ...pushed,
+          cp1dx: origCp1dx * dxScale,
+          cp2dx: origCp2dx * dxScale,
+          cp1dy: origCp1dy * vyScale,
+          cp2dy: origCp2dy * vyScale,
+        };
+      });
     }
 
     function curveDragology(t: number) {
@@ -403,22 +432,36 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
       </g>
     );
   };
+}
 
 export default demo(
-  () => (
-    <div>
-      <DemoNotes>
-        Drag eyes to move/space them. Drag the mouth curve or endpoints.
-        Unpinned features get pushed. Click indicators on the right to
-        pin/unpin.
-      </DemoNotes>
-      <DemoDraggable
+  () => {
+    const [scaleCurve, setScaleCurve] = useState(false);
+    const draggable = useMemo(() => makeDraggable(scaleCurve), [scaleCurve]);
+    return (
+      <DemoWithConfig>
+        <div>
+          <DemoNotes>
+            Drag eyes to move/space them. Drag the mouth curve or endpoints.
+            Unpinned features get pushed. Click indicators on the right to
+            pin/unpin.
+          </DemoNotes>
+          <DemoDraggable
         draggable={draggable}
         initialState={initialState}
         width={400}
         height={350}
       />
-    </div>
-  ),
+        </div>
+        <ConfigPanel>
+          <ConfigCheckbox
+            label="Scale curve with endpoints"
+            value={scaleCurve}
+            onChange={setScaleCurve}
+          />
+        </ConfigPanel>
+      </DemoWithConfig>
+    );
+  },
   { tags: ["d.vary"] },
 );
