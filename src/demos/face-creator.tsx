@@ -355,6 +355,19 @@ function shapeConstraints(s: State): number[] {
   return results;
 }
 
+// Prevents cusps/self-intersections by ensuring CPs stay in the correct quadrant.
+function faceShapeConstraints(s: State): number[] {
+  const segs = faceSegments(s);
+  return [
+    // Top-right: cp1 to the right of p0, cp2 above p3
+    lessThan(segs[0].p0.x, segs[0].cp1.x),
+    lessThan(segs[0].cp2.y, segs[0].p3.y),
+    // Bottom-right: cp1 below p0, cp2 to the right of p3
+    lessThan(segs[1].p0.y, segs[1].cp1.y),
+    lessThan(segs[1].p3.x, segs[1].cp2.x),
+  ];
+}
+
 // ── Push / clamp helpers ───────────────────────────────────────────
 
 function pushMouthBelowEyes(s: State): State {
@@ -516,6 +529,7 @@ const FACE_HANDLE_R = 5;
 function makeDraggable(
   scaleCurve: boolean,
   eyesAboveMouth: boolean,
+  constrainFaceShape: boolean,
 ): Draggable<State> {
   return ({ state, d, draggedId }) => {
     const ml = mouthLeft(state);
@@ -615,20 +629,39 @@ function makeDraggable(
       });
     }
 
+    function faceConstraint(s: State): number[] {
+      const base = shapeConstraints(s);
+      return constrainFaceShape ? [...base, ...faceShapeConstraints(s)] : base;
+    }
+
+    function faceDuring(s: State): State {
+      return clampInsideFace(s);
+    }
+
     function faceTopDragology() {
-      return d.vary(state, [["faceRyTop"]], { constraint: shapeConstraints });
+      return d
+        .vary(state, [["faceRyTop"]], { constraint: faceConstraint })
+        .during(faceDuring);
     }
     function faceRightDragology() {
-      return d.vary(state, [["faceRx"]], { constraint: shapeConstraints });
+      return d
+        .vary(state, [["faceRx"]], { constraint: faceConstraint })
+        .during(faceDuring);
     }
     function faceBottomDragology() {
-      return d.vary(state, [["faceRyBot"]], { constraint: shapeConstraints });
+      return d
+        .vary(state, [["faceRyBot"]], { constraint: faceConstraint })
+        .during(faceDuring);
     }
     function faceBulgeTRDragology() {
-      return d.vary(state, [["faceBulgeTR"]], { constraint: shapeConstraints });
+      return d
+        .vary(state, [["faceBulgeTR"]], { constraint: faceConstraint })
+        .during(faceDuring);
     }
     function faceBulgeBRDragology() {
-      return d.vary(state, [["faceBulgeBR"]], { constraint: shapeConstraints });
+      return d
+        .vary(state, [["faceBulgeBR"]], { constraint: faceConstraint })
+        .during(faceDuring);
     }
 
     return (
@@ -826,9 +859,10 @@ export default demo(
   () => {
     const [scaleCurve, setScaleCurve] = useState(false);
     const [eyesAboveMouth, setEyesAboveMouth] = useState(false);
+    const [constrainFaceShape, setConstrainFaceShape] = useState(false);
     const draggable = useMemo(
-      () => makeDraggable(scaleCurve, eyesAboveMouth),
-      [scaleCurve, eyesAboveMouth],
+      () => makeDraggable(scaleCurve, eyesAboveMouth, constrainFaceShape),
+      [scaleCurve, eyesAboveMouth, constrainFaceShape],
     );
     return (
       <DemoWithConfig>
@@ -855,6 +889,11 @@ export default demo(
             label="Eyes above mouth"
             value={eyesAboveMouth}
             onChange={setEyesAboveMouth}
+          />
+          <ConfigCheckbox
+            label="Prevent face cusps"
+            value={constrainFaceShape}
+            onChange={setConstrainFaceShape}
           />
         </ConfigPanel>
       </DemoWithConfig>
