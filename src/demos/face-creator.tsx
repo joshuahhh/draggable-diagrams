@@ -575,6 +575,7 @@ function makeDraggable(
   eyesAboveMouth: boolean,
   constrainFaceShape: boolean,
   expandFace: boolean,
+  showLockHandles: boolean,
 ): Draggable<State> {
   return ({ state, d, draggedId }) => {
     const ml = mouthLeft(state);
@@ -794,7 +795,7 @@ function makeDraggable(
           transform={translate(ml.x, ml.y)}
           r={ENDPOINT_R}
           fill={draggedId === "mouth-endpoint-left" ? "#e74c3c" : "#c0392b"}
-          stroke="#7f1d1d"
+          stroke="#c0392b"
           strokeWidth={1.5}
           data-z-index={3}
           dragology={endpointDragology}
@@ -804,25 +805,28 @@ function makeDraggable(
           transform={translate(mr.x, mr.y)}
           r={ENDPOINT_R}
           fill={draggedId === "mouth-endpoint-right" ? "#e74c3c" : "#c0392b"}
-          stroke="#7f1d1d"
+          stroke="#c0392b"
           strokeWidth={1.5}
           data-z-index={3}
           dragology={endpointDragology}
         />
 
-        {/* Pin toggles */}
-        <g id="pin-eyes" data-z-index={4}>
+        {/* Pin toggles (hidden unless showLockHandles is on) */}
+        <g id="pin-eyes" data-z-index={4} opacity={showLockHandles ? 1 : 0}>
           <circle
             transform={translate(pinX, state.eyeY)}
             r={PIN_R}
             fill={eyesPinned ? "#666" : "transparent"}
             stroke={eyesPinned ? "#666" : "#ccc"}
             strokeWidth={1.5}
-            dragology={() =>
-              d.fixed({
-                ...state,
-                pinned: { ...state.pinned, eyes: !eyesPinned },
-              })
+            dragology={
+              showLockHandles
+                ? () =>
+                    d.fixed({
+                      ...state,
+                      pinned: { ...state.pinned, eyes: !eyesPinned },
+                    })
+                : undefined
             }
           />
           <line
@@ -836,18 +840,21 @@ function makeDraggable(
             opacity={eyesPinned ? 1 : 0}
           />
         </g>
-        <g id="pin-mouth" data-z-index={4}>
+        <g id="pin-mouth" data-z-index={4} opacity={showLockHandles ? 1 : 0}>
           <circle
             transform={translate(pinX, state.mouthEy)}
             r={PIN_R}
             fill={mouthPinned ? "#666" : "transparent"}
             stroke={mouthPinned ? "#666" : "#ccc"}
             strokeWidth={1.5}
-            dragology={() =>
-              d.fixed({
-                ...state,
-                pinned: { ...state.pinned, mouth: !mouthPinned },
-              })
+            dragology={
+              showLockHandles
+                ? () =>
+                    d.fixed({
+                      ...state,
+                      pinned: { ...state.pinned, mouth: !mouthPinned },
+                    })
+                : undefined
             }
           />
           <line
@@ -872,6 +879,7 @@ export default demo(
     const [eyesAboveMouth, setEyesAboveMouth] = useState(false);
     const [constrainFaceShape, setConstrainFaceShape] = useState(true);
     const [expandFace, setExpandFace] = useState(false);
+    const [showLockHandles, setShowLockHandles] = useState(false);
     const draggable = useMemo(
       () =>
         makeDraggable(
@@ -879,16 +887,22 @@ export default demo(
           eyesAboveMouth,
           constrainFaceShape,
           expandFace,
+          showLockHandles,
         ),
-      [scaleCurve, eyesAboveMouth, constrainFaceShape, expandFace],
+      [
+        scaleCurve,
+        eyesAboveMouth,
+        constrainFaceShape,
+        expandFace,
+        showLockHandles,
+      ],
     );
     return (
       <DemoWithConfig>
         <div>
           <DemoNotes>
             Drag eyes to move/space them. Drag the mouth curve or endpoints.
-            Drag the face outline handles to reshape. Unpinned features get
-            pushed. Click indicators on the right to pin/unpin.
+            Drag the face outline to reshape. Features push each other.
           </DemoNotes>
           <DemoDraggable
             draggable={draggable}
@@ -917,6 +931,11 @@ export default demo(
             label="Scale mouth with endpoints"
             value={scaleCurve}
             onChange={setScaleCurve}
+          />
+          <ConfigCheckbox
+            label="Show lock handles"
+            value={showLockHandles}
+            onChange={setShowLockHandles}
           />
         </ConfigPanel>
       </DemoWithConfig>
