@@ -955,9 +955,9 @@ export default demo(
             onChange={setEyesAboveMouth}
           />
           <ConfigCheckbox
-            label="Enable making mode"
-            value={constrainFaceShape}
-            onChange={setConstrainFaceShape}
+            label="MICKEY mode"
+            value={!constrainFaceShape}
+            onChange={(v) => setConstrainFaceShape(!v)}
           />
           <ConfigCheckbox
             label="Elastic face"
