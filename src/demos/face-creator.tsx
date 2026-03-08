@@ -916,7 +916,7 @@ export default demo(
   () => {
     const [scaleCurve, setScaleCurve] = useState(false);
     const [eyesAboveMouth, setEyesAboveMouth] = useState(false);
-    const [constrainFaceShape, setConstrainFaceShape] = useState(false);
+    const [constrainFaceShape, setConstrainFaceShape] = useState(true);
     const [expandFace, setExpandFace] = useState(false);
     const draggable = useMemo(
       () =>
@@ -955,7 +955,7 @@ export default demo(
             onChange={setEyesAboveMouth}
           />
           <ConfigCheckbox
-            label="MICKEY mode"
+            label="Mickey mode"
             value={!constrainFaceShape}
             onChange={(v) => setConstrainFaceShape(!v)}
           />
