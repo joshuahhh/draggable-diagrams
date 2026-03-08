@@ -563,7 +563,12 @@ const tValues = Array.from(
 
 const ENDPOINT_R = 6;
 const PIN_R = 5;
-const FACE_HANDLE_R = 5;
+
+const FACE_PERIMETER_SAMPLES = 7;
+const facePerimeterTs = Array.from(
+  { length: FACE_PERIMETER_SAMPLES },
+  (_, i) => (i + 1) / (FACE_PERIMETER_SAMPLES + 1),
+);
 
 function makeDraggable(
   scaleCurve: boolean,
@@ -579,15 +584,7 @@ function makeDraggable(
     const eyesPinned = state.pinned.eyes;
     const mouthPinned = state.pinned.mouth;
 
-    // Face outline junction points (for handles)
-    const faceTop = { x: FACE_CX, y: FACE_CY - state.faceRyTop };
-    const faceRight = { x: FACE_CX + state.faceRx, y: FACE_CY };
-    const faceBottom = { x: FACE_CX, y: FACE_CY + state.faceRyBot };
-
-    // Midpoints of each arc (for bulge handles)
     const segs = faceSegments(state);
-    const trMid = evalBezier(segs[0], 0.5);
-    const brMid = evalBezier(segs[1], 0.5);
 
     // Pin indicator x position (relative to rightmost face edge)
     const pinX = FACE_CX + state.faceRx + 18;
@@ -695,29 +692,21 @@ function makeDraggable(
       return clampInsideFace(result);
     }
 
-    function faceTopDragology() {
+    // Face perimeter: pin-by-t selects which param to vary per segment.
+    // [startParam, midParam (bulge), endParam] for each segment.
+    const faceSegParams: [PathIn<State, number>, PathIn<State, number>, PathIn<State, number>][] = [
+      [["faceRyTop"], ["faceBulgeTR"], ["faceRx"]],   // seg 0: top → right
+      [["faceRx"], ["faceBulgeBR"], ["faceRyBot"]],   // seg 1: right → bottom
+      [["faceRyBot"], ["faceBulgeBR"], ["faceRx"]],   // seg 2: bottom → left (mirror)
+      [["faceRx"], ["faceBulgeTR"], ["faceRyTop"]],   // seg 3: left → top (mirror)
+    ];
+
+    function facePerimeterDragology(segIdx: number, t: number) {
+      const [startP, midP, endP] = faceSegParams[segIdx];
+      const paths: PathIn<State, number>[] =
+        t < 0.35 ? [startP] : t > 0.65 ? [endP] : [midP];
       return d
-        .vary(state, [["faceRyTop"]], { constraint: faceConstraint })
-        .during(faceDuring);
-    }
-    function faceRightDragology() {
-      return d
-        .vary(state, [["faceRx"]], { constraint: faceConstraint })
-        .during(faceDuring);
-    }
-    function faceBottomDragology() {
-      return d
-        .vary(state, [["faceRyBot"]], { constraint: faceConstraint })
-        .during(faceDuring);
-    }
-    function faceBulgeTRDragology() {
-      return d
-        .vary(state, [["faceBulgeTR"]], { constraint: faceConstraint })
-        .during(faceDuring);
-    }
-    function faceBulgeBRDragology() {
-      return d
-        .vary(state, [["faceBulgeBR"]], { constraint: faceConstraint })
+        .vary(state, paths, { constraint: faceConstraint })
         .during(faceDuring);
     }
 
@@ -733,59 +722,24 @@ function makeDraggable(
           data-z-index={0}
         />
 
-        {/* Face shape handles — junction points */}
-        <circle
-          id="face-top"
-          transform={translate(faceTop.x, faceTop.y)}
-          r={FACE_HANDLE_R}
-          fill={draggedId === "face-top" ? "#e6a756" : "transparent"}
-          stroke="#e6a756"
-          strokeWidth={1}
-          data-z-index={5}
-          dragology={faceTopDragology}
-        />
-        <circle
-          id="face-right"
-          transform={translate(faceRight.x, faceRight.y)}
-          r={FACE_HANDLE_R}
-          fill={draggedId === "face-right" ? "#e6a756" : "transparent"}
-          stroke="#e6a756"
-          strokeWidth={1}
-          data-z-index={5}
-          dragology={faceRightDragology}
-        />
-        <circle
-          id="face-bottom"
-          transform={translate(faceBottom.x, faceBottom.y)}
-          r={FACE_HANDLE_R}
-          fill={draggedId === "face-bottom" ? "#e6a756" : "transparent"}
-          stroke="#e6a756"
-          strokeWidth={1}
-          data-z-index={5}
-          dragology={faceBottomDragology}
-        />
-
-        {/* Face shape handles — arc midpoints for bulge */}
-        <circle
-          id="face-bulge-tr"
-          transform={translate(trMid.x, trMid.y)}
-          r={FACE_HANDLE_R}
-          fill={draggedId === "face-bulge-tr" ? "#e6a756" : "transparent"}
-          stroke="#e6a756"
-          strokeWidth={1}
-          data-z-index={5}
-          dragology={faceBulgeTRDragology}
-        />
-        <circle
-          id="face-bulge-br"
-          transform={translate(brMid.x, brMid.y)}
-          r={FACE_HANDLE_R}
-          fill={draggedId === "face-bulge-br" ? "#e6a756" : "transparent"}
-          stroke="#e6a756"
-          strokeWidth={1}
-          data-z-index={5}
-          dragology={faceBulgeBRDragology}
-        />
+        {/* Face perimeter drag handles (invisible, like mouth curve handles) */}
+        {segs.flatMap((seg, segIdx) =>
+          facePerimeterTs.map((t) => {
+            const pt = evalBezier(seg, t);
+            const id = `face-${segIdx}-${t}`;
+            const isDragged = draggedId === id;
+            return (
+              <circle
+                id={id}
+                transform={translate(pt.x, pt.y)}
+                r={isDragged ? 6 : 12}
+                fill={isDragged ? "rgba(230, 167, 86, 0.4)" : "transparent"}
+                data-z-index={5}
+                dragology={() => facePerimeterDragology(segIdx, t)}
+              />
+            );
+          }),
+        )}
 
         {/* Eyes */}
         <circle
