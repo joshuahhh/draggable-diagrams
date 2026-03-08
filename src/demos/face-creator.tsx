@@ -146,6 +146,53 @@ function shapeConstraints(s: State): number[] {
   return results;
 }
 
+// Push mouth down until all curve points near the eyes are below them.
+// Uses vertical ordering (not Euclidean distance), so the push grows
+// monotonically as eyes go lower.
+function pushMouthBelowEyes(s: State): State {
+  let result = s;
+  for (let iter = 0; iter < 3; iter++) {
+    const le = leftEye(result);
+    const re = rightEye(result);
+    const threshold = EYE_R + 2;
+    let maxPush = 0;
+    for (let i = 0; i <= 8; i++) {
+      const pt = evalMouthBezier(result, i / 8);
+      for (const eye of [le, re]) {
+        const hDist = Math.abs(pt.x - eye.x);
+        if (hDist < threshold && pt.y < eye.y + EYE_MARGIN) {
+          maxPush = Math.max(maxPush, eye.y + EYE_MARGIN - pt.y);
+        }
+      }
+    }
+    if (maxPush <= 0) break;
+    result = { ...result, mouthEy: result.mouthEy + maxPush };
+  }
+  return result;
+}
+
+// Clamp eyeY so eyes stay above curve points that are horizontally close.
+function clampEyesAboveCurve(s: State): State {
+  const le = leftEye(s);
+  const re = rightEye(s);
+  const threshold = EYE_R + 2;
+  let minEyeY = s.eyeY;
+  for (let i = 0; i <= 8; i++) {
+    const pt = evalMouthBezier(s, i / 8);
+    for (const eye of [le, re]) {
+      const hDist = Math.abs(pt.x - eye.x);
+      if (hDist < threshold) {
+        // Eye must be above this point (lower y value)
+        minEyeY = Math.min(minEyeY, pt.y - EYE_MARGIN);
+      }
+    }
+  }
+  if (minEyeY < s.eyeY) {
+    return { ...s, eyeY: minEyeY };
+  }
+  return s;
+}
+
 // Deterministic push: shift mouthEy or eyeY to maintain minimum
 // eye-to-curve distance. Iterates a few times since shifting mouthEy
 // moves the curve points.
@@ -223,7 +270,10 @@ const ENDPOINT_R = 6;
 const PIN_R = 5;
 const PIN_X = FACE_CX + FACE_R + 18;
 
-function makeDraggable(scaleCurve: boolean): Draggable<State> {
+function makeDraggable(
+  scaleCurve: boolean,
+  eyesAboveMouth: boolean,
+): Draggable<State> {
   return ({ state, d, draggedId }) => {
     const ml = mouthLeft(state);
     const mr = mouthRight(state);
@@ -236,23 +286,34 @@ function makeDraggable(scaleCurve: boolean): Draggable<State> {
       const spec = d.vary(state, [["eyeY"], ["eyeDx"]], {
         constraint: shapeConstraints,
       });
-      if (mouthPinned) return spec;
+      if (mouthPinned && !eyesAboveMouth) return spec;
       const origMouthEy = state.mouthEy;
       const origCp1dy = state.cp1dy;
       const origCp2dy = state.cp2dy;
       return spec.during((s) => {
-        const pushed = pushMouthAway(s);
+        // Push mouth: vertical-ordering push in "eyes above" mode,
+        // distance-based push otherwise
+        let result = s;
+        if (!mouthPinned) {
+          result = eyesAboveMouth
+            ? pushMouthBelowEyes(result)
+            : pushMouthAway(result);
+        }
         // Scale CP vertical offsets proportionally when mouth was pushed
-        if (pushed.mouthEy === origMouthEy) return pushed;
-        const faceBottom = FACE_CY + FACE_R - FACE_MARGIN;
-        const origSpace = faceBottom - origMouthEy;
-        const newSpace = faceBottom - pushed.mouthEy;
-        const scale = origSpace > 0 ? newSpace / origSpace : 1;
-        return {
-          ...pushed,
-          cp1dy: origCp1dy * scale,
-          cp2dy: origCp2dy * scale,
-        };
+        if (result.mouthEy !== origMouthEy) {
+          const faceBottom = FACE_CY + FACE_R - FACE_MARGIN;
+          const origSpace = faceBottom - origMouthEy;
+          const newSpace = faceBottom - result.mouthEy;
+          const scale = origSpace > 0 ? newSpace / origSpace : 1;
+          result = {
+            ...result,
+            cp1dy: origCp1dy * scale,
+            cp2dy: origCp2dy * scale,
+          };
+        }
+        // Safety clamp after push/scale
+        if (eyesAboveMouth) result = clampEyesAboveCurve(result);
+        return result;
       });
     }
 
@@ -267,15 +328,16 @@ function makeDraggable(scaleCurve: boolean): Draggable<State> {
       const origCp2dx = state.cp2dx;
       const origCp2dy = state.cp2dy;
       return spec.during((s) => {
-        const pushed = eyesPinned ? s : pushEyesAway(s);
-        if (!scaleCurve) return pushed;
-        const dxScale = origDx > 0 ? pushed.mouthDx / origDx : 1;
+        let result = eyesPinned ? s : pushEyesAway(s);
+        if (eyesAboveMouth) result = clampEyesAboveCurve(result);
+        if (!scaleCurve) return result;
+        const dxScale = origDx > 0 ? result.mouthDx / origDx : 1;
         const faceBottom = FACE_CY + FACE_R - FACE_MARGIN;
         const origSpace = faceBottom - origEy;
-        const newSpace = faceBottom - pushed.mouthEy;
+        const newSpace = faceBottom - result.mouthEy;
         const vyScale = origSpace > 0 ? newSpace / origSpace : 1;
         return {
-          ...pushed,
+          ...result,
           cp1dx: origCp1dx * dxScale,
           cp2dx: origCp2dx * dxScale,
           cp1dy: origCp1dy * vyScale,
@@ -292,7 +354,14 @@ function makeDraggable(scaleCurve: boolean): Draggable<State> {
             ? [["cp2dx"], ["cp2dy"]]
             : [["cp1dx"], ["cp1dy"], ["cp2dx"], ["cp2dy"]];
       const spec = d.vary(state, paths, { constraint: shapeConstraints });
-      return state.pinned.eyes ? spec : spec.during(pushEyesAway);
+      if (!eyesPinned || eyesAboveMouth) {
+        return spec.during((s) => {
+          let result = eyesPinned ? s : pushEyesAway(s);
+          if (eyesAboveMouth) result = clampEyesAboveCurve(result);
+          return result;
+        });
+      }
+      return spec;
     }
 
     return (
@@ -437,7 +506,11 @@ function makeDraggable(scaleCurve: boolean): Draggable<State> {
 export default demo(
   () => {
     const [scaleCurve, setScaleCurve] = useState(false);
-    const draggable = useMemo(() => makeDraggable(scaleCurve), [scaleCurve]);
+    const [eyesAboveMouth, setEyesAboveMouth] = useState(false);
+    const draggable = useMemo(
+      () => makeDraggable(scaleCurve, eyesAboveMouth),
+      [scaleCurve, eyesAboveMouth],
+    );
     return (
       <DemoWithConfig>
         <div>
@@ -447,17 +520,22 @@ export default demo(
             pin/unpin.
           </DemoNotes>
           <DemoDraggable
-        draggable={draggable}
-        initialState={initialState}
-        width={400}
-        height={350}
-      />
+            draggable={draggable}
+            initialState={initialState}
+            width={400}
+            height={350}
+          />
         </div>
         <ConfigPanel>
           <ConfigCheckbox
             label="Scale curve with endpoints"
             value={scaleCurve}
             onChange={setScaleCurve}
+          />
+          <ConfigCheckbox
+            label="Eyes above mouth"
+            value={eyesAboveMouth}
+            onChange={setEyesAboveMouth}
           />
         </ConfigPanel>
       </DemoWithConfig>
