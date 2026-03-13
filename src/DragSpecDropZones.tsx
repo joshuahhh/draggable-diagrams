@@ -446,7 +446,7 @@ export function useDropZoneData<T extends object>(
   width: number,
   height: number,
 ): { data: DropZoneData | null; computing: boolean } {
-  const { spec, behaviorCtx, pointerStart } = status ?? {};
+  const { specForDropZoneVis: spec, behaviorCtx, pointerStart } = status ?? {};
 
   const [data, setData] = useState<DropZoneData | null>(null);
   const [computing, setComputing] = useState(false);

@@ -107,11 +107,16 @@ export type DragStatus<T extends object> = {
       type: "dragging";
       startState: T;
       behavior: DragBehavior<T>;
-      spec: DragSpec<T>;
       behaviorCtx: DragBehaviorInitContext<T>;
       pointerStart: Vec2;
       result: DragResult<T>;
       dragParamsInfo: DragParamsInfo<T>;
+      /**
+       * We save the drag spec so we can generate fresh behaviors for
+       * the drop-zone visualization. It's named in a scary way to
+       * remind you that it's a niche use case.
+       */
+      specForDropZoneVis: DragSpec<T>;
     }
 );
 
@@ -636,7 +641,7 @@ function initDrag<T extends object>(
     type: "dragging",
     startState: state,
     behavior,
-    spec,
+    specForDropZoneVis: spec,
     behaviorCtx,
     pointerStart,
     result,
