@@ -324,7 +324,7 @@ function DraggableRendererControlled<T extends object>({
 
       const newState: DragStatus<T> = {
         type: "idle",
-        state: status.startState,
+        state: dropState,
         springingFrom: makeSpringingFrom(result.dropTransition, () =>
           runSpring(status.springingFrom, result.rendered),
         ),
