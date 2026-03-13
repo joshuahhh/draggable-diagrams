@@ -39,6 +39,7 @@ export const demoList = [
   "angle",
   "angle-via-transform",
   "bezier",
+  "face-creator",
   "rectangle",
   "stretchy-xy",
   "stretchy-rot",
