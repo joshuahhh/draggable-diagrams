@@ -15,19 +15,12 @@ import { produce } from "immer";
 import _ from "lodash";
 import { demo } from "../../demo";
 import { DemoDraggable } from "../../demo/ui";
-import { Draggable, DragologyPropValue } from "../../draggable";
+import { Draggable, DragSpecCallback } from "../../draggable";
 import { DragSpecBuilder } from "../../DragSpec";
 import { Svgx } from "../../svgx";
 import { translate } from "../../svgx/helpers";
 import { Pattern, Rewrite, Tree } from "./asts";
 import {
-  OP_DEFS,
-  T_EMPTY_CHILD_H,
-  T_EMPTY_CHILD_W,
-  T_GAP,
-  T_LABEL_MIN_HEIGHT,
-  T_LABEL_WIDTH,
-  T_PADDING,
   allInsertionPointsInTrees,
   arityOk,
   cloneTreeWithFreshIds,
@@ -37,9 +30,16 @@ import {
   insertInTrees,
   isOp,
   isRewriteArrow,
+  OP_DEFS,
   removeInTrees,
   replaceInTrees,
   swapChildrenAtParent,
+  T_EMPTY_CHILD_H,
+  T_EMPTY_CHILD_W,
+  T_GAP,
+  T_LABEL_MIN_HEIGHT,
+  T_LABEL_WIDTH,
+  T_PADDING,
   treeSize,
 } from "./nool-tree";
 
@@ -222,7 +222,7 @@ function makePickupDrag(
   d: DragSpecBuilder<State>,
   fullState: State,
   treeIdx: number,
-): DragologyPropValue<State> | undefined {
+): DragSpecCallback<State> | undefined {
   const isHole = tree.label === "◯";
   if (isHole) return undefined;
 
@@ -381,7 +381,7 @@ function makeBrushDrag(
   brushIdx: number,
   allHoles: { treeIdx: number; holeId: string }[],
   allInsertPts: { treeIdx: number; parentId: string; index: number }[],
-): DragologyPropValue<State> {
+): DragSpecCallback<State> {
   return () => {
     const stateWithout = produce(state, (draft) => {
       draft.brushes[brushIdx].key += "-r";
@@ -426,7 +426,7 @@ function makePaletteDrag(
   d: DragSpecBuilder<State>,
   block: Tree,
   idx: number,
-): DragologyPropValue<State> {
+): DragSpecCallback<State> {
   return ({ altKey }) => {
     if (altKey) {
       const stateWithClone = produce(state, (draft) => {
@@ -511,7 +511,7 @@ function makePaletteDrag(
 function makeVoidDrag(
   state: State,
   d: DragSpecBuilder<State>,
-): DragologyPropValue<State> | undefined {
+): DragSpecCallback<State> | undefined {
   if (state.voidStack.length === 0) return undefined;
   const tree = state.voidStack[0];
   const stateWithout: State = {
@@ -563,7 +563,7 @@ function renderTree(
       treeIdx: number;
     };
     pointerEventsNone?: boolean;
-    rootDragology?: DragologyPropValue<State>;
+    rootDragology?: DragSpecCallback<State>;
     rootTransform?: string;
     depth?: number;
     opacity?: number;

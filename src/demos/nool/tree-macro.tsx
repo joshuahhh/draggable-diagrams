@@ -11,7 +11,7 @@ import {
   DemoDraggable,
   DemoWithConfig,
 } from "../../demo/ui";
-import { Draggable, DragologyPropValue } from "../../draggable";
+import { Draggable, DragSpecCallback } from "../../draggable";
 import { DragSpecBuilder } from "../../DragSpec";
 import { Svgx } from "../../svgx";
 import { translate } from "../../svgx/helpers";
@@ -257,7 +257,7 @@ function renderNormalMode(
 ): Svgx {
   const activeRewrites = config.userRules;
 
-  function dragTargets(draggedKey: string): DragologyPropValue<State> {
+  function dragTargets(draggedKey: string): DragSpecCallback<State> {
     const newTrees = allPossibleRewrites(
       state.tree,
       activeRewrites,
@@ -276,7 +276,7 @@ function renderNormalMode(
 function renderNormalTree(
   tree: Tree,
   d: DragSpecBuilder<State>,
-  dragTargets: (id: string) => DragologyPropValue<State>,
+  dragTargets: (id: string) => DragSpecCallback<State>,
   config: Config,
   depth: number,
 ): { element: Svgx; w: number; h: number } {
@@ -357,7 +357,7 @@ function renderMacroTree(
   fullState: State,
   depth: number,
   opts?: {
-    rootDragology?: DragologyPropValue<State>;
+    rootDragology?: DragSpecCallback<State>;
     rootTransform?: string;
     pointerEventsNone?: boolean;
     opacity?: number;
@@ -399,7 +399,7 @@ function renderMacroTree(
     : T_LABEL_MIN_HEIGHT;
 
   // Pick-up drag for freeform rearrangement
-  const pickUpDrag: DragologyPropValue<State> = () => {
+  const pickUpDrag: DragSpecCallback<State> = () => {
     const nodeId = tree.id;
     const parentInfo = findParentAndIndex(fullState.tree, nodeId);
 

@@ -20,6 +20,7 @@ import { debugOverlay } from "./DragSpecTraceInfo";
 import { ErrorBoundary } from "./ErrorBoundary";
 import {
   DragParams,
+  DragSpecCallback,
   Draggable,
   getDragSpecCallbackOnElement,
   makeDraggableProps,
@@ -98,6 +99,36 @@ type PendingDrag<T extends object> = {
   threshold: number;
   status: DragStatusDragging<T>;
 };
+
+/*
+A bit of terminology about the lifetimes of drags:
+
+- A "drag" is the user-facing pointer-down/pointer-move/pointer-up
+  thing we all know and love.
+
+- A "drag span" is the portion of a drag running under a fixed drag
+  behavior. A drag can consist of multiple drag spans in two ways:
+
+  1. When we chain, we move into a new state and re-initialize the
+     drag from that new state, starting a new, chained span.
+  2. When drag params (modifier keys) change, we re-initialize the
+     current span. (It's kinda a one-step undo. You could imagine us
+     undoing all the way back to the start of the drag, but 1. that's
+     complicated and 2. how often are people combining chaining with
+     modifier keys?)
+
+  A drag span is initialized in a few steps:
+
+  - Get ahold of a DragSpecCallback – extract from rendered SVGX or
+    use a saved one.
+  - Evaluate the DragSpecCallback on DragParams to get a drag spec.
+  - Turn the DragSpec into a DragBehavior using dragSpecToBehavior,
+    providing some DragBehaviorInitContext.
+
+I believe the "dragging" drag status need only store information
+about the current span.
+
+*/
 
 export type DragStatus<T extends object> = {
   springingFrom: SpringingFrom | null;
@@ -342,7 +373,7 @@ function DraggableRendererControlled<T extends object>({
       if (status.type !== "dragging") return;
 
       const newParams = dragParamsFromEvent(e);
-      const oldParams = status.dragParamsInfo.dragParams;
+      const oldParams = status.dragParamsInfo.originalDragParams;
       if (
         newParams.altKey === oldParams.altKey &&
         newParams.ctrlKey === oldParams.ctrlKey &&
@@ -352,7 +383,7 @@ function DraggableRendererControlled<T extends object>({
         return;
 
       // Re-evaluate the drag spec with new modifier keys
-      const newSpec = status.dragParamsInfo.dragParamsCallback(newParams);
+      const newSpec = status.dragParamsInfo.dragSpecCallback(newParams);
       const pointer = pointerRef.current;
       if (!pointer) return;
 
@@ -369,7 +400,7 @@ function DraggableRendererControlled<T extends object>({
         frame,
         status.pointerStart,
         newSpringingFrom,
-        { ...status.dragParamsInfo, dragParams: newParams },
+        { ...status.dragParamsInfo, originalDragParams: newParams },
       );
       setStatus(newStatus);
     });
@@ -470,8 +501,8 @@ function runSpring(
  * certainly not well-named, and it may not be meaningful at all.
  */
 type DragParamsInfo<T extends object> = {
-  dragParams: DragParams;
-  dragParamsCallback: (params: DragParams) => DragSpec<T>;
+  originalDragParams: DragParams;
+  dragSpecCallback: DragSpecCallback<T>;
   originalStartState: T;
   originalBehaviorCtxWithoutFloat: Omit<
     DragBehaviorInitContext<T>,
@@ -562,7 +593,7 @@ function processChainNow<T extends object>(
   const newDragSpec =
     result.chainNow.followSpec ??
     getDragSpecCallbackOnElement<T>(found.element)?.(
-      status.dragParamsInfo.dragParams,
+      status.dragParamsInfo.originalDragParams,
     );
   if (!newDragSpec) return null;
 
@@ -728,8 +759,8 @@ function postProcessForInteraction<T extends object>(
               pointer,
               null,
               {
-                dragParams,
-                dragParamsCallback: dragSpecCallback,
+                originalDragParams: dragParams,
+                dragSpecCallback,
                 originalStartState: state,
                 originalBehaviorCtxWithoutFloat: behaviorCtxWithoutFloat,
               },
