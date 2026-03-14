@@ -96,7 +96,7 @@ function makeSpringingFrom(
 type PendingDrag<T extends object> = {
   startClientPos: Vec2;
   threshold: number;
-  status: DragStatus<T> & { type: "dragging" };
+  status: DragStatusDragging<T>;
 };
 
 export type DragStatus<T extends object> = {
@@ -119,6 +119,9 @@ export type DragStatus<T extends object> = {
       specForDropZoneVis: DragSpec<T>;
     }
 );
+type DragStatusDragging<T extends object> = DragStatus<T> & {
+  type: "dragging";
+};
 
 // # Component
 
@@ -461,6 +464,11 @@ function runSpring(
   return lerped;
 }
 
+/**
+ * TODO: This is a BS type made by Claude, in the process of
+ * supporting changing DragParams (modifier key state). It's
+ * certainly not well-named, and it may not be meaningful at all.
+ */
 type DragParamsInfo<T extends object> = {
   dragParams: DragParams;
   dragParamsCallback: (params: DragParams) => DragSpec<T>;
@@ -482,10 +490,7 @@ function advanceFrame<T extends object>(
     const result = status.behavior(frame);
 
     // Handle chaining: restart drag from new state
-    const updatedDs: DragStatus<T> & { type: "dragging" } = {
-      ...status,
-      result,
-    };
+    const updatedDs: DragStatusDragging<T> = { ...status, result };
     const chained = processChainNow(updatedDs, frame);
     if (chained) return chained;
 
@@ -529,9 +534,9 @@ function advanceFrame<T extends object>(
  * and return the new drag state. Returns null if no chaining needed.
  */
 function processChainNow<T extends object>(
-  status: DragStatus<T> & { type: "dragging" },
+  status: DragStatusDragging<T>,
   frame: DragFrame,
-): (DragStatus<T> & { type: "dragging" }) | null {
+): DragStatusDragging<T> | null {
   const result = status.result;
   if (!result.chainNow || _.isEqual(result.dropState, status.startState))
     return null;
@@ -612,7 +617,7 @@ function initDrag<T extends object>(
   pointerStart: Vec2,
   springingFrom: SpringingFrom | null,
   dragParamsInfo: DragParamsInfo<T>,
-): DragStatus<T> & { type: "dragging" } {
+): DragStatusDragging<T> {
   const { draggable, draggedId } = behaviorCtxWithoutFloat;
   let floatLayered: LayeredSvgx | null = null;
   if (draggedId) {
@@ -637,7 +642,7 @@ function initDrag<T extends object>(
   // between the two.
   const result = behavior({ ...frame, pointerStart });
 
-  const status: DragStatus<T> & { type: "dragging" } = {
+  const status: DragStatusDragging<T> = {
     type: "dragging",
     startState: state,
     behavior,
@@ -804,7 +809,7 @@ const DrawDraggingMode = memoGeneric(
     showDebugOverlay,
     pointer,
   }: {
-    status: DragStatus<T> & { type: "dragging" };
+    status: DragStatusDragging<T>;
     showDebugOverlay?: boolean;
     pointer?: Vec2;
   }) => {

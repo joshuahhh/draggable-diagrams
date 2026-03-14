@@ -60,6 +60,15 @@ export type SetState<T> = (
 
 // # drag
 
+/**
+ * A drag spec callback (dragology value) is provided with DragParams
+ * input. Although you generally think of the callback as being
+ * called only at drag start, it's actually reactive to changes in
+ * these params – if these params change the drag will be
+ * re-initialized.
+ *
+ * (So far, this is just modifier key state.)
+ */
 export type DragParams = {
   altKey: boolean;
   ctrlKey: boolean;
