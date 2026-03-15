@@ -92,10 +92,7 @@ function SpecNode<T>({ spec, path }: { spec: DragSpecData<T>; path: string }) {
     );
   } else if (spec.type === "vary") {
     const { active, color, traceInfo } = info(spec);
-    const paramNames = spec.paramPaths.map((p) => {
-      const last = p[p.length - 1];
-      return typeof last === "string" ? last : String(last);
-    });
+    const paramNames = spec.paramPaths.map((p) => p.join("."));
     const constraintSrc = spec.options.constraint
       ? truncate(spec.options.constraint.toString(), 60)
       : null;
