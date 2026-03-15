@@ -354,7 +354,6 @@ function varyBehavior<T extends object>(
       true,
     );
     const found = findByPath(ctx.draggedPath, content);
-    console.log("getElementPos", params, candidateState, found, ctx.draggedId);
     if (!found) return Vec2(Infinity, Infinity);
     return localToGlobal(found.accumulatedTransform, ctx.pointerLocal);
   };
@@ -758,12 +757,9 @@ function reactToBehavior<T extends object>(
   let innerBehavior: DragBehavior<T>;
   let changeCount = 0;
 
-  console.log("initting react-to", new Error().stack);
-
   return (frame) => {
     const value = iterator.next().value;
     if (value !== lastValue) {
-      console.log("new value", value, changeCount);
       lastValue = value;
       changeCount++;
       innerBehavior = dragSpecToBehavior(callback(value), ctx);

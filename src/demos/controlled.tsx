@@ -135,15 +135,11 @@ const DoubleSwitchDemo = ({ handlerName }: DemoProps) => {
 const RejectionDemo = ({ handlerName }: DemoProps) => {
   const [state, setState] = useState<SwitchState>({ value: false });
 
-  const onDropState = useCallback(
-    (newState: SwitchState) => {
-      console.log("onDropState", newState, "old was", state.value);
-      if (newState.value === true) {
-        setState(newState);
-      }
-    },
-    [state.value],
-  );
+  const onDropState = useCallback((newState: SwitchState) => {
+    if (newState.value === true) {
+      setState(newState);
+    }
+  }, []);
 
   return (
     <>
