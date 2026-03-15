@@ -327,6 +327,13 @@ function SpecNode<T>({ spec, path }: { spec: DragSpecData<T>; path: string }) {
         )}
       </Box>
     );
+  } else if (spec.type === "with-init-context") {
+    const { childPath } = info(spec);
+    return (
+      <Box label="withInitContext">
+        <SpecNode spec={spec.inner} path={childPath} />
+      </Box>
+    );
   } else {
     assertNever(spec);
   }

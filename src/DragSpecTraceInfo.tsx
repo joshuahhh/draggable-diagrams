@@ -48,6 +48,7 @@ export type DragSpecTraceInfoByType = {
     changeCount: number;
     tracedInner: DragSpecData<any>;
   };
+  "with-init-context": Record<string, never>;
 };
 
 /** Get typed trace info from a spec node, or undefined if not annotated. */
@@ -244,6 +245,7 @@ export function debugOverlay<T>(
     case "with-drop-transition":
     case "with-branch-transition":
     case "with-chaining":
+    case "with-init-context":
       return debugOverlay(spec.inner, pointer);
 
     case "switch-to-state-and-follow":

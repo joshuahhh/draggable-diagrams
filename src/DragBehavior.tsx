@@ -131,6 +131,8 @@ export function dragSpecToBehavior<T extends object>(
       return substateBehavior(spec, ctx);
     case "react-to":
       return reactToBehavior(spec, ctx);
+    case "with-init-context":
+      return withInitContextBehavior(spec, ctx);
     default:
       assertNever(spec);
   }
@@ -867,6 +869,22 @@ function reactToBehavior<T extends object>(
         changeCount,
         tracedInner: result.tracedSpec,
       }),
+    };
+  };
+}
+
+function withInitContextBehavior<T extends object>(
+  spec: DragSpecData<T> & { type: "with-init-context" },
+  ctx: DragBehaviorInitContext<T>,
+): DragBehavior<T> {
+  const newCtx = spec.f(ctx);
+  const subBehavior = dragSpecToBehavior(spec.inner, newCtx);
+  return (frame) => {
+    const result = subBehavior(frame);
+    return {
+      ...result,
+      activePath: `with-init-context/${result.activePath}`,
+      tracedSpec: { ...spec, inner: result.tracedSpec },
     };
   };
 }

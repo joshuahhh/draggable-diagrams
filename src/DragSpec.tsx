@@ -1,4 +1,5 @@
 import { SVGProps } from "react";
+import type { DragBehaviorInitContext } from "./DragBehavior";
 import { PathIn, ValueAtPath, getAtPath } from "./paths";
 import {
   Transition,
@@ -88,6 +89,11 @@ export type DragSpecData<T> = {
       type: "react-to";
       iterator: Iterator<unknown>;
       callback: (value: any) => DragSpec<T>;
+    }
+  | {
+      type: "with-init-context";
+      inner: DragSpecData<T>;
+      f: (ctx: any) => any;
     }
 );
 
@@ -204,6 +210,15 @@ export interface DragSpecMethods<T> {
    * Like `onDrop`, but the function's output is actually displayed.
    */
   during(fn: (state: T) => T): DragSpec<T>;
+
+  /**
+   * Transform the DragBehaviorInitContext before the inner spec is
+   * initialized. Use this to override things like `pointerLocal` or
+   * `draggedPath` for child behaviors.
+   */
+  withInitContext(
+    f: (ctx: DragBehaviorInitContext<T & object>) => DragBehaviorInitContext<T & object>,
+  ): DragSpec<T>;
 }
 
 const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
@@ -261,6 +276,9 @@ const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
   },
   during(fn) {
     return attachMethods({ type: "during", inner: this, duringFn: fn });
+  },
+  withInitContext(f) {
+    return attachMethods({ type: "with-init-context", inner: this, f });
   },
 };
 
