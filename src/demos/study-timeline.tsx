@@ -51,7 +51,9 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => (
               .closest(
                 _.range(NUM_TRACKS).map((t) =>
                   d.vary(
-                    produce(state, (draft) => {
+                    // TODO: produce needs <State> here so that type
+                    // of param works; very strange
+                    produce<State>(state, (draft) => {
                       draft.blocks[i].track = t;
                     }),
                     param("blocks", i, "pos"),

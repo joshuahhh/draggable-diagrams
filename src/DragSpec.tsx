@@ -349,7 +349,10 @@ export class DragSpecBuilder<T> {
     return attachMethods({
       type: "vary",
       state,
-      paramPaths: manyToArray(paramPaths).map(resolveVaryPath) as PathIn<T, number>[],
+      paramPaths: manyToArray(paramPaths).map(resolveVaryPath) as PathIn<
+        T,
+        number
+      >[],
       options: (options ?? {}) as VaryOptions<T>,
     });
   }
