@@ -1,6 +1,7 @@
 import { demo } from "../demo";
 import { DemoDraggable, DemoLink, DemoNotes } from "../demo/ui";
 import { Draggable } from "../draggable";
+import { param } from "../DragSpec";
 import { altKey } from "../modifierKeys";
 import { translate } from "../svgx/helpers";
 import { makeId } from "../utils";
@@ -37,10 +38,7 @@ const draggable: Draggable<State> = ({ state, d, setState }) => (
         }}
         dragology={() => {
           const moveDot = (s: State, dotId: string) =>
-            d.vary(s, [
-              ["dots", dotId, "x"],
-              ["dots", dotId, "y"],
-            ]);
+            d.vary(s, [param("dots", dotId, "x"), param("dots", dotId, "y")]);
 
           return d.reactTo(altKey, (altKey) => {
             if (altKey) {

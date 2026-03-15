@@ -2,6 +2,7 @@ import _ from "lodash";
 import { demo } from "../demo";
 import { DemoDraggable, DemoNotes } from "../demo/ui";
 import { Draggable } from "../draggable";
+import { param } from "../DragSpec";
 import { translate } from "../svgx/helpers";
 
 // --- Types ---
@@ -152,8 +153,8 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
               dragology={() =>
                 d
                   .vary(state, [
-                    ["piles", pileId, "x"],
-                    ["piles", pileId, "y"],
+                    param("piles", pileId, "x"),
+                    param("piles", pileId, "y"),
                   ])
                   .during(recomputePiles)
               }
@@ -180,8 +181,8 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
               dragology={() =>
                 d
                   .vary(state, [
-                    ["piles", pileId, "cards", cardId, "dx"],
-                    ["piles", pileId, "cards", cardId, "dy"],
+                    param("piles", pileId, "cards", cardId, "dx"),
+                    param("piles", pileId, "cards", cardId, "dy"),
                   ])
                   .during(recomputePiles)
               }

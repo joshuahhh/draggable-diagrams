@@ -343,13 +343,13 @@ export class DragSpecBuilder<T> {
    */
   vary<S extends T>(
     state: S,
-    paramPaths: NoInfer<PathIn<S, number>>[],
+    paramPaths: Many<VaryPath<S>>,
     options?: VaryOptions<S>,
   ): DragSpec<T> {
     return attachMethods({
       type: "vary",
       state,
-      paramPaths: paramPaths as PathIn<T, number>[],
+      paramPaths: manyToArray(paramPaths).map(resolveVaryPath) as PathIn<T, number>[],
       options: (options ?? {}) as VaryOptions<T>,
     });
   }
@@ -432,3 +432,17 @@ export type VaryOptions<T> = {
 };
 
 export { and, equal, lessThan, moreThan } from "./math/optimization";
+
+// # VaryPath
+
+const VARY_PATH = Symbol("VaryPath");
+
+export type VaryPath<T> = { [VARY_PATH]: PathIn<T, number> };
+
+export function param<T>(...segments: PathIn<T, number>): VaryPath<T> {
+  return { [VARY_PATH]: segments };
+}
+
+export function resolveVaryPath<T>(p: VaryPath<T>): PathIn<T, number> {
+  return p[VARY_PATH];
+}

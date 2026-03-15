@@ -15,7 +15,7 @@ export type {
 export type { Draggable, DraggableProps, SetState } from "./draggable";
 
 // DragSpec & builder
-export { and, lessThan, moreThan } from "./DragSpec";
+export { and, lessThan, moreThan, param } from "./DragSpec";
 export type {
   DragSpec,
   DragSpecBuilder,

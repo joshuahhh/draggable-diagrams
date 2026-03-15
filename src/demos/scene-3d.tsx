@@ -7,7 +7,7 @@ import {
   DemoWithConfig,
 } from "../demo/ui";
 import { Draggable } from "../draggable";
-import { lessThan } from "../DragSpec";
+import { lessThan, param } from "../DragSpec";
 import { translate } from "../svgx/helpers";
 
 // A simple 3D scene: draggable colored boxes on a ground grid.
@@ -194,10 +194,7 @@ function makeDraggable(
               dragology={() =>
                 d.vary(
                   state,
-                  [
-                    ["boxes", key, "x"],
-                    ["boxes", key, "z"],
-                  ],
+                  [param("boxes", key, "x"), param("boxes", key, "z")],
                   {
                     constraint: (s) => {
                       const box = s.boxes[key];

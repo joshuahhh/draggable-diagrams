@@ -3,7 +3,7 @@ import _ from "lodash";
 import { demo } from "../demo";
 import { DemoDraggable } from "../demo/ui";
 import { Draggable } from "../draggable";
-import { lessThan } from "../DragSpec";
+import { lessThan, param } from "../DragSpec";
 import { translate } from "../svgx/helpers";
 
 type Block = { id: string; pos: number; track: number; color: string };
@@ -54,7 +54,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => (
                     produce(state, (draft) => {
                       draft.blocks[i].track = t;
                     }),
-                    [["blocks", i, "pos"]],
+                    param("blocks", i, "pos"),
                     {
                       constraint: (s) => [
                         lessThan(0, s.blocks[i].pos),

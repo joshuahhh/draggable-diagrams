@@ -1,7 +1,7 @@
 import { demo } from "../demo";
 import { DemoDraggable } from "../demo/ui";
 import { Draggable } from "../draggable";
-import { lessThan } from "../DragSpec";
+import { lessThan, param } from "../DragSpec";
 import { Vec2 } from "../math/vec2";
 import { translate } from "../svgx/helpers";
 
@@ -37,7 +37,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
         r={14}
         fill="black"
         dragology={() =>
-          d.vary(state, [["x"], ["y"]], {
+          d.vary(state, [param("x"), param("y")], {
             constraint: (s) => lessThan(center.dist2(s), radius ** 2),
           })
         }

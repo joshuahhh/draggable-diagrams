@@ -1,7 +1,14 @@
 import { useCallback, useState } from "react";
 import { demo } from "../demo";
 import { DemoNotes } from "../demo/ui";
-import { and, Draggable, DraggableRenderer, lessThan, translate } from "../lib";
+import {
+  and,
+  Draggable,
+  DraggableRenderer,
+  lessThan,
+  param,
+  translate,
+} from "../lib";
 
 type SwitchState = {
   value: boolean;
@@ -57,7 +64,7 @@ const sliderDraggable: Draggable<SliderState> = ({ state, d }) => (
       transform={translate(state.t * 100, 10)}
       r={8}
       dragology={() =>
-        d.vary(state, [["t"]], {
+        d.vary(state, param("t"), {
           constraint: (s) => and(lessThan(0, s.t), lessThan(s.t, 1)),
         })
       }

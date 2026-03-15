@@ -2,7 +2,7 @@ import { produce } from "immer";
 import { demo } from "../demo";
 import { DemoDraggable } from "../demo/ui";
 import { Draggable } from "../draggable";
-import { lessThan } from "../DragSpec";
+import { lessThan, param } from "../DragSpec";
 import { Vec2 } from "../math/vec2";
 import { translate } from "../svgx/helpers";
 
@@ -72,8 +72,8 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
               data-z-index={isCircleDragged ? 2 : 1}
               dragology={() =>
                 d.vary(state, [
-                  ["circles", circleIdx, "x"],
-                  ["circles", circleIdx, "y"],
+                  param("circles", circleIdx, "x"),
+                  param("circles", circleIdx, "y"),
                 ])
               }
             />
@@ -103,10 +103,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
 
           return d.vary(
             stateInCircle,
-            [
-              ["points", pointIdx, "dx"],
-              ["points", pointIdx, "dy"],
-            ],
+            [param("points", pointIdx, "dx"), param("points", pointIdx, "dy")],
             {
               constraint: (s) => {
                 const p = s.points[pointIdx];

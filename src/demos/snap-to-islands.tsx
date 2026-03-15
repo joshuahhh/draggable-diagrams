@@ -1,6 +1,7 @@
 import { demo } from "../demo";
 import { DemoDraggable, DemoNotes } from "../demo/ui";
 import { Draggable } from "../draggable";
+import { param } from "../DragSpec";
 import { translate } from "../svgx/helpers";
 
 type State =
@@ -44,7 +45,9 @@ const draggable: Draggable<State> = ({ state, d }) => (
             { type: "on-island", island: "B" },
           ])
           .withFloating()
-          .whenFar(d.vary({ type: "floating", x: 0, y: 0 }, [["x"], ["y"]]))
+          .whenFar(
+            d.vary({ type: "floating", x: 0, y: 0 }, [param("x"), param("y")]),
+          )
       }
     />
   </g>

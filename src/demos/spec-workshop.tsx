@@ -3,7 +3,7 @@ import React from "react";
 import { demo } from "../demo";
 import { DemoDraggable } from "../demo/ui";
 import { Draggable } from "../draggable";
-import { DragSpec, DragSpecBuilder, lessThan } from "../DragSpec";
+import { DragSpec, DragSpecBuilder, lessThan, param } from "../DragSpec";
 import { translate } from "../svgx/helpers";
 import { makeId } from "../utils";
 
@@ -265,8 +265,8 @@ function nodeDrag(
   targets.push(d.dropTarget(deleted, "trash-bin"));
 
   const free = d.vary(base, [
-    ["nodes", nid, "x"],
-    ["nodes", nid, "y"],
+    param("nodes", nid, "x"),
+    param("nodes", nid, "y"),
   ]);
 
   return d.closest(targets).whenFar(free, { distance: 40 });
@@ -671,7 +671,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
           style={{ cursor: "ew-resize" }}
           data-z-index={parentDragged ? 11 : 2}
           dragology={() =>
-            d.vary(state, [["nodes", parentId, "expr", "radius"]], {
+            d.vary(state, param("nodes", parentId, "expr", "radius"), {
               constraint: (s: State) => {
                 const expr = s.nodes[parentId].expr as WithSnapRadiusExpr;
                 return [lessThan(0, expr.radius), lessThan(expr.radius, 30)];

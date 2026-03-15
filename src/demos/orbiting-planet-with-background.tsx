@@ -1,5 +1,6 @@
 import { DemoDraggable } from "../demo/ui";
 import { Draggable } from "../draggable";
+import { param } from "../DragSpec";
 
 import { demo } from "../demo";
 import { translate } from "../svgx/helpers";
@@ -80,12 +81,15 @@ const draggable: Draggable<State> = ({ state, d }) => {
               STARS.map((_, starIdx) =>
                 d.vary(
                   { mode: "orbiting" as const, currentStar: starIdx, angle },
-                  [["angle"]],
+                  param("angle"),
                 ),
               ),
             )
             .whenFar(
-              d.vary({ mode: "free", x: planetX, y: planetY }, [["x"], ["y"]]),
+              d.vary({ mode: "free", x: planetX, y: planetY }, [
+                param("x"),
+                param("y"),
+              ]),
               { distance: 50 },
             );
         }}

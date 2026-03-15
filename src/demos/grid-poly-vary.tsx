@@ -3,6 +3,7 @@ import _ from "lodash";
 import { demo } from "../demo";
 import { DemoDraggable, DemoNotes } from "../demo/ui";
 import { Draggable } from "../draggable";
+import { param } from "../DragSpec";
 import { Vec2 } from "../math/vec2";
 import { translate } from "../svgx/helpers";
 
@@ -53,8 +54,8 @@ const draggable: Draggable<State> = ({ state, d }) => {
           dragology={() =>
             d
               .vary(state, [
-                ["points", idx, "x"],
-                ["points", idx, "y"],
+                param("points", idx, "x"),
+                param("points", idx, "y"),
               ])
               .during(
                 produce((d) => {

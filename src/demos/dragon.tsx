@@ -9,6 +9,7 @@ import {
   DemoWithConfig,
 } from "../demo/ui";
 import { Draggable } from "../draggable";
+import { param } from "../DragSpec";
 import { Vec2 } from "../math/vec2";
 import { Svgx } from "../svgx";
 import { translate } from "../svgx/helpers";
@@ -48,7 +49,7 @@ function makeDraggable(levels: number): Draggable<State> {
             stroke="black"
             strokeWidth={4}
             strokeLinecap="round"
-            dragology={() => d.vary(state, [["squareness"]])}
+            dragology={() => d.vary(state, param("squareness"))}
           />,
         ];
       } else {
@@ -74,10 +75,7 @@ function makeDraggable(levels: number): Draggable<State> {
           r={8}
           fill="red"
           dragology={() =>
-            d.vary(state, [
-              ["from", "x"],
-              ["from", "y"],
-            ])
+            d.vary(state, [param("from", "x"), param("from", "y")])
           }
         />
         <circle
@@ -85,12 +83,7 @@ function makeDraggable(levels: number): Draggable<State> {
           transform={translate(state.to)}
           r={8}
           fill="blue"
-          dragology={() =>
-            d.vary(state, [
-              ["to", "x"],
-              ["to", "y"],
-            ])
-          }
+          dragology={() => d.vary(state, [param("to", "x"), param("to", "y")])}
         />
       </g>
     );

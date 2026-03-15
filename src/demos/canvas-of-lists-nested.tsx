@@ -4,6 +4,7 @@ import { amb, produceAmb } from "../amb";
 import { demo } from "../demo";
 import { DemoDraggable, DemoNotes } from "../demo/ui";
 import { Draggable } from "../draggable";
+import { param } from "../DragSpec";
 import { getAtPath, PathIn } from "../paths";
 import { translate } from "../svgx/helpers";
 
@@ -130,8 +131,8 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
         .withFloating()
         .whenFar(
           d.vary(stateWithTopRow, [
-            ["rows", stateWithTopRow.rows.length - 1, "x"],
-            ["rows", stateWithTopRow.rows.length - 1, "y"],
+            param("rows", stateWithTopRow.rows.length - 1, "x"),
+            param("rows", stateWithTopRow.rows.length - 1, "y"),
           ]),
         );
     };

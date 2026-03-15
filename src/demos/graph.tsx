@@ -3,6 +3,7 @@ import { amb, produceAmb, require } from "../amb";
 import { arrowhead } from "../arrows";
 import { DemoDraggable } from "../demo/ui";
 import { Draggable } from "../draggable";
+import { param } from "../DragSpec";
 
 import { demo } from "../demo";
 import { Vec2 } from "../math/vec2";
@@ -124,10 +125,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
           r={NODE_R}
           fill="black"
           dragology={() =>
-            d.vary(state, [
-              ["nodes", key, "x"],
-              ["nodes", key, "y"],
-            ])
+            d.vary(state, [param("nodes", key, "x"), param("nodes", key, "y")])
           }
         />
       ))}

@@ -4,6 +4,7 @@ import { amb, produceAmb } from "../amb";
 import { demo } from "../demo";
 import { DemoDraggable, DemoNotes } from "../demo/ui";
 import { Draggable } from "../draggable";
+import { param } from "../DragSpec";
 import { translate } from "../svgx/helpers";
 
 type State = {
@@ -82,8 +83,8 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
             data-z-index={isDragged ? 10 : 0}
             dragology={() =>
               d.vary(state, [
-                ["rows", rowId, "x"],
-                ["rows", rowId, "y"],
+                param("rows", rowId, "x"),
+                param("rows", rowId, "y"),
               ])
             }
           >
@@ -156,8 +157,8 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                     .withFloating()
                     .whenFar(
                       d.vary(stateWithNewRow, [
-                        ["rows", newRowId, "x"],
-                        ["rows", newRowId, "y"],
+                        param("rows", newRowId, "x"),
+                        param("rows", newRowId, "y"),
                       ]),
                     );
                 }}

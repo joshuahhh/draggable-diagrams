@@ -2,6 +2,7 @@ import { produce } from "immer";
 import { demo } from "../demo";
 import { DemoDraggable } from "../demo/ui";
 import { Draggable } from "../draggable";
+import { param } from "../DragSpec";
 import { translate } from "../svgx/helpers";
 
 const NODE_W = 90;
@@ -117,8 +118,8 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
       draft.wires[wireId][endKey] = { type: "free", x: px, y: py };
     });
     let varySpec = d.vary(freeState, [
-      ["wires", wireId, endKey, "x"],
-      ["wires", wireId, endKey, "y"],
+      param("wires", wireId, endKey, "x"),
+      param("wires", wireId, endKey, "y"),
     ]);
     if (
       freeState.wires[wireId].from.type === "free" &&
@@ -195,8 +196,8 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
             data-z-index={draggedId === `node-${nid}` ? 5 : 1}
             dragology={() =>
               d.vary(state, [
-                ["nodes", nid, "x"],
-                ["nodes", nid, "y"],
+                param("nodes", nid, "x"),
+                param("nodes", nid, "y"),
               ])
             }
           >

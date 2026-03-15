@@ -4,6 +4,7 @@ import { amb, produceAmb } from "../amb";
 import { demo } from "../demo";
 import { DemoDraggable } from "../demo/ui";
 import { Draggable } from "../draggable";
+import { param } from "../DragSpec";
 import { getAtPath, PathIn } from "../paths";
 import { translate } from "../svgx/helpers";
 
@@ -117,8 +118,8 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
       });
 
       const varySpec = d.vary(stateWithTopBox, [
-        ["boxes", stateWithTopBox.boxes.length - 1, "x"],
-        ["boxes", stateWithTopBox.boxes.length - 1, "y"],
+        param("boxes", stateWithTopBox.boxes.length - 1, "x"),
+        param("boxes", stateWithTopBox.boxes.length - 1, "y"),
       ]);
 
       if (statesWith.length === 0) {

@@ -1,8 +1,7 @@
 import { demo } from "../demo";
 import { DemoDraggable, DemoNotes } from "../demo/ui";
 import { Draggable } from "../draggable";
-import { lessThan, moreThan } from "../DragSpec";
-import { PathIn } from "../paths";
+import { VaryPath, lessThan, moreThan, param } from "../DragSpec";
 import { translate } from "../svgx/helpers";
 
 type State = {
@@ -19,7 +18,12 @@ const HEIGHT = 300;
 const HANDLE_HIT = 14;
 const CORNER_SIZE = 18;
 
-const PARAMS: PathIn<State, number>[] = [["x"], ["y"], ["w"], ["h"]];
+const PARAMS: VaryPath<State>[] = [
+  param("x"),
+  param("y"),
+  param("w"),
+  param("h"),
+];
 const L = (s: State) => s.x;
 const R = (s: State) => s.x + s.w;
 const T = (s: State) => s.y;
@@ -62,7 +66,9 @@ const draggable: Draggable<State> = ({ state, d }) => {
         strokeWidth={2}
         rx={6}
         style={{ cursor: "grab" }}
-        dragology={() => d.vary(state, [["x"], ["y"]], { constraint })}
+        dragology={() =>
+          d.vary(state, [param("x"), param("y")], { constraint })
+        }
       />
 
       {/* ---- Edges ---- */}
