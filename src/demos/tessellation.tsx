@@ -350,38 +350,35 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
 
       {/* Palette items */}
       <g id="palette" data-z-index={20}>
-        {PALETTE_ITEMS.map((item, i) => {
-          const newId = makeId();
-          const newShape: Shape = {
-            id: newId,
-            kind: item.kind,
-            x: 0,
-            y: 0,
-            rotDeg: 0,
-          };
-          const stateWithNew = produce(state, (draft) => {
-            draft.shapes[newId] = newShape;
-          });
-
-          return (
-            <g
-              id={`palette-${i}`}
-              transform={translate(item.x, item.y)}
-              data-z-index={21}
-              dragology={() =>
-                d.switchToStateAndFollow(stateWithNew, `shape-${newId}`)
-              }
-            >
-              <polygon
-                points={shapePoints(item.kind)}
-                fill={SHAPE_COLORS[item.kind]}
-                stroke={SHAPE_STROKES[item.kind]}
-                strokeWidth={2}
-                opacity={0.8}
-              />
-            </g>
-          );
-        })}
+        {PALETTE_ITEMS.map((item, i) => (
+          <g
+            id={`palette-${i}`}
+            transform={translate(item.x, item.y)}
+            data-z-index={21}
+            dragology={() => {
+              const newId = makeId();
+              const newShape: Shape = {
+                id: newId,
+                kind: item.kind,
+                x: 0,
+                y: 0,
+                rotDeg: 0,
+              };
+              const stateWithNew = produce(state, (draft) => {
+                draft.shapes[newId] = newShape;
+              });
+              return d.switchToStateAndFollow(stateWithNew, `shape-${newId}`);
+            }}
+          >
+            <polygon
+              points={shapePoints(item.kind)}
+              fill={SHAPE_COLORS[item.kind]}
+              stroke={SHAPE_STROKES[item.kind]}
+              strokeWidth={2}
+              opacity={0.8}
+            />
+          </g>
+        ))}
       </g>
     </g>
   );
