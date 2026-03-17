@@ -23,15 +23,20 @@ export const NaturalNeighborTestPage = () => {
   const [dragging, setDragging] = useState<number | null>(null);
   const [queryPoint, setQueryPoint] = useState<Dot>({ x: 250, y: 200 });
   const [draggingQuery, setDraggingQuery] = useState(false);
+  const [projectOutside, setProjectOutside] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
 
   const points = dots.map((d) => Vec2(d.x, d.y));
+
+  const t0 = performance.now();
 
   // Compute weight grid for the selected dot.
   const grid: { x: number; y: number; weight: number }[] = [];
   for (let x = GRID_STEP; x < WIDTH; x += GRID_STEP) {
     for (let y = GRID_STEP; y < HEIGHT; y += GRID_STEP) {
-      const result = naturalNeighborWeights(points, Vec2(x, y));
+      const result = naturalNeighborWeights(points, Vec2(x, y), {
+        projectOutside,
+      });
       let weight = 0;
       if (result && "weights" in result) {
         weight = result.weights.get(selectedIdx) ?? 0;
@@ -46,6 +51,7 @@ export const NaturalNeighborTestPage = () => {
   const queryResult = naturalNeighborWeights(
     points,
     Vec2(queryPoint.x, queryPoint.y),
+    { projectOutside },
   );
   const queryWeights: { idx: number; weight: number }[] = [];
   if (queryResult && "weights" in queryResult) {
@@ -55,6 +61,8 @@ export const NaturalNeighborTestPage = () => {
   } else if (queryResult && "coincidentIndex" in queryResult) {
     queryWeights.push({ idx: queryResult.coincidentIndex, weight: 1 });
   }
+
+  const renderMs = performance.now() - t0;
 
   const getSvgPoint = useCallback((e: React.PointerEvent) => {
     const svg = svgRef.current!;
@@ -105,8 +113,16 @@ export const NaturalNeighborTestPage = () => {
       <p>
         Drag dots. Last dragged = selected (highlighted). Grid color = weight
         assigned to selected dot. Drag the green query point to see weight
-        breakdown.
+        breakdown. Render: {renderMs.toFixed(1)}ms
       </p>
+      <label>
+        <input
+          type="checkbox"
+          checked={projectOutside}
+          onChange={(e) => setProjectOutside(e.target.checked)}
+        />{" "}
+        Project outside hull
+      </label>
       <div style={{ display: "flex", gap: 20 }}>
         <svg
           ref={svgRef}

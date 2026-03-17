@@ -39,7 +39,7 @@ function prevHe(e: number): number {
 export function naturalNeighborWeights(
   points: Vec2[],
   query: Vec2,
-  coincidenceTolerance2 = 1e-20,
+  opts?: { projectOutside?: boolean; coincidenceTolerance2?: number },
 ): NaturalNeighborResult | { coincidentIndex: number } | null {
   const n = points.length;
   if (n < 3) return null;
@@ -51,11 +51,7 @@ export function naturalNeighborWeights(
   }
 
   const delaunay = new D3Delaunay(flat);
-  return naturalNeighborWeightsFromDelaunay(
-    delaunay,
-    query,
-    coincidenceTolerance2,
-  );
+  return naturalNeighborWeightsFromDelaunay(delaunay, query, opts);
 }
 
 /**
@@ -64,12 +60,14 @@ export function naturalNeighborWeights(
 export function naturalNeighborWeightsFromDelaunay(
   delaunay: D3Delaunay<Float64Array>,
   query: Vec2,
-  coincidenceTolerance2 = 1e-20,
+  opts?: { projectOutside?: boolean; coincidenceTolerance2?: number },
 ): NaturalNeighborResult | { coincidentIndex: number } | null {
+  const coincidenceTolerance2 = opts?.coincidenceTolerance2 ?? 1e-20;
+  const projectOutside = opts?.projectOutside ?? false;
   const points = delaunay.points as Float64Array;
   const { triangles, halfedges } = delaunay;
-  const qx = query.x;
-  const qy = query.y;
+  let qx = query.x;
+  let qy = query.y;
 
   // Check coincidence with nearest vertex.
   const nearest = delaunay.find(qx, qy);
@@ -100,7 +98,43 @@ export function naturalNeighborWeightsFromDelaunay(
 
   // Find the enclosing triangle.
   const encTri = findEnclosingTriangle(delaunay, nearest, qx, qy);
-  if (encTri === -1) return null; // outside convex hull
+  if (encTri === -1) {
+    if (!projectOutside) return null;
+
+    // Project onto the nearest point on the convex hull boundary.
+    const proj = projectOntoHull(delaunay, qx, qy);
+    if (proj === null) return null;
+    qx = proj.x;
+    qy = proj.y;
+
+    // Re-check coincidence after projection.
+    const nearest2 = delaunay.find(qx, qy);
+    const dx2 = points[2 * nearest2] - qx;
+    const dy2 = points[2 * nearest2 + 1] - qy;
+    if (dx2 * dx2 + dy2 * dy2 < coincidenceTolerance2) {
+      return { coincidentIndex: nearest2 };
+    }
+
+    // After projection we're on a hull edge.
+    const hullEdge2 = findHullEdge(delaunay, qx, qy);
+    if (hullEdge2 !== null) {
+      const [iA, iB] = hullEdge2;
+      const ax = points[2 * iA],
+        ay = points[2 * iA + 1];
+      const bx = points[2 * iB],
+        by = points[2 * iB + 1];
+      const abx = bx - ax,
+        aby = by - ay;
+      const ab2 = abx * abx + aby * aby;
+      const t = ab2 > 0 ? ((qx - ax) * abx + (qy - ay) * aby) / ab2 : 0.5;
+      const weights = new Map<number, number>();
+      weights.set(iA, 1 - t);
+      weights.set(iB, t);
+      return { weights, barycentricDeviation: 0 };
+    }
+
+    return null;
+  }
 
   // Find the Bowyer-Watson cavity: all triangles whose circumcircle contains query.
   // Use >= 0 (non-strict) so points exactly on circumcircle boundaries are included.
@@ -327,6 +361,53 @@ export function naturalNeighborWeightsFromDelaunay(
  * Find the triangle index containing (qx, qy), starting from the nearest vertex.
  * Returns -1 if outside the convex hull.
  */
+/**
+ * Project (qx, qy) onto the nearest point on the convex hull boundary.
+ */
+function projectOntoHull(
+  delaunay: D3Delaunay<Float64Array>,
+  qx: number,
+  qy: number,
+): { x: number; y: number } | null {
+  const points = delaunay.points as Float64Array;
+  const hull: Uint32Array = delaunay.hull as any;
+  if (hull.length < 2) return null;
+
+  let bestDist2 = Infinity;
+  let bestX = 0;
+  let bestY = 0;
+
+  for (let i = 0; i < hull.length; i++) {
+    const iA = hull[i];
+    const iB = hull[(i + 1) % hull.length];
+    const ax = points[2 * iA],
+      ay = points[2 * iA + 1];
+    const bx = points[2 * iB],
+      by = points[2 * iB + 1];
+    const abx = bx - ax,
+      aby = by - ay;
+    const ab2 = abx * abx + aby * aby;
+
+    let t: number;
+    if (ab2 < 1e-30) {
+      t = 0;
+    } else {
+      t = Math.max(0, Math.min(1, ((qx - ax) * abx + (qy - ay) * aby) / ab2));
+    }
+
+    const px = ax + t * abx;
+    const py = ay + t * aby;
+    const d2 = (qx - px) * (qx - px) + (qy - py) * (qy - py);
+    if (d2 < bestDist2) {
+      bestDist2 = d2;
+      bestX = px;
+      bestY = py;
+    }
+  }
+
+  return { x: bestX, y: bestY };
+}
+
 /**
  * Check if (qx, qy) lies on a convex hull edge. Returns [vertA, vertB] or null.
  */

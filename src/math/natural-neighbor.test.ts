@@ -241,6 +241,19 @@ describe("naturalNeighborWeights", () => {
     expect(yRecon).toBeCloseTo(q.y, 6);
   });
 
+  it("projectOutside returns weights for query outside convex hull", () => {
+    const points = [Vec2(0, 0), Vec2(10, 0), Vec2(5, 10)];
+    // Without flag: null
+    expect(naturalNeighborWeights(points, Vec2(5, -5))).toBeNull();
+    // With flag: projects onto hull and returns weights
+    const result = naturalNeighborWeights(points, Vec2(5, -5), {
+      projectOutside: true,
+    });
+    assertIsWeights(result);
+    const sum = [...result.weights.values()].reduce((a, b) => a + b, 0);
+    expect(sum).toBeCloseTo(1, 10);
+  });
+
   // Symmetry test: for a regular polygon, querying the center should give equal weights
   it("gives equal weights at center of regular polygon", () => {
     const n = 6;
