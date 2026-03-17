@@ -309,7 +309,7 @@ function d3DelaunayCollinearIdxs(
   return (delaunay as any).collinear;
 }
 
-type ConvexHullProjection =
+export type ConvexHullProjection =
   | { type: "vertex"; ptIdx: number; projectedPt: Vec2; dist: number }
   | {
       type: "edge";

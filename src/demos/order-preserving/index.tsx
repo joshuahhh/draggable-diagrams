@@ -6,13 +6,17 @@ import { demo } from "../../demo";
 import {
   ConfigCheckbox,
   ConfigPanel,
+  ConfigSelect,
   DemoDraggable,
   DemoLink,
   DemoNotes,
   DemoWithConfig,
 } from "../../demo/ui";
 import { Draggable } from "../../draggable";
-import { type DragSpecBuilder } from "../../DragSpec";
+import {
+  type BetweenInterpolation,
+  type DragSpecBuilder,
+} from "../../DragSpec";
 import { Vec2 } from "../../math/vec2";
 import { Svgx } from "../../svgx";
 import { Finalizers, pointRef, PointRef } from "../../svgx/finalizers";
@@ -58,11 +62,13 @@ const nodeDist = (a: TreeNode, b: TreeNode) =>
 type Config = {
   oneNodeAtATime: boolean;
   showTradRep: boolean;
+  interpolation: BetweenInterpolation;
 };
 
 const defaultConfig: Config = {
   oneNodeAtATime: false,
   showTradRep: false,
+  interpolation: "natural-neighbor",
 };
 
 type State = {
@@ -158,7 +164,12 @@ function dragSpec(draggedNodeId: string, ctx: Ctx) {
   }
 
   return ctx.d
-    .between(newMorphs.map((morph) => ({ morph })))
+    .between(
+      newMorphs.map((morph) => ({ morph })),
+      {
+        interpolation: ctx.config.interpolation,
+      },
+    )
     .withSnapRadius(20, { transition: true });
 }
 
@@ -674,6 +685,12 @@ export default demo(
             >
               Show traditional representation
             </ConfigCheckbox>
+            <ConfigSelect
+              label="Interpolation"
+              value={config.interpolation}
+              onChange={(v) => setConfig((c) => ({ ...c, interpolation: v }))}
+              options={["natural-neighbor", "delaunay"] as const}
+            />
           </ConfigPanel>
         </DemoWithConfig>
       </div>

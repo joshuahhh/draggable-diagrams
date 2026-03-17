@@ -33,6 +33,8 @@ export type DragSpecTraceInfoByType = {
     outputRendered: LayeredSvgx;
     delaunayTriangles: Vec2[][];
     projectedPoint: Vec2;
+    /** Index → weight for each state contributing to the interpolation. */
+    weights: Map<number, number>;
   };
   "switch-to-state-and-follow": {
     tracedInner: DragSpecData<any>;
@@ -181,17 +183,28 @@ export function debugOverlay<T>(
               />
             );
           })}
-          {info.renderedStates.map((rs, i) => (
-            <circle
-              key={`pt-${i}`}
-              {...rs.position.cxy()}
-              r={6}
-              fill={i === info.closestIndex ? "magenta" : "none"}
-              stroke="magenta"
-              strokeWidth={1.5}
-              opacity={i === info.closestIndex ? 1 : 0.5}
-            />
-          ))}
+          {info.renderedStates.map((rs, i) => {
+            const w = info.weights.get(i) ?? 0;
+            const maxR = 8;
+            const r = Math.sqrt(w) * maxR;
+            const isDropState = i === info.closestIndex;
+            return (
+              <g key={`pt-${i}`}>
+                {/* indicator circle */}
+                <circle
+                  {...rs.position.cxy()}
+                  r={isDropState ? maxR + 4 : 4}
+                  fill="none"
+                  stroke="magenta"
+                  strokeWidth={1.5}
+                />
+                {/* weight disk */}
+                {r > 0.5 && (
+                  <circle {...rs.position.cxy()} r={r} fill="magenta" />
+                )}
+              </g>
+            );
+          })}
           <circle
             {...info.projectedPoint.cxy()}
             r={5}

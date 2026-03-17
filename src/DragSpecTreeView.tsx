@@ -225,7 +225,7 @@ function SpecNode<T>({ spec, path }: { spec: DragSpecData<T>; path: string }) {
     const allFixed = spec.specs.every((s) => s.type === "fixed");
     return (
       <Box
-        label={`between [${spec.specs.length}]`}
+        label={`between [${spec.specs.length}]${spec.interpolation ? ` (${spec.interpolation})` : ""}`}
         active={active}
         color={color}
       >

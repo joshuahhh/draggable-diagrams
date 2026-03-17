@@ -8,7 +8,12 @@ import {
 import { Chaining, DragSpecData } from "./DragSpec";
 import { setTraceInfo } from "./DragSpecTraceInfo";
 import { ErrorWithJSX } from "./ErrorBoundary";
-import { CoincidentPointsError, Delaunay } from "./math/delaunay";
+import {
+  CoincidentPointsError,
+  ConvexHullProjection,
+  Delaunay,
+} from "./math/delaunay";
+import { naturalNeighborWeightsFromDelaunay } from "./math/natural-neighbor";
 import { DistanceMinimizer } from "./math/optimization";
 import { Vec2 } from "./math/vec2";
 import { getAtPath, setAtPath } from "./paths";
@@ -30,7 +35,7 @@ import {
   LayeredSvgx,
   layeredTransform,
 } from "./svgx/layers";
-import { lerpLayered, lerpLayered3 } from "./svgx/lerp";
+import { lerpLayeredWeighted } from "./svgx/lerp";
 import { findByPath } from "./svgx/path";
 import { globalToLocal, localToGlobal, parseTransform } from "./svgx/transform";
 import { Transition } from "./transition";
@@ -629,23 +634,20 @@ function betweenProjectAndRender<T extends object>(
   const projection = delaunay.projectOntoConvexHull(frame.pointer);
   const delaunayTriangles = delaunay.triangles();
 
-  let rendered: LayeredSvgx;
-  if (projection.type === "vertex") {
-    rendered = renderedStates[projection.ptIdx].layered;
-  } else if (projection.type === "edge") {
-    rendered = lerpLayered(
-      renderedStates[projection.ptIdx0].layered,
-      renderedStates[projection.ptIdx1].layered,
-      projection.t,
-    );
+  const interpolation = spec.interpolation ?? "natural-neighbor";
+  let weights;
+  if (interpolation === "natural-neighbor") {
+    weights = naturalNeighborWeights(delaunay, frame, projection);
+  } else if (interpolation === "delaunay") {
+    weights = delaunayWeights(projection);
   } else {
-    rendered = lerpLayered3(
-      renderedStates[projection.ptIdx0].layered,
-      renderedStates[projection.ptIdx1].layered,
-      renderedStates[projection.ptIdx2].layered,
-      projection.barycentric,
-    );
+    assertNever(interpolation);
   }
+
+  const rendered = lerpLayeredWeighted(
+    renderedStates.map((rs) => rs.layered),
+    weights,
+  );
 
   // Drop state: closest rendered state by pointer distance
   const closest = _.minBy(renderedStates, (rs) =>
@@ -667,8 +669,48 @@ function betweenProjectAndRender<T extends object>(
       outputRendered: rendered,
       delaunayTriangles,
       projectedPoint: projection.projectedPt,
+      weights,
     }),
   };
+}
+
+/** Compute NNI weights, falling back to Delaunay projection weights. */
+function naturalNeighborWeights(
+  delaunay: Delaunay,
+  frame: DragFrame,
+  projection: ConvexHullProjection,
+): Map<number, number> {
+  const nniResult = naturalNeighborWeightsFromDelaunay(
+    delaunay,
+    frame.pointer,
+    { projectOutside: true },
+  );
+
+  if (nniResult) {
+    return nniResult.weights;
+  }
+
+  // NNI needs ≥3 points; fall back to Delaunay projection for 1–2 points
+  return delaunayWeights(projection);
+}
+
+/** Extract interpolation weights from a Delaunay projection result. */
+function delaunayWeights(
+  projection: ConvexHullProjection,
+): Map<number, number> {
+  const weights = new Map<number, number>();
+  if (projection.type === "vertex") {
+    weights.set(projection.ptIdx, 1);
+  } else if (projection.type === "edge") {
+    weights.set(projection.ptIdx0, 1 - projection.t);
+    weights.set(projection.ptIdx1, projection.t);
+  } else {
+    const { l0, l1, l2 } = projection.barycentric;
+    weights.set(projection.ptIdx0, l0);
+    weights.set(projection.ptIdx1, l1);
+    weights.set(projection.ptIdx2, l2);
+  }
+  return weights;
 }
 
 function betweenFixedBehavior<T extends object>(

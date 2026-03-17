@@ -30,13 +30,13 @@ function nextHe(e: number): number {
  * Compute natural neighbor (Sibson) weights for a query point.
  *
  * Returns null if the query point is outside the convex hull.
- * Returns { coincidentIndex } if query is on top of an existing vertex.
+ * Returns a single-entry weights map if query is on top of an existing vertex.
  */
 export function naturalNeighborWeights(
   inputPoints: Vec2[],
   query: Vec2,
   opts?: { projectOutside?: boolean; coincidenceTolerance2?: number },
-): NaturalNeighborResult | { coincidentIndex: number } | null {
+): NaturalNeighborResult | null {
   if (inputPoints.length < 3) return null;
   const delaunay = new Delaunay(inputPoints);
   return naturalNeighborWeightsFromDelaunay(delaunay, query, opts);
@@ -49,7 +49,7 @@ export function naturalNeighborWeightsFromDelaunay(
   delaunay: Delaunay,
   query: Vec2,
   opts?: { projectOutside?: boolean; coincidenceTolerance2?: number },
-): NaturalNeighborResult | { coincidentIndex: number } | null {
+): NaturalNeighborResult | null {
   const coincidenceTolerance2 = opts?.coincidenceTolerance2 ?? 1e-20;
   const projectOutside = opts?.projectOutside ?? false;
   const d3 = delaunay.d3;
@@ -63,7 +63,9 @@ export function naturalNeighborWeightsFromDelaunay(
   const dx = points[2 * nearest] - qx;
   const dy = points[2 * nearest + 1] - qy;
   if (dx * dx + dy * dy < coincidenceTolerance2) {
-    return { coincidentIndex: nearest };
+    const weights = new Map<number, number>();
+    weights.set(nearest, 1);
+    return { weights, barycentricDeviation: 0 };
   }
 
   // Check if query lies on a hull edge. If so, Sibson weights degenerate to
@@ -81,7 +83,9 @@ export function naturalNeighborWeightsFromDelaunay(
     // Project onto the nearest point on the convex hull boundary.
     const proj = delaunay.projectOntoConvexHull(Vec2(qx, qy));
     if (proj.type === "vertex") {
-      return { coincidentIndex: proj.ptIdx };
+      const weights = new Map<number, number>();
+      weights.set(proj.ptIdx, 1);
+      return { weights, barycentricDeviation: 0 };
     }
     if (proj.type === "edge") {
       const weights = new Map<number, number>();

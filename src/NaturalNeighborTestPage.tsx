@@ -56,10 +56,8 @@ export const NaturalNeighborTestPage = () => {
           opts,
         );
         let weight = 0;
-        if (result && "weights" in result) {
+        if (result) {
           weight = result.weights.get(selectedIdx) ?? 0;
-        } else if (result && "coincidentIndex" in result) {
-          weight = result.coincidentIndex === selectedIdx ? 1 : 0;
         }
         if (weight > 0) {
           const a = Math.round(weight * 255);
@@ -91,12 +89,10 @@ export const NaturalNeighborTestPage = () => {
     opts,
   );
   const queryWeights: { idx: number; weight: number }[] = [];
-  if (queryResult && "weights" in queryResult) {
+  if (queryResult) {
     for (const [idx, w] of queryResult.weights) {
       queryWeights.push({ idx, weight: w });
     }
-  } else if (queryResult && "coincidentIndex" in queryResult) {
-    queryWeights.push({ idx: queryResult.coincidentIndex, weight: 1 });
   }
 
   const getPoint = useCallback((e: React.PointerEvent) => {

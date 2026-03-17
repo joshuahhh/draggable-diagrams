@@ -25,7 +25,7 @@ const COLOR_PROPS = new Set([
 ]);
 
 // Color interpolator must be chosen carefully. When we do three-way
-// interpolation (via `lerpLayered3`), interpolators like
+// interpolation (via `lerpLayeredWeights`), interpolators like
 // `interpolateCubehelix` which do "shortest path between hues"
 // behave erratically. `interpolateCubehelixLong` is ok, and keeps
 // things vibrant, but it means you go through blue on the way from
@@ -500,13 +500,32 @@ export function lerpLayered(
   };
 }
 
-export function lerpLayered3(
-  a: LayeredSvgx,
-  b: LayeredSvgx,
-  c: LayeredSvgx,
-  { l0, l1, l2 }: { l0: number; l1: number; l2: number },
+/**
+ * Weighted interpolation of N LayeredSvgx values.
+ * `weights` maps index (into `items`) → weight; weights must sum to 1.
+ */
+export function lerpLayeredWeighted(
+  items: LayeredSvgx[],
+  weights: Map<number, number>,
 ): LayeredSvgx {
-  if (l0 + l1 < 1e-6) return c;
-  const ab = lerpLayered(a, b, l1 / (l0 + l1));
-  return lerpLayered(ab, c, l2);
+  // Sort entries so we fold deterministically.
+  const entries = [...weights.entries()]
+    .filter(([, w]) => w > 1e-10)
+    .sort((a, b) => a[0] - b[0]);
+
+  if (entries.length === 0) return items[0];
+  if (entries.length === 1) return items[entries[0][0]];
+
+  // Fold pairwise: accumulate = lerp(accumulate, next, next_weight / remaining_weight)
+  let acc = items[entries[0][0]];
+  let accWeight = entries[0][1];
+
+  for (let i = 1; i < entries.length; i++) {
+    const [idx, w] = entries[i];
+    const t = w / (accWeight + w);
+    acc = lerpLayered(acc, items[idx], t);
+    accWeight += w;
+  }
+
+  return acc;
 }

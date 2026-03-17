@@ -61,7 +61,11 @@ export type DragSpecData<T> = {
       inner: DragSpecData<T>;
       transition: Transition | false;
     }
-  | { type: "between"; specs: DragSpecData<T>[] }
+  | {
+      type: "between";
+      specs: DragSpecData<T>[];
+      interpolation?: BetweenInterpolation;
+    }
   | {
       type: "switch-to-state-and-follow";
       state: T;
@@ -121,6 +125,8 @@ export type Chaining<T> = {
   draggedId?: string;
   followSpec?: DragSpec<T>;
 };
+
+export type BetweenInterpolation = "delaunay" | "natural-neighbor";
 
 // # DragSpec
 
@@ -347,10 +353,17 @@ export class DragSpecBuilder<T> {
    * This drag behavior lets you interpolate smoothly between states
    * by dragging inside their convex hull.
    */
-  between(specs: Many<DragSpecLike<T>>): DragSpec<T> {
+  between(
+    specs: Many<DragSpecLike<T>>,
+    options?: { interpolation?: BetweenInterpolation },
+  ): DragSpec<T> {
     const resolved = manyToArray(specs).map(resolveDragSpecLike);
     assert(resolved.length > 0, "between requires at least one state");
-    return attachMethods({ type: "between", specs: resolved });
+    return attachMethods({
+      type: "between",
+      specs: resolved,
+      interpolation: options?.interpolation,
+    });
   }
 
   /**

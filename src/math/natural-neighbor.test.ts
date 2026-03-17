@@ -61,10 +61,12 @@ describe("naturalNeighborWeights", () => {
     expect(result.barycentricDeviation).toBeLessThan(1e-10);
   });
 
-  it("returns coincident index when query is on a vertex", () => {
+  it("returns full weight on vertex when query is coincident", () => {
     const points = [Vec2(0, 0), Vec2(10, 0), Vec2(5, 10)];
     const result = naturalNeighborWeights(points, Vec2(0, 0));
-    expect(result).toHaveProperty("coincidentIndex");
+    assertIsWeights(result);
+    expect(result.weights.get(0)).toBe(1);
+    expect(result.weights.size).toBe(1);
   });
 
   it("returns null for query outside convex hull", () => {
