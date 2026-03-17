@@ -1,5 +1,3 @@
-import { produce } from "immer";
-import _ from "lodash";
 import { useMemo, useState } from "react";
 import { demo } from "../demo";
 import {
@@ -30,6 +28,7 @@ const stages = [
   "d.closest()",
   "d.closest().withFloating()",
   "d.closest().whenFar().withFloating()",
+  "d.between()",
 ] as const;
 type Stage = (typeof stages)[number];
 
@@ -52,27 +51,27 @@ function makeDraggable(stage: Stage): Draggable<State> {
               transform={translate(p)}
               data-z-index={isDragged ? 2 : 1}
               dragology={() => {
-                const futureStates = _.range(n).map((targetIdx) =>
-                  produce(state, (draft) => {
-                    draft.beads.splice(idx, 1);
-                    draft.beads.splice(targetIdx, 0, bead);
-                  }),
-                );
+                const newStates = Array.from({ length: n }, (_, targetIdx) => {
+                  const newState = structuredClone(state);
+                  newState.beads.splice(idx, 1);
+                  newState.beads.splice(targetIdx, 0, bead);
+                  return newState;
+                });
 
                 switch (stage) {
                   case "d.closest()":
-                    return d.closest(futureStates);
+                    return d.closest(newStates);
                   case "d.closest().withFloating()":
-                    return d.closest(futureStates).withFloating();
-                  case "d.closest().whenFar().withFloating()": {
-                    const removed = produce(state, (draft) => {
-                      draft.beads.splice(idx, 1);
-                    });
+                    return d.closest(newStates).withFloating();
+                  case "d.closest().whenFar().withFloating()":
+                    const removedState = structuredClone(state);
+                    removedState.beads.splice(idx, 1);
                     return d
-                      .closest(futureStates)
-                      .whenFar(d.fixed(removed).onDrop(state))
+                      .closest(newStates)
+                      .whenFar(d.fixed(removedState).onDrop(state))
                       .withFloating();
-                  }
+                  case "d.between()":
+                    return d.between(newStates);
                   default:
                     assertNever(stage);
                 }
