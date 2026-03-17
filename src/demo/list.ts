@@ -17,7 +17,7 @@ export const demoList = [
   "canvas-of-lists-nested-vanilla",
   "two-kinds-of-tree",
   "kanban",
-  "necklace",
+  "ring-of-beads",
   "insert-and-remove",
   "insert-and-remove-2",
   "tiles",
