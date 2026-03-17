@@ -634,7 +634,7 @@ function betweenProjectAndRender<T extends object>(
   const projection = delaunay.projectOntoConvexHull(frame.pointer);
   const delaunayTriangles = delaunay.triangles();
 
-  const interpolation = spec.interpolation ?? "natural-neighbor";
+  const interpolation = spec.interpolation ?? "delaunay";
   let weights;
   if (interpolation === "natural-neighbor") {
     weights = naturalNeighborWeights(delaunay, frame, projection);
