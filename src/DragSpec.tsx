@@ -1,5 +1,5 @@
 import { SVGProps } from "react";
-import type { DragBehaviorInitContext, DragResult } from "./DragBehavior";
+import type { DragInitContext, DragResult } from "./DragBehavior";
 import { PathIn, ValueAtPath, getAtPath } from "./paths";
 import {
   Transition,
@@ -228,14 +228,12 @@ export interface DragSpecMethods<T> {
   during(fn: (state: T) => T): DragSpec<T>;
 
   /**
-   * Transform the DragBehaviorInitContext before the inner spec is
+   * Transform the DragInitContext before the inner spec is
    * initialized. Use this to override things like `pointerLocal` or
    * `draggedPath` for child behaviors.
    */
   withInitContext(
-    f: (
-      ctx: DragBehaviorInitContext<T & object>,
-    ) => DragBehaviorInitContext<T & object>,
+    f: (ctx: DragInitContext<T & object>) => DragInitContext<T & object>,
   ): DragSpec<T>;
 }
 

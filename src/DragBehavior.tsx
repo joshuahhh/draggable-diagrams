@@ -85,7 +85,7 @@ export type DragResult<T> = {
  * The information available to a drag behavior when it's being
  * created from a DragSpec.
  */
-export type DragBehaviorInitContext<T extends object> = {
+export type DragInitContext<T extends object> = {
   draggable: Draggable<T>;
   draggedPath: string;
   draggedId: string | null;
@@ -100,7 +100,7 @@ export type DragBehaviorInitContext<T extends object> = {
  */
 export function dragSpecToBehavior<T extends object>(
   spec: DragSpecData<T>,
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   switch (spec.type) {
     case "fixed":
@@ -150,7 +150,7 @@ export function dragSpecToBehavior<T extends object>(
 
 function fixedBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "fixed" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   const rendered = renderStateReadOnly(ctx, spec.state);
   const elementPos = getElementPosition(ctx, rendered);
@@ -171,7 +171,7 @@ function fixedBehavior<T extends object>(
 
 function withFloatingBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "with-floating" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   const { draggedId } = ctx;
   assert(
@@ -288,7 +288,7 @@ function withFloatingBehavior<T extends object>(
 
 function closestBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "closest" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   let fixedResult: DragResult<T> | undefined;
   if (spec.specs.length === 0) {
@@ -334,7 +334,7 @@ function closestBehavior<T extends object>(
 
 function whenFarBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "when-far" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   const foregroundBehavior = dragSpecToBehavior(spec.foreground, ctx);
   const backdropBehavior = dragSpecToBehavior(spec.background, ctx);
@@ -369,7 +369,7 @@ function whenFarBehavior<T extends object>(
 
 function onDropBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "on-drop" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   return changeResultBehaviorBase(spec, ctx, (result) => ({
     dropState:
@@ -381,7 +381,7 @@ function onDropBehavior<T extends object>(
 
 function duringBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "during" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   const subBehavior = dragSpecToBehavior(spec.inner, ctx);
   return (frame) => {
@@ -405,7 +405,7 @@ function duringBehavior<T extends object>(
 
 function varyBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "vary" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   const stateFromParams = (params: number[]): T => {
     let s = spec.state;
@@ -486,7 +486,7 @@ function varyBehavior<T extends object>(
 
 function changeResultBehaviorBase<T extends object>(
   spec: DragSpecData<T> & { inner: DragSpecData<T> },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
   f: Reader<Partial<DragResult<T>>, DragResult<T>>,
 ): DragBehavior<T> {
   const subBehavior = dragSpecToBehavior(spec.inner, ctx);
@@ -504,14 +504,14 @@ function changeResultBehaviorBase<T extends object>(
 
 function changeResultBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "change-result" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   return changeResultBehaviorBase(spec, ctx, spec.f);
 }
 
 function changeGapBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "change-gap" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   return changeResultBehaviorBase(spec, ctx, (result) => ({
     gap: spec.f(result.gap),
@@ -520,7 +520,7 @@ function changeGapBehavior<T extends object>(
 
 function withSnapRadiusBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "with-snap-radius" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   const subBehavior = dragSpecToBehavior(spec.inner, ctx);
   const radiusSq = spec.radius ** 2;
@@ -564,7 +564,7 @@ function withSnapRadiusBehavior<T extends object>(
 
 function withDropTransitionBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "with-drop-transition" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   return changeResultBehaviorBase(spec, ctx, {
     dropTransition: spec.transition,
@@ -573,7 +573,7 @@ function withDropTransitionBehavior<T extends object>(
 
 function withBranchTransitionBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "with-branch-transition" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   return changeResultBehaviorBase(spec, ctx, {
     activePathTransition: spec.transition,
@@ -582,7 +582,7 @@ function withBranchTransitionBehavior<T extends object>(
 
 function betweenBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "between" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   const allFixed = spec.specs.every((s) => s.type === "fixed");
 
@@ -595,7 +595,7 @@ function betweenBehavior<T extends object>(
 
 function betweenMakeDelaunay<T extends object>(
   renderedStates: { state: T; layered: LayeredSvgx; position: Vec2 }[],
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ) {
   try {
     return new Delaunay(renderedStates.map((rs) => rs.position));
@@ -721,7 +721,7 @@ function delaunayWeights(
 
 function betweenFixedBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "between" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   const renderedStates = spec.specs.map((s) => {
     assert(s.type === "fixed");
@@ -737,7 +737,7 @@ function betweenFixedBehavior<T extends object>(
 
 function betweenDynamicBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "between" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   const subBehaviors = spec.specs.map((s) => dragSpecToBehavior(s, ctx));
 
@@ -758,7 +758,7 @@ function betweenDynamicBehavior<T extends object>(
 
 function switchToStateAndFollowBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "switch-to-state-and-follow" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   const floatCtx = spec.draggedId
     ? extractFloatContext(
@@ -814,7 +814,7 @@ function switchToStateAndFollowBehavior<T extends object>(
 
 function dropTargetBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "drop-target" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   const rendered = renderStateReadOnly(ctx, spec.state);
   const targetElement = rendered.byId.get(spec.targetId);
@@ -855,7 +855,7 @@ function dropTargetBehavior<T extends object>(
 
 function withChainingBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "with-chaining" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   return changeResultBehaviorBase(spec, ctx, (result) => ({
     chainNow: result.chainNow ?? spec.chaining,
@@ -864,7 +864,7 @@ function withChainingBehavior<T extends object>(
 
 function substateBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "substate" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   const { state, path, innerSpec } = spec;
 
@@ -901,7 +901,7 @@ function substateBehavior<T extends object>(
 
 function reactToBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "react-to" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   const { iterator, callback } = spec;
 
@@ -932,7 +932,7 @@ function reactToBehavior<T extends object>(
 
 function withInitContextBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "with-init-context" },
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
 ): DragBehavior<T> {
   const newCtx = spec.f(ctx);
   const subBehavior = dragSpecToBehavior(spec.inner, newCtx);
@@ -949,7 +949,7 @@ function withInitContextBehavior<T extends object>(
 // # Shared helpers
 
 function renderStateReadOnly<T extends object>(
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
   state: T,
 ): LayeredSvgx {
   // TODO: be more discriminating about whether isTracking should be
@@ -958,7 +958,7 @@ function renderStateReadOnly<T extends object>(
 }
 
 function getElementPosition<T extends object>(
-  ctx: DragBehaviorInitContext<T>,
+  ctx: DragInitContext<T>,
   layered: LayeredSvgx,
 ): Vec2 {
   const found = findByPathInLayered(ctx.draggedPath, layered);

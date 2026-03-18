@@ -10,8 +10,8 @@ import React, {
 } from "react";
 import {
   DragBehavior,
-  DragBehaviorInitContext,
   DragFrame,
+  DragInitContext,
   DragResult,
   dragSpecToBehavior,
 } from "./DragBehavior";
@@ -98,7 +98,7 @@ A bit of terminology about the lifetimes of drags:
     use a saved one.
   - Evaluate the DragSpecCallback to get a DragSpec.
   - Turn the DragSpec into a DragBehavior using dragSpecToBehavior,
-    providing some DragBehaviorInitContext.
+    providing some DragInitContext.
 
 */
 
@@ -110,7 +110,7 @@ export type DragStatus<T extends object> = {
       type: "dragging";
       startState: T; // TODO: this is of suspect utility
       behavior: DragBehavior<T>;
-      behaviorCtx: DragBehaviorInitContext<T>;
+      behaviorCtx: DragInitContext<T>;
       result: DragResult<T>;
       /**
        * We save the drag spec so we can generate fresh behaviors for
@@ -550,7 +550,7 @@ function processChainNow<T extends object>(
 
 function initDrag<T extends object>(
   spec: DragSpec<T>,
-  behaviorCtx: DragBehaviorInitContext<T>,
+  behaviorCtx: DragInitContext<T>,
   state: T,
   frame: DragFrame,
   springingFrom: SpringingFrom | null,
@@ -625,7 +625,7 @@ function postProcessForInteraction<T extends object>(
               pointer,
             );
 
-            const behaviorCtx: DragBehaviorInitContext<T> = {
+            const behaviorCtx: DragInitContext<T> = {
               draggable: ctx.draggable,
               draggedPath,
               draggedId,
