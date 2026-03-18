@@ -191,7 +191,7 @@ export interface DragSpecMethods<T> {
   /**
    * Advanced: Transform the behavior's entire result on each frame.
    * This is the most general wrapper — you can change any field of
-   * the DragResult (rendered output, drop state, gap, etc.).
+   * the DragResult (preview, drop state, gap, etc.).
    */
   changeResult(f: (result: DragResult<T>) => DragResult<T>): DragSpec<T>;
 
@@ -204,8 +204,8 @@ export interface DragSpecMethods<T> {
 
   /**
    * Wrap this behavior with floating: on each frame, the inner
-   * behavior's rendered output is used as a dynamic backdrop (with
-   * the dragged element extracted), and the original dragged element
+   * behavior's preview is used as a dynamic backdrop (with the
+   * dragged element extracted), and the original dragged element
    * floats freely on top. Optionally provide a ghost and/or a tether
    * function to limit how far the float deviates from the inner
    * behavior's element position.
@@ -221,9 +221,9 @@ export interface DragSpecMethods<T> {
   withChaining(chaining?: Chaining<T>): DragSpec<T>;
 
   /**
-   * Transform the state on every frame — both the rendered preview
-   * and the drop state are re-rendered from the transformed state.
-   * Like `onDrop`, but the function's output is actually displayed.
+   * Transform the state on every frame, rendering it as a preview.
+   * (Same drop behavior as `onDrop`, but that doesn't change the
+   * preview.)
    */
   during(fn: (state: T) => T): DragSpec<T>;
 

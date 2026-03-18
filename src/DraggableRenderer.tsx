@@ -330,7 +330,7 @@ function DraggableRendererControlled<T extends object>({
         type: "idle",
         state: dropState,
         springingFrom: makeSpringingFrom(result.dropTransition, () =>
-          runSpring(status.springingFrom, result.rendered),
+          runSpring(status.springingFrom, result.preview),
         ),
       };
       setStatus(newState);
@@ -444,7 +444,7 @@ function advanceFrame<T extends object>(
     // Detect activePath change → start new spring from current display
     if (result.activePath !== status.result.activePath) {
       springingFrom = makeSpringingFrom(result.activePathTransition, () =>
-        runSpring(springingFrom, status.result.rendered),
+        runSpring(springingFrom, status.result.preview),
       );
     }
 
@@ -510,7 +510,7 @@ function processChainNow<T extends object>(
   if (!newDragSpec) return null;
 
   const newSpringingFrom = makeSpringingFrom(true, () =>
-    runSpring(status.springingFrom, result.rendered),
+    runSpring(status.springingFrom, result.preview),
   );
 
   const newDraggedPath = getPath(found.element);
@@ -721,7 +721,7 @@ const DrawDraggingMode = memoGeneric(
     showDebugOverlay?: boolean;
     pointer?: Vec2;
   }) => {
-    const rendered = runSpring(status.springingFrom, status.result.rendered);
+    const rendered = runSpring(status.springingFrom, status.result.preview);
     return (
       <>
         {drawLayered(rendered)}

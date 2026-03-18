@@ -13,24 +13,24 @@ export type RenderedState = { layered: LayeredSvgx; position: Vec2 };
  */
 export type DragSpecTraceInfoByType = {
   fixed: { renderedStates: RenderedState[] };
-  "with-floating": { outputRendered: LayeredSvgx; elementPos: Vec2 };
+  "with-floating": { outputPreview: LayeredSvgx; elementPos: Vec2 };
   closest: { bestIndex: number };
   "when-far": { inForeground: boolean };
   "on-drop": Record<string, never>;
-  during: { outputRendered: LayeredSvgx };
+  during: { outputPreview: LayeredSvgx };
   vary: { renderedStates: RenderedState[]; currentParams: number[] };
   "change-result": Record<string, never>;
   "change-gap": Record<string, never>;
   "with-snap-radius": {
     snapped: boolean;
-    outputRendered: LayeredSvgx;
+    outputPreview: LayeredSvgx;
   };
   "with-drop-transition": Record<string, never>;
   "with-branch-transition": Record<string, never>;
   between: {
     renderedStates: RenderedState[];
     closestIndex: number;
-    outputRendered: LayeredSvgx;
+    outputPreview: LayeredSvgx;
     delaunayTriangles: Vec2[][];
     projectedPoint: Vec2;
     /** Index → weight for each state contributing to the interpolation. */

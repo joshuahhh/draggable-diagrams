@@ -85,7 +85,7 @@ function SpecNode<T>({ spec, path }: { spec: DragSpecData<T>; path: string }) {
     return (
       <Box label="withFloating" color={color}>
         {traceInfo && (
-          <OutputThumbnail outputRendered={traceInfo.outputRendered} />
+          <OutputThumbnail outputPreview={traceInfo.outputPreview} />
         )}
         <SpecNode spec={spec.inner} path={childPath} />
       </Box>
@@ -179,7 +179,7 @@ function SpecNode<T>({ spec, path }: { spec: DragSpecData<T>; path: string }) {
     return (
       <Box label="during">
         {traceInfo && (
-          <OutputThumbnail outputRendered={traceInfo.outputRendered} />
+          <OutputThumbnail outputPreview={traceInfo.outputPreview} />
         )}
         <SpecNode spec={spec.inner} path={childPath} />
       </Box>
@@ -215,7 +215,7 @@ function SpecNode<T>({ spec, path }: { spec: DragSpecData<T>; path: string }) {
     return (
       <Box label={label}>
         {traceInfo && (
-          <OutputThumbnail outputRendered={traceInfo.outputRendered} />
+          <OutputThumbnail outputPreview={traceInfo.outputPreview} />
         )}
         <SpecNode spec={spec.inner} path={childPath + snapSegment} />
       </Box>
@@ -230,7 +230,7 @@ function SpecNode<T>({ spec, path }: { spec: DragSpecData<T>; path: string }) {
         color={color}
       >
         {traceInfo && (
-          <OutputThumbnail outputRendered={traceInfo.outputRendered} />
+          <OutputThumbnail outputPreview={traceInfo.outputPreview} />
         )}
         {allFixed
           ? traceInfo && (
@@ -393,7 +393,7 @@ function StateThumbnails({
   );
 }
 
-function OutputThumbnail({ outputRendered }: { outputRendered: LayeredSvgx }) {
+function OutputThumbnail({ outputPreview }: { outputPreview: LayeredSvgx }) {
   const { svgWidth, svgHeight, thumbArea } = useTreeViewContext();
   if (svgWidth === 0 || svgHeight === 0) return null;
   const aspect = svgWidth / svgHeight;
@@ -412,7 +412,7 @@ function OutputThumbnail({ outputRendered }: { outputRendered: LayeredSvgx }) {
           transition: "width 150ms ease, height 150ms ease",
         }}
       >
-        {drawLayered(outputRendered)}
+        {drawLayered(outputPreview)}
       </svg>
     </div>
   );
