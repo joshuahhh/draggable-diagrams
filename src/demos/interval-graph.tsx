@@ -3,19 +3,19 @@ import _ from "lodash";
 import { demo } from "../demo";
 import { DemoDraggable } from "../demo/ui";
 import { Draggable } from "../draggable";
-import { inOrder, param } from "../DragSpec";
+import { lessThan, param } from "../DragSpec";
 import { translate } from "../svgx/helpers";
 
-type Interval = { left: number; right: number; track: number };
-type State = { intervals: Interval[] };
+type Meeting = { start: number; end: number; room: number };
+type State = { meetings: Meeting[] };
 
 const initialState: State = {
-  intervals: [
-    { left: 20, right: 100, track: 0 },
-    { left: 60, right: 160, track: 1 },
-    { left: 10, right: 70, track: 2 },
-    { left: 120, right: 200, track: 0 },
-    { left: 80, right: 140, track: 2 },
+  meetings: [
+    { start: 20, end: 100, room: 0 },
+    { start: 60, end: 160, room: 1 },
+    { start: 10, end: 70, room: 2 },
+    { start: 120, end: 200, room: 0 },
+    { start: 80, end: 140, room: 2 },
   ],
 };
 
@@ -24,30 +24,30 @@ const TRACK_H = 40;
 const GAP = 8;
 const DOT_R = 7;
 const BAR_H = 6;
-const TRACK_W = 300;
-const MIN_WIDTH = 10;
-const GRAPH_X = TRACK_W + 40;
+const END_TIME = 300;
+const MIN_LENGTH = 4 * DOT_R;
+const GRAPH_X = END_TIME + 40;
 const NODE_R = 10;
 
 const COLORS = ["#3b82f6", "#06b6d4", "#22c55e", "#f59e0b", "#8b5cf6"];
 
-function overlaps(a: Interval, b: Interval) {
-  return a.left < b.right && b.left < a.right;
+function overlaps(a: Meeting, b: Meeting) {
+  return a.start < b.end && b.start < a.end;
 }
 
 const draggable: Draggable<State> = ({ state, d, draggedId }) => {
   const trackY = (track: number) => track * (TRACK_H + GAP) + TRACK_H / 2;
 
-  const nodePos = (iv: Interval) => ({
-    x: GRAPH_X + (iv.left + iv.right) / 2,
-    y: trackY(iv.track),
+  const nodePos = (iv: Meeting) => ({
+    x: GRAPH_X + (iv.start + iv.end) / 2,
+    y: trackY(iv.room),
   });
 
   // All overlapping pairs
   const edges: [number, number][] = [];
-  for (let i = 0; i < state.intervals.length; i++) {
-    for (let j = i + 1; j < state.intervals.length; j++) {
-      if (overlaps(state.intervals[i], state.intervals[j])) {
+  for (let i = 0; i < state.meetings.length; i++) {
+    for (let j = i + 1; j < state.meetings.length; j++) {
+      if (overlaps(state.meetings[i], state.meetings[j])) {
         edges.push([i, j]);
       }
     }
@@ -61,7 +61,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
           key={t}
           x1={0}
           y1={trackY(t)}
-          x2={TRACK_W}
+          x2={END_TIME}
           y2={trackY(t)}
           stroke="#94a3b8"
           strokeWidth={1.5}
@@ -69,30 +69,33 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
         />
       ))}
 
-      {/* Intervals */}
-      {state.intervals.map((iv, i) => {
-        const y = trackY(iv.track);
+      {/* Meetings */}
+      {state.meetings.map((iv, i) => {
+        const y = trackY(iv.room);
         const color = COLORS[i % COLORS.length];
         const isDraggedBar = draggedId === `bar-${i}`;
 
-        const endpointDrag = (endpoint: "left" | "right") =>
-          d.vary(state, param("intervals", i, endpoint), {
-            constraint: (s) =>
-              inOrder(0, s.intervals[i].left, s.intervals[i].right, TRACK_W),
+        const endpointDrag = (endpoint: "start" | "end") =>
+          d.vary(state, param("meetings", i, endpoint), {
+            constraint: (s) => [
+              lessThan(0, s.meetings[i].start),
+              lessThan(s.meetings[i].start, s.meetings[i].end - MIN_LENGTH),
+              lessThan(s.meetings[i].end, END_TIME),
+            ],
           });
 
         const barStates = _.range(NUM_TRACKS).map((t) =>
           produce<State>(state, (draft) => {
-            draft.intervals[i].track = t;
+            draft.meetings[i].room = t;
           }),
         );
 
         return (
-          <g id={`interval-${i}`} dragologyZIndex={isDraggedBar ? 1 : 0}>
+          <g id={`meeting-${i}`} dragologyZIndex={isDraggedBar ? 1 : 0}>
             {/* Bar — drag to change track */}
             <rect
-              transform={translate(iv.left, y - BAR_H / 2)}
-              width={Math.max(iv.right - iv.left, MIN_WIDTH)}
+              transform={translate(iv.start, y - BAR_H / 2)}
+              width={iv.end - iv.start}
               height={BAR_H}
               rx={3}
               fill={color}
@@ -105,25 +108,21 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
             {/* Left dot */}
             <circle
               id={`left-${i}`}
-              transform={translate(iv.left, y)}
+              transform={translate(iv.start + DOT_R, y)}
               r={DOT_R}
               fill={color}
-              stroke="white"
-              strokeWidth={2}
               dragologyZIndex={2}
-              dragology={() => endpointDrag("left")}
+              dragology={() => endpointDrag("start")}
             />
 
             {/* Right dot */}
             <circle
               id={`right-${i}`}
-              transform={translate(iv.right, y)}
+              transform={translate(iv.end - DOT_R, y)}
               r={DOT_R}
               fill={color}
-              stroke="white"
-              strokeWidth={2}
               dragologyZIndex={2}
-              dragology={() => endpointDrag("right")}
+              dragology={() => endpointDrag("end")}
             />
 
             {/* Graph node */}
@@ -143,10 +142,9 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
 
       {/* Graph: edges */}
       {edges.map(([ia, ib]) => {
-        const a = nodePos(state.intervals[ia]);
-        const b = nodePos(state.intervals[ib]);
-        const sameTrack =
-          state.intervals[ia].track === state.intervals[ib].track;
+        const a = nodePos(state.meetings[ia]);
+        const b = nodePos(state.meetings[ib]);
+        const sameTrack = state.meetings[ia].room === state.meetings[ib].room;
         return (
           <g>
             <line
@@ -178,7 +176,7 @@ export default demo(
     <DemoDraggable
       draggable={draggable}
       initialState={initialState}
-      width={GRAPH_X + TRACK_W + 20}
+      width={GRAPH_X + END_TIME + 20}
       height={NUM_TRACKS * (TRACK_H + GAP) + 20}
     />
   ),
