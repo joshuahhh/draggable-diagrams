@@ -262,7 +262,7 @@ function renderTree(
       id={tree.id}
       dragology={() => dragTargets(d, state, tree.id, activeRewrites)}
       dragologyZIndex={depth}
-      data-emerge-from={
+      dragologyEmergeFrom={
         config.enableEmergeAnimation ? tree.emergeFrom : undefined
       }
       data-emerge-mode={

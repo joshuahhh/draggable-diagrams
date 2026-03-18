@@ -34,7 +34,11 @@ function draggableFactory(config: Config): Draggable<State> {
 
         {/* The emerging dot — only present in state 2 */}
         {state.right && (
-          <g id="dot2" transform={translate(200, 100)} data-emerge-from="dot">
+          <g
+            id="dot2"
+            transform={translate(200, 100)}
+            dragologyEmergeFrom="dot"
+          >
             <circle r={14} fill="#f0a07c" stroke="#d9824a" strokeWidth={2} />
           </g>
         )}

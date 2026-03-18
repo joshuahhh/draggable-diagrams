@@ -313,7 +313,7 @@ function renderNormalTree(
       id={tree.id}
       dragology={dragTargets(tree.id)}
       dragologyZIndex={depth}
-      data-emerge-from={
+      dragologyEmergeFrom={
         config.enableEmergeAnimation ? tree.emergeFrom : undefined
       }
       data-emerge-mode={tree.emergeMode}

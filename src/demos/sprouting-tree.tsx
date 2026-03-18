@@ -200,7 +200,7 @@ function draggableFactory(config: Config): Draggable<State> {
                 y2={childPos.y}
                 stroke="#ccc"
                 strokeWidth={2}
-                data-emerge-from={node.emergeFrom || child.emergeFrom}
+                dragologyEmergeFrom={node.emergeFrom || child.emergeFrom}
               />
             );
           })}
@@ -213,7 +213,7 @@ function draggableFactory(config: Config): Draggable<State> {
             id={node.id}
             transform={translate(pos.x, pos.y)}
             dragologyZIndex={draggedId === node.id ? 3 : 1}
-            data-emerge-from={node.emergeFrom}
+            dragologyEmergeFrom={node.emergeFrom}
             dragology={
               leaf &&
               (() => {

@@ -422,7 +422,7 @@ function createSyntheticBefore(newElement: Svgx, originElement: Svgx): Svgx {
 }
 
 /**
- * For each element in `source` that has a `data-emerge-from` attribute and is
+ * For each element in `source` that has a `dragologyEmergeFrom` attribute and is
  * missing from `target`, inject a synthetic "before" version into `target`
  * using the referenced origin element from `origins`.
  */
@@ -434,7 +434,7 @@ function augmentWithEmerging(
   for (const [key, val] of source) {
     if (!target.has(key)) {
       const emergeFromId = (val.props as Record<string, unknown>)[
-        "data-emerge-from"
+        "dragologyEmergeFrom"
       ];
       if (emergeFromId && typeof emergeFromId === "string") {
         const originElement = origins.get(emergeFromId);

@@ -17,6 +17,6 @@ declare module "react" {
 
     dragologyZIndex?: number;
     dragologyTransition?: boolean;
-    "data-emerge-from"?: string;
+    dragologyEmergeFrom?: string;
   }
 }
