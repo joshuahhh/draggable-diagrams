@@ -34,7 +34,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) =>
                 }),
               ),
             ),
-          "data-z-index": p === draggedId ? 1 : 0,
+          dragologyZIndex: p === draggedId ? 1 : 0,
         });
 
         return Group({ id: p }, [

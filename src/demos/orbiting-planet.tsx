@@ -67,7 +67,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
       <g
         id="planet"
         transform={translate(planetX, planetY)}
-        data-z-index={1}
+        dragologyZIndex={1}
         dragology={() =>
           d.closest(
             STARS.map((_, starIdx) =>

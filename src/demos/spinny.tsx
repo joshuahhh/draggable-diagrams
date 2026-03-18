@@ -37,7 +37,7 @@ const draggable: Draggable<State> = ({ state, d }) => (
           transform={
             rotateDeg(angle) + translate(RADIUS, 0) + rotateDeg(-angle)
           }
-          data-z-index={1}
+          dragologyZIndex={1}
           dragology={() => {
             const newState1 = produce(state, (s) => {
               s.perm.push(s.perm.shift()!);

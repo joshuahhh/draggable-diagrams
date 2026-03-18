@@ -69,7 +69,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
               stroke={circle.color}
               strokeWidth={isCircleDragged ? 3 : 2}
               strokeDasharray={isCircleDragged ? undefined : "6 4"}
-              data-z-index={isCircleDragged ? 2 : 1}
+              dragologyZIndex={isCircleDragged ? 2 : 1}
               dragology={() =>
                 d.vary(state, [
                   param("circles", circleIdx, "x"),
@@ -123,7 +123,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
             fill={circle.color}
             stroke="white"
             strokeWidth={2}
-            data-z-index={isPointDragged ? 10 : 3}
+            dragologyZIndex={isPointDragged ? 10 : 3}
             dragology={() => d.closest(varySpecs)}
           />
         );

@@ -49,7 +49,7 @@ function makeDraggable(stage: Stage): Draggable<State> {
             <g
               id={bead}
               transform={translate(p)}
-              data-z-index={isDragged ? 2 : 1}
+              dragologyZIndex={isDragged ? 2 : 1}
               dragology={() => {
                 const newStates = Array.from({ length: n }, (_, targetIdx) => {
                   const newState = structuredClone(state);

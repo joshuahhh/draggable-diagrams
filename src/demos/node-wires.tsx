@@ -164,7 +164,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                   ? { cursor: "crosshair" }
                   : undefined
               }
-              data-z-index={3}
+              dragologyZIndex={3}
               dragology={() => endDragSpec(wid, "from")}
             />
             <circle
@@ -177,7 +177,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
               style={
                 wire.to.type === "on-port" ? { cursor: "crosshair" } : undefined
               }
-              data-z-index={3}
+              dragologyZIndex={3}
               dragology={() => endDragSpec(wid, "to")}
             />
           </g>
@@ -193,7 +193,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
           <g
             id={`node-${nid}`}
             transform={translate(node.x, node.y)}
-            data-z-index={draggedId === `node-${nid}` ? 5 : 1}
+            dragologyZIndex={draggedId === `node-${nid}` ? 5 : 1}
             dragology={() =>
               d.vary(state, [
                 param("nodes", nid, "x"),

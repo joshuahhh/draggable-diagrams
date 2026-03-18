@@ -141,7 +141,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
 
     if (item.type === "tile") {
       const element = (
-        <g id={item.id} data-z-index={effectiveZIndex} dragology={dragology}>
+        <g id={item.id} dragologyZIndex={effectiveZIndex} dragology={dragology}>
           <rect
             x={0}
             y={0}
@@ -186,7 +186,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
       let xOffset = GRIP_WIDTH + GRIP_PADDING + ROW_PADDING;
 
       const element = (
-        <g id={item.id} data-z-index={effectiveZIndex} dragology={dragology}>
+        <g id={item.id} dragologyZIndex={effectiveZIndex} dragology={dragology}>
           <rect
             width={rowWidth}
             height={rowHeight}

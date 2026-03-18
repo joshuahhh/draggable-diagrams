@@ -31,7 +31,7 @@ function makeDraggable(
           <g
             id={item}
             transform={translate(0, i * (H + GAP))}
-            data-z-index={isDragged ? 1 : 0}
+            dragologyZIndex={isDragged ? 1 : 0}
             dragology={() => {
               const newStates = state.items.map((_item, j) => ({
                 items: moveItem(state.items, i, j),

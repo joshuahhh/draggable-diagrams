@@ -280,7 +280,7 @@ function drawBgSubtree(
           y2={to.y}
           stroke="lightgray"
           strokeWidth={12}
-          data-z-index={-2}
+          dragologyZIndex={-2}
         />
       );
     });
@@ -347,7 +347,7 @@ function drawBgNodeWithFgNodesInside(
           cy={nodeCenterInCircle.y}
           r={circleRadius}
           fill="lightgray"
-          data-z-index={-1}
+          dragologyZIndex={-1}
         />
         <g transform={translate(offset)}>{elementsInRect}</g>
       </g>
@@ -412,7 +412,7 @@ function drawFgSubtreeInBgNode(
             fill="none"
             stroke="black"
             strokeWidth={2}
-            data-z-index={-1}
+            dragologyZIndex={-1}
           />
         );
       });

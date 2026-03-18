@@ -145,7 +145,7 @@ Tags in `demo()` use prefixes to distinguish builder methods from spec chain met
 - **No React keys**: Use `id` attributes for element tracking, never `key`
 - **No slashes in IDs**: Use hyphens — `id="node-1-2"` not `id="node/1/2"`
 - **Positioning**: Always use `transform={translate(x, y)}`, never `x`/`y` attributes directly
-- **Layering**: Use `data-z-index={isDragged ? 2 : 1}` to control draw order
+- **Layering**: Use `dragologyZIndex={isDragged ? 2 : 1}` to control draw order
 - **Conditional drag**: `dragology={condition && drag(...)}` to make things conditionally draggable
 - **`data-transition={false}`**: Elements with this skip spring animation and track the cursor directly
 

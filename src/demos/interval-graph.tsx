@@ -88,7 +88,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
         );
 
         return (
-          <g id={`interval-${i}`} data-z-index={isDraggedBar ? 1 : 0}>
+          <g id={`interval-${i}`} dragologyZIndex={isDraggedBar ? 1 : 0}>
             {/* Bar — drag to change track */}
             <rect
               transform={translate(iv.left, y - BAR_H / 2)}
@@ -110,7 +110,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
               fill={color}
               stroke="white"
               strokeWidth={2}
-              data-z-index={2}
+              dragologyZIndex={2}
               dragology={() => endpointDrag("left")}
             />
 
@@ -122,7 +122,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
               fill={color}
               stroke="white"
               strokeWidth={2}
-              data-z-index={2}
+              dragologyZIndex={2}
               dragology={() => endpointDrag("right")}
             />
 

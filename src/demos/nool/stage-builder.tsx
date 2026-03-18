@@ -686,7 +686,7 @@ function renderTree(
       id={tree.id}
       transform={opts?.rootTransform}
       dragology={opts?.rootDragology || pickUpDrag}
-      data-z-index={zIndex}
+      dragologyZIndex={zIndex}
       opacity={opts?.opacity}
     >
       <rect
@@ -1071,7 +1071,7 @@ export const draggable: Draggable<State> = ({
             }));
             return d.between(targets);
           }}
-          data-z-index={-5}
+          dragologyZIndex={-5}
           onClick={() =>
             setState({ ...state, [stateKey]: !active }, { transition: 0 })
           }
@@ -1101,7 +1101,7 @@ export const draggable: Draggable<State> = ({
           strokeWidth={1}
           strokeLinecap="round"
           id={`sep-${idx}`}
-          data-z-index={-10}
+          dragologyZIndex={-10}
         />
       ))}
 
@@ -1113,7 +1113,7 @@ export const draggable: Draggable<State> = ({
         r={4}
         fill={state.paletteExpanded ? "#999" : "#ddd"}
         data-palette-toggle={true}
-        data-z-index={-5}
+        dragologyZIndex={-5}
         onClick={() =>
           setState(
             { ...state, paletteExpanded: !state.paletteExpanded },
@@ -1132,7 +1132,7 @@ export const draggable: Draggable<State> = ({
           y2={y}
           stroke="#ddd"
           strokeWidth={1}
-          data-z-index={-10}
+          dragologyZIndex={-10}
         />
       ))}
 

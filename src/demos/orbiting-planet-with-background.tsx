@@ -73,7 +73,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
       <g
         id="planet"
         transform={translate(planetX, planetY)}
-        data-z-index={1}
+        dragologyZIndex={1}
         dragology={() => {
           const angle = state.mode === "orbiting" ? state.angle : 0;
           return d

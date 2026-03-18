@@ -106,7 +106,7 @@ function draggableFactory(config: Config): Draggable<State> {
               stroke="gray"
               strokeWidth={1}
               fill="none"
-              data-z-index={-5}
+              dragologyZIndex={-5}
             />
           )),
         )}
@@ -119,7 +119,7 @@ function draggableFactory(config: Config): Draggable<State> {
               object.pos.x * TILE_SIZE,
               object.pos.y * TILE_SIZE,
             )}
-            data-z-index={object.type === "goal" ? 1 : 0}
+            dragologyZIndex={object.type === "goal" ? 1 : 0}
             dragology={
               config.levelEditable
                 ? () =>
@@ -190,7 +190,7 @@ function draggableFactory(config: Config): Draggable<State> {
             state.player.x * TILE_SIZE,
             state.player.y * TILE_SIZE,
           )}
-          data-z-index={2}
+          dragologyZIndex={2}
           dragology={() =>
             d
               .closest(

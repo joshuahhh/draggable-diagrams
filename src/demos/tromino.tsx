@@ -59,7 +59,7 @@ function draggableFactory(config: Config): Draggable<State> {
       {drawState(state, boardLevel, cellSize)}
       <rect
         id="missing-square"
-        data-z-index={1}
+        dragologyZIndex={1}
         transform={translate(state.missingSquare.mul(cellSize).add(padding))}
         width={cellSize - 2 * padding}
         height={cellSize - 2 * padding}

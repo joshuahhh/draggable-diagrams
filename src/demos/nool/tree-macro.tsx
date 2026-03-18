@@ -312,7 +312,7 @@ function renderNormalTree(
     <g
       id={tree.id}
       dragology={dragTargets(tree.id)}
-      data-z-index={depth}
+      dragologyZIndex={depth}
       data-emerge-from={
         config.enableEmergeAnimation ? tree.emergeFrom : undefined
       }
@@ -472,7 +472,7 @@ function renderMacroTree(
       id={tree.id}
       transform={opts?.rootTransform}
       dragology={opts?.rootDragology || pickUpDrag}
-      data-z-index={zIndex}
+      dragologyZIndex={zIndex}
       opacity={opts?.opacity}
     >
       <rect
@@ -578,7 +578,7 @@ function renderMacroMode(
         strokeDasharray="8,4"
         rx={12}
         id="macro-border"
-        data-z-index={-20}
+        dragologyZIndex={-20}
       />
 
       {/* Toolkit */}
@@ -592,7 +592,7 @@ function renderMacroMode(
         strokeWidth={1}
         rx={Math.min(14, 0.3 * Math.min(toolkitWidth, toolkitHeight))}
         id="macro-toolkit-bg"
-        data-z-index={-10}
+        dragologyZIndex={-10}
       />
       {toolkitItems.map(({ block, tree }, idx) => (
         <g transform={translate(TOOLKIT_PADDING, toolkitPositions[idx])}>
@@ -653,7 +653,7 @@ function renderMacroMode(
             Math.min(gutterContentWidth, Math.max(gutterHeight, toolkitHeight)),
         )}
         id="macro-gutter-bg"
-        data-z-index={-10}
+        dragologyZIndex={-10}
       />
       {gutterItemData.map(
         ({ block }, idx) =>

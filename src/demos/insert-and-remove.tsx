@@ -81,7 +81,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
         strokeWidth={1}
         rx={4}
         id="toolbar-bg"
-        data-z-index={-10}
+        dragologyZIndex={-10}
       />
 
       {/* Store items */}

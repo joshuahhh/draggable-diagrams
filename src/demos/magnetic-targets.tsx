@@ -45,7 +45,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
         fill="#333"
         stroke="white"
         strokeWidth={2}
-        data-z-index={2}
+        dragologyZIndex={2}
         dragology={() =>
           d.closest(
             targets.map((t, i) =>

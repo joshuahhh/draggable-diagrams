@@ -276,7 +276,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
           <polygon
             id={`shape-${shape.id}`}
             transform={translate(shape.x, shape.y) + rotateDeg(shape.rotDeg)}
-            data-z-index={isDragged ? 10 : 1}
+            dragologyZIndex={isDragged ? 10 : 1}
             points={shapePoints(shape.kind)}
             fill={getFillColor(shape.kind)}
             stroke={getStrokeColor(shape.kind)}

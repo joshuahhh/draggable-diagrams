@@ -239,7 +239,7 @@ function renderTree(
     elem: (
       <g
         id={tree.id}
-        data-z-index={tree.id === draggedId ? 1 : 0}
+        dragologyZIndex={tree.id === draggedId ? 1 : 0}
         dragology={
           isRoot
             ? undefined

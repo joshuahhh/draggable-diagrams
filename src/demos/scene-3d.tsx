@@ -190,7 +190,7 @@ function makeDraggable(
             <g
               id={`box-${key}`}
               transform={translate(center.x, center.y)}
-              data-z-index={1}
+              dragologyZIndex={1}
               dragology={() =>
                 d.vary(
                   state,

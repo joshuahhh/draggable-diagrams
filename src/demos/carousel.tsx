@@ -26,7 +26,7 @@ const draggable: Draggable<State> = ({ state, d, setState }) => (
     {/* Main carousel container */}
     <rect
       id="background-rect"
-      data-z-index={-1}
+      dragologyZIndex={-1}
       x={0}
       y={0}
       width={WIDTH}

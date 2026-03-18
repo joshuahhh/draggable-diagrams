@@ -55,7 +55,7 @@ const blockDraggable: Draggable<Block> = ({ state, d, draggedId }) => {
     <g
       id={state.id}
       transform={translate(state.pos, state.track * (TRACK_H + GAP))}
-      data-z-index={isDragged ? 1 : 0}
+      dragologyZIndex={isDragged ? 1 : 0}
       dragology={() =>
         d
           .closest(

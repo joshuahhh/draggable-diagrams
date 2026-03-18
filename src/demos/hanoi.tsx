@@ -106,7 +106,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
                     .withFloating({ ghost: { opacity: 0.5 } });
                 })
               }
-              data-z-index={1}
+              dragologyZIndex={1}
             >
               <rect
                 x={0}

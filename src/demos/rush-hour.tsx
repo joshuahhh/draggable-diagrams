@@ -53,7 +53,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
             stroke="gray"
             strokeWidth={1}
             fill="none"
-            data-z-index={-5}
+            dragologyZIndex={-5}
           />
         )),
       )}
@@ -70,7 +70,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
           stroke="black"
           strokeWidth={2}
           transform={translate(car.x * TILE_SIZE, car.y * TILE_SIZE)}
-          data-z-index={5}
+          dragologyZIndex={5}
           dragology={() => {
             const nextStates: State[] = [state];
 
@@ -135,7 +135,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
         stroke="gray"
         strokeWidth={BORDER_WIDTH}
         fill="none"
-        data-z-index={-10}
+        dragologyZIndex={-10}
         id="border"
       />
 

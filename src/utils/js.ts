@@ -7,6 +7,25 @@ export function objectEntries<T extends object>(obj: T): Entries<T> {
   return Object.entries(obj) as Entries<T>;
 }
 
+type FromEntries<T> =
+  T extends ReadonlyArray<
+    readonly [infer K extends string | number | symbol, infer _V]
+  >
+    ? { [key in K]: Extract<T[number], readonly [key, any]>[1] }
+    : never;
+
+/** Better-typed Object.fromEntries */
+export function objectFromEntries<
+  T extends ReadonlyArray<readonly [PropertyKey, any]>,
+>(entries: T): FromEntries<T> {
+  return Object.fromEntries(entries) as FromEntries<T>;
+}
+
+/** Better-typed Object.keys */
+export function objectKeys<T extends object>(obj: T): (keyof T)[] {
+  return Object.keys(obj) as (keyof T)[];
+}
+
 /** Better-typed Array.isArray */
 export function isArray<T>(x: T | readonly T[] | T[]): x is readonly T[] | T[] {
   return Array.isArray(x);

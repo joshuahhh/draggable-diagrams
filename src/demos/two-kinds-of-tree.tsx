@@ -188,7 +188,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
     let belowXOffset = 0;
 
     const element = (
-      <g id={box.id} data-z-index={effectiveZIndex} dragology={dragology}>
+      <g id={box.id} dragologyZIndex={effectiveZIndex} dragology={dragology}>
         {/* Box */}
         <g transform={translate(boxX, 0)}>
           <rect
@@ -245,7 +245,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
           return (
             <line
               id={`${box.id}-line-${childIdx}`}
-              data-z-index={effectiveZIndex + 1}
+              dragologyZIndex={effectiveZIndex + 1}
               x1={totalWidth / 2}
               y1={contentHeight}
               x2={childCenterX}

@@ -355,22 +355,22 @@ describe("layerSvg", () => {
     `);
   });
 
-  it("throws error if data-z-index is set without id", () => {
+  it("throws error if dragologyZIndex is set without id", () => {
     const tree = (
       <g>
-        <rect data-z-index={5} x={10} y={10} />
+        <rect dragologyZIndex={5} x={10} y={10} />
       </g>
     );
 
     expect(() => layerSvg(tree)).toThrow(
-      /data-z-index can only be set on elements with an id attribute/,
+      /dragologyZIndex can only be set on elements with an id attribute/,
     );
   });
 
-  it("allows data-z-index on elements with id", () => {
+  it("allows dragologyZIndex on elements with id", () => {
     const tree = (
       <g>
-        <rect id="r1" data-z-index={5} x={10} y={10} />
+        <rect id="r1" dragologyZIndex={5} x={10} y={10} />
       </g>
     );
 

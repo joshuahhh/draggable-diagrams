@@ -96,7 +96,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
                     require(stateIsValid(draft));
                   }),
                 ),
-              "data-z-index": 1,
+              dragologyZIndex: 1,
             })}
             <circle
               id={`tail-${key}`}
@@ -111,7 +111,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
                   }),
                 )
               }
-              data-z-index={1}
+              dragologyZIndex={1}
             />
           </g>
         );

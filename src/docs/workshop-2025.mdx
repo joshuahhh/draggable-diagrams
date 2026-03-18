@@ -102,7 +102,7 @@ With this knowledge we can take on a more involved example: reordering objects.
             <g
               id={p}
               transform={translate(idx * TILE_SIZE, isDragged ? -10 : 0)}
-              data-z-index={isDragged ? 1 : 0}
+              dragologyZIndex={isDragged ? 1 : 0}
               dragology={() =>
                 d.between(
                   _.range(state.perm.length).map((newIdx) => {
@@ -150,7 +150,7 @@ Some important aspects, top to bottom:
 
   - `id` acts like a global version of React's `key`. I considered adding `key` as a local version, but I haven't run into a need for it yet. Let me know what you think!
 
-- SVG doesn't have z-index. But because elements with `id`s end up "ripped out" of the SVG structure, we can put z-indices on them (with `data-z-index`) to determine their ultimate ordering. Here, we use that to make sure the dragged tile is on top of the others.
+- SVG doesn't have z-index. But because elements with `id`s end up "ripped out" of the SVG structure, we can put z-indices on them (with `dragologyZIndex`) to determine their ultimate ordering. Here, we use that to make sure the dragged tile is on top of the others.
 
 - Now the important part: the drag spec attached to `dragology`! Dragging an element of the array should be able to bring you to every possible version of the array where the dragged element is removed and then inserted in a different location. We compute all these possible arrays in the drag spec callback. Specifically, for each possible insertion index, we make a copy of the starting state (with `structuredClone`) before mutating and returning it. Alternatively, you could use [Immer](https://immerjs.github.io/immer/)'s `produce` function, or painstakingly use a bunch of `{ ...oldState, newKey: ...}`-type expressions. (Or you could even use `produceAmb` -- search the codebase for examples of that.)
 

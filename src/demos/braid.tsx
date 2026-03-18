@@ -49,7 +49,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
               y2={TILE_SIZE}
               stroke="black"
               strokeWidth={2}
-              data-z-index={-1}
+              dragologyZIndex={-1}
             />
             <circle
               id={`line-bkgrnd-${perm[i]}-${idx}`}
@@ -57,7 +57,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
               cy={TILE_SIZE / 2}
               r={TILE_SIZE / 7}
               fill="white"
-              data-z-index={0}
+              dragologyZIndex={0}
             />
             <line
               id={`line-${perm[j]}-${idx}`}
@@ -67,7 +67,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
               y2={TILE_SIZE}
               stroke="black"
               strokeWidth={2}
-              data-z-index={1}
+              dragologyZIndex={1}
             />
             {/* the rest */}
             {_.range(state.n).map((k) =>
@@ -106,7 +106,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
             i * TILE_SIZE,
             (state.seq.length + 1) * TILE_SIZE,
           )}
-          data-z-index={1}
+          dragologyZIndex={1}
           dragology={() => {
             return d
               .closest([

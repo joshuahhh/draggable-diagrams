@@ -114,7 +114,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
               return (
                 <g
                   id={p.id}
-                  data-z-index={1}
+                  dragologyZIndex={1}
                   transform={translate(
                     GRIP_WIDTH + GRIP_PADDING + origX + ROW_PADDING,
                     ROW_PADDING,

@@ -51,7 +51,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
             stroke="gray"
             strokeWidth={1}
             fill="none"
-            data-z-index={-5}
+            dragologyZIndex={-5}
           />
         )),
       )}
