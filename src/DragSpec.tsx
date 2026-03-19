@@ -11,7 +11,7 @@ import { Many, ManyReader, Reader, manyToArray } from "./utils/flexible-types";
 
 // # DragSpecData
 
-export type DragSpecData<T> = {
+export type DragSpecData<T extends object> = {
   traceInfo?: unknown;
 } & (
   | { type: "fixed"; state: T }
@@ -93,7 +93,7 @@ export type DragSpecData<T> = {
       state: T;
       path: (string | number)[];
       /** This is really a DragSpecData<T[path]> */
-      innerSpec: DragSpecData<unknown>;
+      innerSpec: DragSpecData<object>;
     }
   | {
       type: "react-to";
@@ -103,7 +103,7 @@ export type DragSpecData<T> = {
   | {
       type: "with-init-context";
       inner: DragSpecData<T>;
-      f: (ctx: any) => any;
+      f: (ctx: DragInitContext<T>) => DragInitContext<T>;
     }
 );
 
@@ -121,7 +121,7 @@ export type FloatingOptions = {
  *   omitted, the dragology behavior of the newly rendered state
  *   is consulted as usual
  */
-export type Chaining<T> = {
+export type Chaining<T extends object> = {
   draggedId?: string;
   followSpec?: DragSpec<T>;
 };
@@ -131,17 +131,19 @@ export type BetweenInterpolation = "delaunay" | "natural-neighbor";
 // # DragSpec
 
 // Full API, including methods and a brand.
-export type DragSpec<T> = DragSpecData<T> & DragSpecMethods<T> & DragSpecBrand;
+export type DragSpec<T extends object> = DragSpecData<T> &
+  DragSpecMethods<T> &
+  DragSpecBrand;
 
 /** Either a DragSpec or a bare state (coerced via d.fixed). */
-export type DragSpecLike<T> = DragSpec<T> | T;
+export type DragSpecLike<T extends object> = DragSpec<T> | T;
 
 // Brand marker so jsx.d.ts can reference DragSpec without a generic parameter.
 declare const _dragSpecBrand: unique symbol;
 export type DragSpecBrand = { readonly [_dragSpecBrand]: true };
 
 // Fluent methods available on every DragSpec value.
-export interface DragSpecMethods<T> {
+export interface DragSpecMethods<T extends object> {
   /**
    * Set a new drop state for the behavior – the drag preview will be
    * the same as before, but dropping will transition into the given
@@ -233,7 +235,7 @@ export interface DragSpecMethods<T> {
    * `draggedPath` for child behaviors.
    */
   withInitContext(
-    f: (ctx: DragInitContext<T & object>) => DragInitContext<T & object>,
+    f: (ctx: DragInitContext<T>) => DragInitContext<T>,
   ): DragSpec<T>;
 }
 
@@ -301,11 +303,13 @@ const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
   },
 };
 
-function attachMethods<T>(data: DragSpecData<T>): DragSpec<T> {
+function attachMethods<T extends object>(data: DragSpecData<T>): DragSpec<T> {
   return Object.assign(Object.create(dragSpecMethods), data);
 }
 
-function isDragSpec<T>(value: DragSpecLike<T>): value is DragSpec<T> {
+function isDragSpec<T extends object>(
+  value: DragSpecLike<T>,
+): value is DragSpec<T> {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -313,14 +317,16 @@ function isDragSpec<T>(value: DragSpecLike<T>): value is DragSpec<T> {
   );
 }
 
-export function resolveDragSpecLike<T>(specLike: DragSpecLike<T>): DragSpec<T> {
+export function resolveDragSpecLike<T extends object>(
+  specLike: DragSpecLike<T>,
+): DragSpec<T> {
   if (isDragSpec(specLike)) return specLike;
   return attachMethods({ type: "fixed", state: specLike });
 }
 
 // # DragSpecBuilder
 
-export class DragSpecBuilder<T> {
+export class DragSpecBuilder<T extends object> {
   readonly state: T;
 
   constructor(state: T) {
@@ -428,7 +434,7 @@ export class DragSpecBuilder<T> {
       type: "substate",
       state,
       path: path as any,
-      innerSpec: innerSpec as DragSpecData<unknown>,
+      innerSpec: innerSpec as DragSpecData<object>,
     });
   }
 

@@ -70,7 +70,7 @@ export function setTraceInfo<S extends DragSpecData<any>>(
 }
 
 /** Compute the debug overlay SVG from a traced spec tree + pointer position. */
-export function debugOverlay<T>(
+export function debugOverlay<T extends object>(
   spec: DragSpecData<T>,
   pointer: Vec2,
 ): Svgx | null {

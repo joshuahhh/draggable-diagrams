@@ -60,11 +60,11 @@ export type SetState<T> = (
 
 // # drag
 
-export type DragSpecCallback<T> = () => DragSpec<T>;
+export type DragSpecCallback<T extends object> = () => DragSpec<T>;
 
 export const DRAGOLOGY_PROP_NAME = "dragology";
 
-export function getDragSpecCallbackOnElement<T>(
+export function getDragSpecCallbackOnElement<T extends object>(
   element: ReactElement,
 ): DragSpecCallback<T> | undefined {
   return (element.props as any)[DRAGOLOGY_PROP_NAME] || undefined;

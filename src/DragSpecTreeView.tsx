@@ -21,7 +21,7 @@ function useTreeViewContext() {
   return ctx;
 }
 
-export function DragSpecTreeView<T>({
+export function DragSpecTreeView<T extends object>({
   spec,
   activePath,
   colorMap,
@@ -57,7 +57,13 @@ const INACTIVE_BORDER = "rgb(203, 213, 225)";
  * `path` is the accumulated path of the current node, built top-down.
  * Each node checks whether `activePath` matches or extends its own `path`.
  */
-function SpecNode<T>({ spec, path }: { spec: DragSpecData<T>; path: string }) {
+function SpecNode<T extends object>({
+  spec,
+  path,
+}: {
+  spec: DragSpecData<T>;
+  path: string;
+}) {
   const { activePath, colorMap } = useTreeViewContext();
 
   /** Compute active/color/childPath/traceInfo for a node from its narrowed spec. */

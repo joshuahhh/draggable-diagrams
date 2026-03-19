@@ -53,7 +53,9 @@ import { pipe } from "./utils/pipe";
  * displayed – as well as what state the draggable will transition
  * into on drop. At least so far, it is assumed to be "memoryless".
  */
-export type DragBehavior<T> = (frame: DragFrame) => DragResult<T>;
+export type DragBehavior<T extends object> = (
+  frame: DragFrame,
+) => DragResult<T>;
 
 /**
  * The information passed to a drag behavior on every frame of the
@@ -67,7 +69,7 @@ export type DragFrame = {
  * The information returned by a drag behavior on every frame of the
  * drag.
  */
-export type DragResult<T> = {
+export type DragResult<T extends object> = {
   preview: LayeredSvgx;
   dropState: T;
   dropTransition?: Transition | false;
@@ -891,7 +893,7 @@ function substateBehavior<T extends object>(
       tracedSpec: setTraceInfo(
         {
           ...spec,
-          innerSpec: result.tracedSpec as DragSpecData<unknown>,
+          innerSpec: result.tracedSpec as DragSpecData<object>,
         } as DragSpecData<T>,
         {},
       ),
