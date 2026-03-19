@@ -13,6 +13,7 @@
 - feature: scene-3d: drag to rotate
 - whenFar: support for a "transition range" of gaps, which interpolates between close & far behaviors?
 - include results in traces automatically?
+- add first-overloads of methods with fancy APIs to show the un-fancy API as guidance?
 
 ## meh
 - memoize a lot of rendering of states? (but only if it's actually a problem; no premature stuff!)
