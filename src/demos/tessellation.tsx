@@ -270,7 +270,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                   ]),
                   { gap: 30 },
                 )
-                .withInitContext((ctx) => ({ ...ctx, pointerLocal: Vec2(0) }));
+                .withInitContext({ pointerLocal: Vec2(0) });
             }}
           />
         );

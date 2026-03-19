@@ -103,7 +103,7 @@ export type DragSpecData<T extends object> = {
   | {
       type: "with-init-context";
       inner: DragSpecData<T>;
-      f: (ctx: DragInitContext<T>) => DragInitContext<T>;
+      f: Reader<Partial<DragInitContext<T>>, DragInitContext<T>>;
     }
 );
 
@@ -235,7 +235,7 @@ export interface DragSpecMethods<T extends object> {
    * `draggedPath` for child behaviors.
    */
   withInitContext(
-    f: (ctx: DragInitContext<T>) => DragInitContext<T>,
+    f: Reader<Partial<DragInitContext<T>>, DragInitContext<T>>,
   ): DragSpec<T>;
 }
 

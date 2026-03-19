@@ -936,7 +936,7 @@ function withInitContextBehavior<T extends object>(
   spec: DragSpecData<T> & { type: "with-init-context" },
   ctx: DragInitContext<T>,
 ): DragBehavior<T> {
-  const newCtx = spec.f(ctx);
+  const newCtx = { ...ctx, ...readerToValue(spec.f, ctx) };
   const subBehavior = dragSpecToBehavior(spec.inner, newCtx);
   return (frame) => {
     const result = subBehavior(frame);
