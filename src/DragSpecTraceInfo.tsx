@@ -263,8 +263,10 @@ export function debugOverlay<T extends object>(
     case "with-init-context":
       return debugOverlay(spec.inner, pointer);
 
-    case "switch-to-state-and-follow":
-      return null;
+    case "switch-to-state-and-follow": {
+      const info = getTraceInfo(spec);
+      return info ? debugOverlay(info.tracedInner, pointer) : null;
+    }
 
     case "substate":
       return debugOverlay(spec.innerSpec, pointer);

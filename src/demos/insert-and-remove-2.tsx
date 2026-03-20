@@ -106,6 +106,10 @@ const draggable: Draggable<State> = ({ state, d }) => {
                 items: [...state.items, { id: newId, label }],
               },
               `tile-${newId}`,
+              // This is slightly different from dragging a tile
+              // that's already on the list: if we drag it far away,
+              // we want it to disappear, not "return" to the end of
+              // the list.
               dropIntoListAndTrash(state, { id: newId, label }).whenFar(
                 d.fixed(state).withFloating(),
               ),
