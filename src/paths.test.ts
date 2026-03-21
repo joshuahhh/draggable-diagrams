@@ -50,6 +50,18 @@ describe("PathIn type", () => {
     expect(pathToElement).toEqual(["items", 0]);
   });
 
+  it("rejects single-variant paths in discriminated unions", () => {
+    type State =
+      | { mode: "slider"; value: number }
+      | { mode: "island"; id: string };
+
+    // BUG: "value" only exists on the slider variant, so this should
+    // be rejected — but PathIn distributes over the union and accepts
+    // paths valid for ANY variant.
+    // @ts-expect-error — PathIn should reject this but doesn't (union distribution bug)
+    assertType<PathIn<State, number>>(["value"]);
+  });
+
   it("handles recursive tree types (compile-time type test)", () => {
     type Tree = {
       value: number;
