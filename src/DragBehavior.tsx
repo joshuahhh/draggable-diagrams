@@ -548,8 +548,12 @@ function withSnapRadiusBehavior<T extends object>(
     if (snapped) {
       preview = dropRendered;
     }
-    const snapSegment = spec.transition && snapped ? "snapped" : "unsnapped";
-    const activePath = `with-snap-radius/${snapSegment}/${result.activePath}`;
+    const snapSegment = spec.transition
+      ? snapped
+        ? "snapped/"
+        : "unsnapped/"
+      : "";
+    const activePath = `with-snap-radius/${snapSegment}${result.activePath}`;
     return {
       ...result,
       preview,
