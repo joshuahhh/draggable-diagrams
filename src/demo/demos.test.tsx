@@ -20,10 +20,16 @@ afterEach(cleanup);
 // run.
 const modules = import.meta.glob<{ default: unknown }>("../demos/**/*.tsx");
 
-const SKIP = new Set(["bluefish-static", "bluefish-perm"]);
+function shouldSkip(id: string) {
+  if (id.startsWith("bluefish-")) {
+    // these require more browser-specific infra to run
+    return true;
+  }
+  return false;
+}
 
 for (const id of demoList) {
-  if (SKIP.has(id)) continue;
+  if (shouldSkip(id)) continue;
 
   it(id, async () => {
     const load = Object.entries(modules).find(
