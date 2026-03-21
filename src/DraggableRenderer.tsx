@@ -435,9 +435,8 @@ function advanceFrame<T extends object>(
     const result = status.behavior(frame);
 
     // Handle chaining: restart drag from new state
-    const updatedDs: DragStatusDragging<T> = { ...status, result };
-    const chained = resolveChainNows(updatedDs, frame);
-    if (chained !== updatedDs) return chained;
+    const chained = resolveChainNows(status, frame, result);
+    if (chained !== status) return chained;
 
     let springOrigin = status.springOrigin;
 
@@ -481,8 +480,8 @@ function advanceFrame<T extends object>(
 function resolveChainNows<T extends object>(
   status: DragStatusDragging<T>,
   frame: DragFrame,
+  result: DragResult<T>,
 ): DragStatusDragging<T> {
-  const result = status.result;
   if (!result.chainNow || _.isEqual(result.dropState, status.startState))
     return status;
 
@@ -509,8 +508,10 @@ function resolveChainNows<T extends object>(
     getDragSpecCallbackOnElement<T>(found.element)?.();
   if (!newDragSpec) return status;
 
+  // We construct a spring origin to emulate what was rendered here
+  // before. That means: no references to the new `result`!
   const newSpringOrigin = makeSpringOrigin(true, () =>
-    runSpring(status.springOrigin, result.preview),
+    runSpring(status.springOrigin, status.result.preview),
   );
 
   const newDraggedPath = getPath(found.element);
@@ -561,7 +562,7 @@ function initDrag<T extends object>(
   // If the result chains immediately (e.g. switchToStateAndFollow),
   // process it now so the first rendered frame is the chained drag,
   // avoiding a single-frame flash of the intermediate state.
-  return resolveChainNows(status, frame);
+  return resolveChainNows(status, frame, result);
 }
 
 // # Render context

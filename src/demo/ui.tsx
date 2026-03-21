@@ -420,6 +420,21 @@ export function DemoDraggable<T extends object>({
                     niceId={false}
                     niceType={false}
                   />
+                  {/* {status.springOrigin && (
+                    <div>
+                      <div className="text-xs text-slate-500 mb-1">
+                        Spring origin
+                      </div>
+                      <svg
+                        width={120}
+                        height={120 * (height / width)}
+                        viewBox={`0 0 ${width} ${height}`}
+                        className="border border-slate-200 rounded bg-white"
+                      >
+                        {drawLayered(status.springOrigin.layered)}
+                      </svg>
+                    </div>
+                  )} */}
                 </ErrorBoundary>
               )}
             </div>
