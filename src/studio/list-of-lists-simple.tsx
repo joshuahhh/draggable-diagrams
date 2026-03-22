@@ -15,6 +15,33 @@ const initialState: State = {
   ],
 };
 
+const tileColors: Record<
+  string,
+  { fill: string; stroke: string; text: string }
+> = {
+  // HSL fills: L=90 S=40, strokes: L=55 S=50, text: L=35 S=50
+  A: {
+    fill: "hsl(220, 40%, 90%)",
+    stroke: "hsl(220, 50%, 55%)",
+    text: "hsl(220, 50%, 35%)",
+  },
+  B: {
+    fill: "hsl(35, 40%, 90%)",
+    stroke: "hsl(35, 50%, 55%)",
+    text: "hsl(35, 50%, 35%)",
+  },
+  C: {
+    fill: "hsl(150, 40%, 90%)",
+    stroke: "hsl(150, 50%, 55%)",
+    text: "hsl(150, 50%, 35%)",
+  },
+  D: {
+    fill: "hsl(330, 40%, 90%)",
+    stroke: "hsl(330, 50%, 55%)",
+    text: "hsl(330, 50%, 35%)",
+  },
+};
+
 const draggable: Draggable<State> = ({ state, d }) => {
   const TILE_SIZE = 50;
   const TILE_GAP = 8;
@@ -80,9 +107,9 @@ const draggable: Draggable<State> = ({ state, d }) => {
                 y={0}
                 width={TILE_SIZE}
                 height={TILE_SIZE}
-                stroke="#aaa"
+                stroke={tileColors[p]?.stroke ?? "#aaa"}
                 strokeWidth={1.5}
-                fill="white"
+                fill={tileColors[p]?.fill ?? "white"}
                 rx={4}
               />
               <text
@@ -92,7 +119,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
                 textAnchor="middle"
                 fontSize={18}
                 fontWeight="500"
-                fill="#555"
+                fill={tileColors[p]?.text ?? "#555"}
               >
                 {p}
               </text>

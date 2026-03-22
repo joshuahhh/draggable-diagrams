@@ -37,7 +37,7 @@ export function Teaser() {
             <li>Drag a bit left, then down.</li>
           </ol>
         </div>
-        <Lens zoom={2}>
+        <Lens zoom={3}>
           <StudioHackContext.Provider
             value={{
               overlayFullOpacity: true,
