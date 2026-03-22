@@ -255,7 +255,14 @@ function DraggableRendererControlled<T extends object>({
     (e: globalThis.PointerEvent) => {
       assert(!!svgElem);
       const rect = svgElem.getBoundingClientRect();
-      const pointer = Vec2(e.clientX - rect.left, e.clientY - rect.top);
+      const scale =
+        svgElem.width.baseVal.value !== 0
+          ? rect.width / svgElem.width.baseVal.value
+          : 1;
+      const pointer = Vec2(
+        (e.clientX - rect.left) / scale,
+        (e.clientY - rect.top) / scale,
+      );
       pointerRef.current = pointer;
       return pointer;
     },
