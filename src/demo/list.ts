@@ -19,7 +19,7 @@ export const demoList = [
   "kanban",
   "ring-of-beads",
   "insert-and-remove",
-  "insert-and-remove-2",
+  "insert-and-remove-original",
   "tiles",
   "grid-poly",
   "grid-poly-vary",
