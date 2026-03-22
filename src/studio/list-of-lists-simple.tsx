@@ -1,6 +1,6 @@
 import { produce } from "immer";
 import _ from "lodash";
-import { amb, ambBoth, produceAmb } from "../amb";
+import { amb, produceAmb } from "../amb";
 import { Draggable } from "../draggable";
 import { translate } from "../svgx/helpers";
 
@@ -54,8 +54,8 @@ const draggable: Draggable<State> = ({ state, d }) => {
                   draft.rows[rowIdx].splice(idx, 1);
                 });
                 const newStates = produceAmb(stateWithout, (draft) => {
-                  // if (true) {
-                  if (ambBoth()) {
+                  if (true) {
+                    // if (ambBoth()) {
                     const newRow = amb(draft.rows);
                     const newColIdx = amb(_.range(newRow.length + 1));
                     newRow.splice(newColIdx, 0, p);
