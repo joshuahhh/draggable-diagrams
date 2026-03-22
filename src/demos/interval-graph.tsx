@@ -99,7 +99,6 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
               height={BAR_H}
               rx={3}
               fill={color}
-              style={{ cursor: "grab" }}
               dragology={() =>
                 d.between(barStates).withSnapRadius(10, { transition: true })
               }

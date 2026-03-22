@@ -65,7 +65,6 @@ const draggable: Draggable<State> = ({ state, d }) => {
         stroke="#3b82f6"
         strokeWidth={2}
         rx={6}
-        style={{ cursor: "grab" }}
         dragology={() =>
           d.vary(state, [param("x"), param("y")], { constraint })
         }

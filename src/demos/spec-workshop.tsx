@@ -843,7 +843,6 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
           id={`tb-${t.label}`}
           key={t.label}
           transform={translate(t.x, TOOLBAR_H / 2 + 4)}
-          style={{ cursor: "grab" }}
           dragology={() => {
             const nid = makeId();
             const ns = produce(state, (draft) => {

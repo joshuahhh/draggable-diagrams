@@ -63,7 +63,6 @@ const draggable: Draggable<State> = ({ state, d, setState }) => (
             height={HEIGHT - 60}
             fill={slide.color}
             rx={8}
-            style={{ cursor: "grab" }}
           />
           <text
             x={WIDTH / 2}
