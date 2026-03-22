@@ -74,7 +74,9 @@ export function setTraceInfo<S extends DragSpecData<any>>(
 export function debugOverlay<T extends object>(
   spec: DragSpecData<T>,
   pointer: Vec2,
+  active = true,
 ): Svgx | null {
+  const opacity = active ? 0.8 : 0.2;
   switch (spec.type) {
     case "fixed": {
       const info = getTraceInfo(spec);
@@ -82,7 +84,7 @@ export function debugOverlay<T extends object>(
       const pos = info.renderedStates[0].position;
       const distance = pointer.dist(pos);
       return (
-        <g opacity={0.8}>
+        <g opacity={opacity}>
           <circle
             cx={pos.x}
             cy={pos.y}
@@ -99,12 +101,12 @@ export function debugOverlay<T extends object>(
     case "with-floating": {
       const info = getTraceInfo(spec);
       if (!info) return null;
-      const innerOverlay = debugOverlay(spec.inner, pointer);
+      const innerOverlay = debugOverlay(spec.inner, pointer, active);
       const distance = pointer.dist(info.elementPos);
       return (
         <g>
           {innerOverlay}
-          <g opacity={0.8}>
+          <g opacity={opacity}>
             <circle
               cx={info.elementPos.x}
               cy={info.elementPos.y}
@@ -127,13 +129,13 @@ export function debugOverlay<T extends object>(
       return (
         <g>
           {spec.specs.map((child, i) => {
-            const sub = debugOverlay(child, pointer);
-            if (!sub) return null;
-            return (
-              <g key={i} opacity={i === info.bestIndex ? 1 : 0.2}>
-                {sub}
-              </g>
+            const sub = debugOverlay(
+              child,
+              pointer,
+              active && i === info.bestIndex,
             );
+            if (!sub) return null;
+            return <g key={i}>{sub}</g>;
           })}
         </g>
       );
@@ -142,15 +144,19 @@ export function debugOverlay<T extends object>(
     case "when-far": {
       const info = getTraceInfo(spec);
       if (!info) return null;
-      const fgOverlay = debugOverlay(spec.foreground, pointer);
+      const fgOverlay = debugOverlay(
+        spec.foreground,
+        pointer,
+        active && info.inForeground,
+      );
       if (info.inForeground) {
         return fgOverlay;
       }
-      const bgOverlay = debugOverlay(spec.background, pointer);
+      const bgOverlay = debugOverlay(spec.background, pointer, active);
       if (!fgOverlay && !bgOverlay) return null;
       return (
         <g>
-          {fgOverlay && <g opacity={0.15}>{fgOverlay}</g>}
+          {fgOverlay}
           {bgOverlay}
         </g>
       );
@@ -163,61 +169,59 @@ export function debugOverlay<T extends object>(
       return (
         <g>
           {spec.specs.map((child, i) => {
-            const sub = debugOverlay(child, pointer);
+            const sub = debugOverlay(child, pointer, false);
             if (!sub) return null;
-            return (
-              <g key={`sub-${i}`} opacity={0.5}>
-                {sub}
-              </g>
-            );
+            return <g key={`sub-${i}`}>{sub}</g>;
           })}
-          {info.delaunayTriangles.map((tri, i) => {
-            const [a, b, c] = tri;
-            return (
-              <path
-                key={`tri-${i}`}
-                d={svgPath("M", a.x, a.y, "L", b.x, b.y, "L", c.x, c.y, "Z")}
-                stroke="magenta"
-                strokeWidth={1}
-                fill="magenta"
-                fillOpacity={0.05}
-              />
-            );
-          })}
-          {info.renderedStates.map((rs, i) => {
-            const w = info.weights.get(i) ?? 0;
-            const maxR = 8;
-            const r = Math.sqrt(w) * maxR;
-            const isDropState = i === info.closestIndex;
-            return (
-              <g key={`pt-${i}`}>
-                {/* indicator circle */}
-                <circle
-                  {...rs.position.cxy()}
-                  r={isDropState ? maxR + 4 : 4}
-                  fill="none"
+          <g opacity={opacity}>
+            {info.delaunayTriangles.map((tri, i) => {
+              const [a, b, c] = tri;
+              return (
+                <path
+                  key={`tri-${i}`}
+                  d={svgPath("M", a.x, a.y, "L", b.x, b.y, "L", c.x, c.y, "Z")}
                   stroke="magenta"
-                  strokeWidth={1.5}
+                  strokeWidth={1}
+                  fill="magenta"
+                  fillOpacity={0.05}
                 />
-                {/* weight disk */}
-                {r > 0.5 && (
-                  <circle {...rs.position.cxy()} r={r} fill="magenta" />
-                )}
-              </g>
-            );
-          })}
-          <circle
-            {...info.projectedPoint.cxy()}
-            r={5}
-            stroke="magenta"
-            strokeWidth={2}
-            fill="none"
-          />
-          <DistanceLine
-            from={pointer}
-            to={info.projectedPoint}
-            distance={projDist}
-          />
+              );
+            })}
+            {info.renderedStates.map((rs, i) => {
+              const w = info.weights.get(i) ?? 0;
+              const maxR = 8;
+              const r = Math.sqrt(w) * maxR;
+              const isDropState = i === info.closestIndex;
+              return (
+                <g key={`pt-${i}`}>
+                  {/* indicator circle */}
+                  <circle
+                    {...rs.position.cxy()}
+                    r={isDropState ? maxR + 4 : 4}
+                    fill="none"
+                    stroke="magenta"
+                    strokeWidth={1.5}
+                  />
+                  {/* weight disk */}
+                  {r > 0.5 && (
+                    <circle {...rs.position.cxy()} r={r} fill="magenta" />
+                  )}
+                </g>
+              );
+            })}
+            <circle
+              {...info.projectedPoint.cxy()}
+              r={5}
+              stroke="magenta"
+              strokeWidth={2}
+              fill="none"
+            />
+            <DistanceLine
+              from={pointer}
+              to={info.projectedPoint}
+              distance={projDist}
+            />
+          </g>
         </g>
       );
     }
@@ -228,7 +232,7 @@ export function debugOverlay<T extends object>(
       const pos = info.renderedStates[0].position;
       const distance = pointer.dist(pos);
       return (
-        <g opacity={0.8}>
+        <g opacity={opacity}>
           <circle {...pos.cxy()} r={5} fill="magenta" />
           <DistanceLine from={pos} to={pointer} distance={distance} />
         </g>
@@ -239,7 +243,7 @@ export function debugOverlay<T extends object>(
       const info = getTraceInfo(spec);
       if (!info || info.globalBounds.empty) return null;
       return (
-        <g opacity={0.8}>
+        <g opacity={opacity}>
           <rect
             x={info.globalBounds.minX}
             y={info.globalBounds.minY}
@@ -269,19 +273,19 @@ export function debugOverlay<T extends object>(
     case "with-branch-transition":
     case "with-chaining":
     case "with-init-context":
-      return debugOverlay(spec.inner, pointer);
+      return debugOverlay(spec.inner, pointer, active);
 
     case "switch-to-state-and-follow": {
       const info = getTraceInfo(spec);
-      return info ? debugOverlay(info.tracedInner, pointer) : null;
+      return info ? debugOverlay(info.tracedInner, pointer, active) : null;
     }
 
     case "substate":
-      return debugOverlay(spec.innerSpec, pointer);
+      return debugOverlay(spec.innerSpec, pointer, active);
 
     case "react-to": {
       const info = getTraceInfo(spec);
-      return info ? debugOverlay(info.tracedInner, pointer) : null;
+      return info ? debugOverlay(info.tracedInner, pointer, active) : null;
     }
 
     default:
