@@ -4,7 +4,6 @@ import * as d3Interpolate from "d3-interpolate";
 import { interpolatePath } from "d3-interpolate-path";
 import React, { cloneElement } from "react";
 import { shouldRecurseIntoChildren, Svgx } from ".";
-import { DRAGOLOGY_PROP_NAME } from "../draggable";
 import { ErrorWithJSX } from "../ErrorBoundary";
 import { lerp } from "../math/vec2";
 import { objectKeys } from "../utils/js";
@@ -229,7 +228,7 @@ export function lerpSvgx(a: Svgx, b: Svgx, t: number): Svgx {
     if (key === "children" || key === "transform") continue;
     // TODO: audit handling of data- props
     if (key.startsWith("data-")) continue;
-    if (key === DRAGOLOGY_PROP_NAME) continue;
+    if (key.startsWith("dragology")) continue;
     if (/^on[A-Z]/.test(key)) continue;
     if (NO_LERP_PROPS.has(key)) continue;
 
