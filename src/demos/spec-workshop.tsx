@@ -32,7 +32,7 @@ type Expr =
 type CanvasNode = { expr: Expr; x: number; y: number };
 type DotLabel = "A" | "B" | "C";
 const ACTIVE_SPEC_ID = "active-spec";
-type State = {
+export type State = {
   nodes: Record<string, CanvasNode>;
   previewDot: DotLabel;
 };
@@ -50,13 +50,13 @@ const DEFAULT_NHW = 24;
 const SLOT_PAD = 12;
 
 const TOOLBAR_H = 52;
-const CANVAS_W = 600;
-const CANVAS_H = 400;
+export const CANVAS_W = 600;
+export const CANVAS_H = 400;
 
 const PV_W = 160;
 const PV_H = 140;
 const PV_X = CANVAS_W - PV_W - 10;
-const PV_Y = CANVAS_H - PV_H - 10;
+const PV_Y = TOOLBAR_H + 10;
 const PV_DOT_R = 12;
 const PV_DOTS: Record<DotLabel, { x: number; y: number }> = {
   A: { x: PV_W / 2, y: 35 },
@@ -278,7 +278,7 @@ function nodeDrag(
 
 // ─── Initial State ───
 
-const initialState: State = {
+export const initialState: State = {
   nodes: {
     [ACTIVE_SPEC_ID]: {
       expr: { type: "activeSpec", childId: null },
@@ -422,7 +422,7 @@ function compileExpr(
 
 // ─── Draggable ───
 
-const draggable: Draggable<State> = ({ state, d, draggedId }) => {
+export const draggable: Draggable<State> = ({ state, d, draggedId }) => {
   // Collect snapped IDs (children of other nodes + the permanent active-spec node)
   const snappedIds = new Set<string>([ACTIVE_SPEC_ID]);
   for (const n of Object.values(state.nodes))
@@ -430,71 +430,110 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
 
   // ── Toolbar defs ──
 
-  const toolbarDefs: {
+  type ToolbarItem = {
     label: string;
+    group: string;
+    hw: number; // half-width for layout
     makeExpr: () => Expr;
     preview: React.ReactElement;
-    x: number;
+  };
+
+  const GROUP_GAP = 20;
+  const LEFT_PAD = 10;
+
+  const ITEM_GAP = 12;
+
+  const toolbarItemGroups: {
+    title: string;
+    items: Omit<ToolbarItem, "group">[];
   }[] = [
-    ...(["A", "B", "C"] as const).map((l, i) => ({
-      label: l,
-      makeExpr: (): Expr => ({ type: "state", label: l }),
-      preview: (
-        <g>
-          <polygon
-            points={`0,-10 10,0 0,10 -10,0`}
-            fill={STATE_FILL[l]}
-            strokeLinejoin="round"
-          />
-          <text
-            textAnchor="middle"
-            dominantBaseline="central"
-            fontSize={8}
-            fontWeight="700"
-            fill="white"
-            pointerEvents="none"
-          >
-            {l}
-          </text>
-        </g>
-      ),
-      x: 24 + i * 30,
-    })),
     {
-      label: "between",
-      makeExpr: (): Expr => ({ type: "between", childIds: [] }),
-      preview: tbPreview("between", S.between),
-      x: 150,
+      title: "STATES",
+      items: (["A", "B", "C"] as const).map((l) => ({
+        label: l,
+        hw: 10,
+        makeExpr: (): Expr => ({ type: "state", label: l }),
+        preview: (
+          <g>
+            <polygon
+              points={`0,-10 10,0 0,10 -10,0`}
+              fill={STATE_FILL[l]}
+              strokeLinejoin="round"
+            />
+            <text
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={8}
+              fontWeight="700"
+              fill="white"
+              pointerEvents="none"
+            >
+              {l}
+            </text>
+          </g>
+        ),
+      })),
     },
     {
-      label: "fixed",
-      makeExpr: (): Expr => ({ type: "fixed", childId: null }),
-      preview: tbPreview("fixed", S.fixed),
-      x: 220,
+      title: "COMBINATORS",
+      items: [
+        {
+          label: "between",
+          hw: 28,
+          makeExpr: (): Expr => ({ type: "between", childIds: [] }),
+          preview: tbPreview("between", S.between),
+        },
+        {
+          label: "closest",
+          hw: 28,
+          makeExpr: (): Expr => ({ type: "closest", childIds: [] }),
+          preview: tbPreview("closest", S.closest),
+        },
+      ],
     },
     {
-      label: "withFloating",
-      makeExpr: (): Expr => ({ type: "withFloating", childId: null }),
-      preview: tbPreview("withFloating", S.withFloating, 36, 8),
-      x: 300,
-    },
-    {
-      label: "closest",
-      makeExpr: (): Expr => ({ type: "closest", childIds: [] }),
-      preview: tbPreview("closest", S.closest),
-      x: 390,
-    },
-    {
-      label: "wsr",
-      makeExpr: (): Expr => ({
-        type: "withSnapRadius",
-        childId: null,
-        radius: 15,
-      }),
-      preview: tbPreview("withSnapRadius", S.wsr, 42, 8),
-      x: 490,
+      title: "MODIFIERS",
+      items: [
+        {
+          label: "fixed",
+          hw: 28,
+          makeExpr: (): Expr => ({ type: "fixed", childId: null }),
+          preview: tbPreview("fixed", S.fixed),
+        },
+        {
+          label: "withFloating",
+          hw: 36,
+          makeExpr: (): Expr => ({ type: "withFloating", childId: null }),
+          preview: tbPreview("withFloating", S.withFloating, 36, 8),
+        },
+        {
+          label: "wsr",
+          hw: 42,
+          makeExpr: (): Expr => ({
+            type: "withSnapRadius",
+            childId: null,
+            radius: 15,
+          }),
+          preview: tbPreview("withSnapRadius", S.wsr, 42, 8),
+        },
+      ],
     },
   ];
+
+  // Lay out items with even spacing within groups, and gaps between groups
+  const toolbarDefs: (ToolbarItem & { x: number })[] = [];
+  const toolbarGroupPositions: { title: string; x: number }[] = [];
+  let x = LEFT_PAD;
+  for (const group of toolbarItemGroups) {
+    toolbarGroupPositions.push({ title: group.title, x });
+    for (let i = 0; i < group.items.length; i++) {
+      const item = group.items[i];
+      x += item.hw; // advance to center
+      toolbarDefs.push({ ...item, group: group.title, x });
+      x += item.hw + ITEM_GAP; // advance past right edge + gap
+    }
+    x += GROUP_GAP - ITEM_GAP; // replace last item gap with group gap
+  }
 
   // ── Render helpers (using closure over state, d, draggedId) ──
 
@@ -832,24 +871,33 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
         stroke="#e5e7eb"
       />
 
-      {/* toolbar label */}
-      <text x={10} y={14} fontSize={9} fill="#aaa" fontWeight="500">
-        DRAG TO ADD
-      </text>
+      {/* toolbar group labels */}
+      {toolbarGroupPositions.map((group) => (
+        <text
+          key={group.title}
+          x={group.x}
+          y={14}
+          fontSize={9}
+          fill="#aaa"
+          fontWeight="500"
+        >
+          {group.title}
+        </text>
+      ))}
 
       {/* toolbar items */}
       {toolbarDefs.map((t) => (
         <g
           id={`tb-${t.label}`}
           key={t.label}
-          transform={translate(t.x, TOOLBAR_H / 2 + 4)}
+          transform={translate(t.x, TOOLBAR_H / 2 + 7)}
           dragologyOnDrag={() => {
             const nid = makeId();
             const ns = produce(state, (draft) => {
               draft.nodes[nid] = {
                 expr: t.makeExpr(),
                 x: t.x,
-                y: TOOLBAR_H / 2 + 4,
+                y: TOOLBAR_H / 2 + 7,
               };
             });
             return d.switchToStateAndFollow(
@@ -864,7 +912,10 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
       ))}
 
       {/* trash bin */}
-      <g id="trash-bin" transform={translate(CANVAS_W - 40, TOOLBAR_H / 2 + 4)}>
+      <g
+        id="trash-bin"
+        transform={translate(CANVAS_W - LEFT_PAD - 16, TOOLBAR_H / 2)}
+      >
         <rect
           x={-16}
           y={-16}

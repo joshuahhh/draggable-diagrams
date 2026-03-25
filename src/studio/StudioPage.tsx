@@ -4,7 +4,9 @@ import { NoolTreeSection } from "./NoolTreeSection";
 import { OrderPreservingSection } from "./OrderPreservingSection";
 import qrA from "./qr_A.png";
 import { RingOfBeadsSection } from "./RingOfBeadsSection";
+import { SpecWorkshopSection } from "./SpecWorkshopSection";
 import { TeaserSection } from "./TeaserSection";
+import { TessellationSection } from "./TessellationSection";
 
 export function Section({
   title,
@@ -87,6 +89,10 @@ export const StudioPage = () => {
       <OrderPreservingSection />
       <Divider />
       <NoolTreeSection />
+      <Divider />
+      <TessellationSection />
+      <Divider />
+      <SpecWorkshopSection />
     </div>
   );
 };

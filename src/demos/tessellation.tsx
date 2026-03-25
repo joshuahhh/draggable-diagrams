@@ -187,7 +187,7 @@ type Shape = {
   rotDeg: number;
 };
 
-type State = {
+export type State = {
   shapes: Shape[];
 };
 
@@ -277,7 +277,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
       })}
 
       {/* Trash bin */}
-      <g id="trash-bin" transform={translate(530, 380)}>
+      <g id="trash-bin" transform={translate(540, 10)}>
         <rect
           width={50}
           height={50}
@@ -304,19 +304,18 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
         <rect
           width={PALETTE_W}
           height={PALETTE_H}
-          rx={8}
-          fill="#f3f4f6"
-          stroke="#d1d5db"
-          strokeWidth={1.5}
+          fill="#f9fafb"
+          stroke="#e5e7eb"
         />
-        <text
-          x={PALETTE_W / 2}
-          y={12}
-          textAnchor="middle"
-          fontSize={10}
-          fill="#999"
-        >
-          drag to add
+        <line
+          x1={0}
+          y1={PALETTE_H}
+          x2={PALETTE_W}
+          y2={PALETTE_H}
+          stroke="#e5e7eb"
+        />
+        <text x={10} y={14} fontSize={9} fill="#aaa" fontWeight="500">
+          DRAG TO ADD
         </text>
       </g>
 
@@ -347,6 +346,8 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
     </g>
   );
 };
+
+export { draggable };
 
 export default demo(
   () => (
