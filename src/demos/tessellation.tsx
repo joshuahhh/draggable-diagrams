@@ -368,6 +368,7 @@ export default demo(
       "spec.whenFar",
       "discrete on top of continuous",
       "d.dropTarget",
+      "spec.withInitContext [pointerLocal]",
     ],
   },
 );
