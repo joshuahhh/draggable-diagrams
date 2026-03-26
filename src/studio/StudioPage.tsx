@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { useTitle } from "../useTitle";
+import { IntervalGraphSection } from "./IntervalGraphSection";
 import { NoolTreeSection } from "./NoolTreeSection";
 import { OrderPreservingSection } from "./OrderPreservingSection";
 import qrA from "./qr_A.png";
@@ -93,6 +94,8 @@ export const StudioPage = () => {
       <TessellationSection />
       <Divider />
       <SpecWorkshopSection />
+      <Divider />
+      <IntervalGraphSection />
     </div>
   );
 };

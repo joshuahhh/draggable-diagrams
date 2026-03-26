@@ -529,11 +529,8 @@ function resolveChainNows<T extends object>(
   const newDraggedPath = getPath(found.element);
   assert(!!newDraggedPath, "Chained element must have a path");
 
-  const pointerLocal = status.behaviorCtx.pointerLocal;
-  const newPointerStart = localToGlobal(
-    found.accumulatedTransform,
-    pointerLocal,
-  );
+  const anchorPos = status.behaviorCtx.anchorPos;
+  const newPointerStart = localToGlobal(found.accumulatedTransform, anchorPos);
 
   return initDrag(
     newDragSpec,
@@ -541,7 +538,7 @@ function resolveChainNows<T extends object>(
       ...status.behaviorCtx,
       draggedPath: newDraggedPath,
       draggedId: newDraggedId,
-      pointerLocal,
+      anchorPos,
       pointerStart: newPointerStart,
       startState: newState,
     },
@@ -645,7 +642,7 @@ function postProcessForInteraction<T extends object>(
             // via updatePropsDownTree?
             const found = findByPath(draggedPath, withPaths);
             assert(!!found, "Dragged element must be findable by path");
-            const pointerLocal = globalToLocal(
+            const anchorPos = globalToLocal(
               found.accumulatedTransform,
               pointer,
             );
@@ -654,7 +651,7 @@ function postProcessForInteraction<T extends object>(
               draggable: ctx.draggable,
               draggedPath,
               draggedId,
-              pointerLocal,
+              anchorPos,
               pointerStart: pointer,
               startState: state,
             };

@@ -40,19 +40,20 @@ export function renderDraggableInert<T extends object>(
 }
 
 /**
- * Render a state and extract the float context for a dragged element:
- * the floatLayered (the extracted element layer) and the pointerStart
- * (where pointerLocal maps to in the element's global coordinates).
+ * Render a state and extract the float context for a dragged
+ * element: the floatLayered (the extracted element layer) and the
+ * pointerStart (where anchorPos maps to in the element's global
+ * coordinates).
  */
 export function extractFloatContext<T extends object>(
   draggable: Draggable<T>,
   state: T,
   draggedId: string,
-  pointerLocal: Vec2,
+  anchorPos: Vec2,
 ): { floatLayered: LayeredSvgx; pointerStart: Vec2 } {
   const layered = renderDraggableInert(draggable, state, draggedId, false);
   const { extracted } = layeredExtract(layered, draggedId);
   const element = layered.byId.get(draggedId)!;
-  const pointerStart = localToGlobal(element.props.transform, pointerLocal);
+  const pointerStart = localToGlobal(element.props.transform, anchorPos);
   return { floatLayered: extracted, pointerStart };
 }

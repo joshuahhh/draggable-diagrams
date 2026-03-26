@@ -7,9 +7,9 @@ import { lessThan, param } from "../DragSpec";
 import { translate } from "../svgx/helpers";
 
 type Meeting = { start: number; end: number; room: number };
-type State = { meetings: Meeting[] };
+export type State = { meetings: Meeting[] };
 
-const initialState: State = {
+export const initialState: State = {
   meetings: [
     { start: 20, end: 100, room: 0 },
     { start: 60, end: 160, room: 1 },
@@ -27,6 +27,8 @@ const BAR_H = 6;
 const END_TIME = 300;
 const MIN_LENGTH = 4 * DOT_R;
 const GRAPH_X = END_TIME + 40;
+export const CANVAS_W = GRAPH_X + END_TIME + 20;
+export const CANVAS_H = NUM_TRACKS * (TRACK_H + GAP) + 20;
 const NODE_R = 10;
 
 const COLORS = ["#3b82f6", "#06b6d4", "#22c55e", "#f59e0b", "#8b5cf6"];
@@ -35,7 +37,7 @@ function overlaps(a: Meeting, b: Meeting) {
   return a.start < b.end && b.start < a.end;
 }
 
-const draggable: Draggable<State> = ({ state, d, draggedId }) => {
+export const draggable: Draggable<State> = ({ state, d, draggedId }) => {
   const trackY = (track: number) => track * (TRACK_H + GAP) + TRACK_H / 2;
 
   const nodePos = (iv: Meeting) => ({
@@ -175,8 +177,8 @@ export default demo(
     <DemoDraggable
       draggable={draggable}
       initialState={initialState}
-      width={GRAPH_X + END_TIME + 20}
-      height={NUM_TRACKS * (TRACK_H + GAP) + 20}
+      width={CANVAS_W}
+      height={CANVAS_H}
     />
   ),
   { tags: ["d.vary [constraint]", "d.between", "spec.withSnapRadius"] },

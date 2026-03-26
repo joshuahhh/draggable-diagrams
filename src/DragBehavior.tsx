@@ -93,7 +93,7 @@ export type DragInitContext<T extends object> = {
   draggable: Draggable<T>;
   draggedPath: string;
   draggedId: string | null;
-  pointerLocal: Vec2;
+  anchorPos: Vec2;
   pointerStart: Vec2;
   startState: T;
 };
@@ -198,7 +198,7 @@ function withFloatingBehavior<T extends object>(
     // On a layer, the transform prop IS the accumulated transform.
     const draggedElement = layered.byId.get(draggedId);
     const elementPos = draggedElement
-      ? localToGlobal(draggedElement.props.transform, ctx.pointerLocal)
+      ? localToGlobal(draggedElement.props.transform, ctx.anchorPos)
       : Vec2(Infinity, Infinity);
 
     // Extract the float element from the inner result, or fall back to cache.
@@ -221,7 +221,7 @@ function withFloatingBehavior<T extends object>(
         cachedFloatLayered = extracted;
         const startDraggedElement = startLayered.byId.get(draggedId);
         cachedFloatPos = startDraggedElement
-          ? localToGlobal(startDraggedElement.props.transform, ctx.pointerLocal)
+          ? localToGlobal(startDraggedElement.props.transform, ctx.anchorPos)
           : Vec2(0, 0);
         startFloatPos = ctx.pointerStart;
       }
@@ -430,7 +430,7 @@ function varyBehavior<T extends object>(
     );
     const found = findByPath(ctx.draggedPath, content);
     if (!found) return Vec2(Infinity, Infinity);
-    return localToGlobal(found.accumulatedTransform, ctx.pointerLocal);
+    return localToGlobal(found.accumulatedTransform, ctx.anchorPos);
   };
 
   const { constraint, pin } = spec.options;
@@ -879,7 +879,7 @@ function switchToStateAndFollowBehavior<T extends object>(
         ctx.draggable,
         spec.state,
         spec.draggedId,
-        ctx.pointerLocal,
+        ctx.anchorPos,
       )
     : null;
 
@@ -1071,5 +1071,5 @@ function getElementPosition<T extends object>(
 ): Vec2 {
   const found = findByPathInLayered(ctx.draggedPath, layered);
   if (!found) return Vec2(Infinity, Infinity);
-  return localToGlobal(found.accumulatedTransform, ctx.pointerLocal);
+  return localToGlobal(found.accumulatedTransform, ctx.anchorPos);
 }

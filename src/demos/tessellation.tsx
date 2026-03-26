@@ -270,7 +270,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                   ]),
                   { gap: 30 },
                 )
-                .withInitContext({ pointerLocal: Vec2(0) });
+                .withInitContext({ anchorPos: Vec2(0) });
             }}
           />
         );
@@ -369,7 +369,7 @@ export default demo(
       "spec.whenFar",
       "discrete on top of continuous",
       "d.dropTarget",
-      "spec.withInitContext [pointerLocal]",
+      "spec.withInitContext [anchorPos]",
     ],
   },
 );

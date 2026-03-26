@@ -232,7 +232,7 @@ export interface DragSpecMethods<T extends object> {
 
   /**
    * Transform the DragInitContext before the inner spec is
-   * initialized. Use this to override things like `pointerLocal` or
+   * initialized. Use this to override things like `anchorPos` or
    * `draggedPath` for child behaviors.
    */
   withInitContext(
