@@ -155,6 +155,23 @@ function traceContours(
     return vertices[vi(r, c)] === region;
   }
 
+  function cornerValue(r: number, c: number): string {
+    if (r < 0 || r > fineRows || c < 0 || c > fineCols) return "";
+    return vertices[vi(r, c)];
+  }
+
+  // Detect cells where 3+ distinct regions meet. In these cells, straight
+  // edge-midpoint-to-edge-midpoint lines leave small uncovered triangles.
+  // Routing through the cell center makes all regions meet at one point.
+  function isMultiLabel(cellRow: number, cellCol: number): boolean {
+    const vals = new Set<string>();
+    vals.add(cornerValue(cellRow, cellCol));
+    vals.add(cornerValue(cellRow, cellCol + 1));
+    vals.add(cornerValue(cellRow + 1, cellCol + 1));
+    vals.add(cornerValue(cellRow + 1, cellCol));
+    return vals.size >= 3;
+  }
+
   function caseAt(cellRow: number, cellCol: number): number {
     const tl = isInside(cellRow, cellCol) ? 8 : 0;
     const tr = isInside(cellRow, cellCol + 1) ? 4 : 0;
@@ -194,6 +211,16 @@ function traceContours(
           if (exitEdge === undefined) break;
 
           traced.add(ek(curCol, curRow, curEntry));
+
+          // For multi-label cells (3+ regions), route through center so
+          // adjacent regions meet at a point instead of leaving a gap.
+          // Skip for saddle cases (5, 10) which have two segments per cell.
+          if (isMultiLabel(curRow, curCol) && curCase !== 5 && curCase !== 10) {
+            polygon.push(
+              Vec2((curCol + 0.5) * cellSize, (curRow + 0.5) * cellSize),
+            );
+          }
+
           polygon.push(edgeMidpoint(curCol, curRow, exitEdge, cellSize));
 
           const nb = neighbor(
