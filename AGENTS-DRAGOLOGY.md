@@ -383,3 +383,5 @@ const point = center.add(offset);
 7. **`dragologyOnDrag` takes a function that returns a spec**, not the spec directly: `dragologyOnDrag={() => d.between(...)}`, not `dragologyOnDrag={d.between(...)}`.
 
 8. **Use `<g>` rather than `<>` (Fragment) for grouping.** Fragments are not supported. Always use `<g>` to wrap multiple elements.
+
+9. **Variable-length lists need `id` attributes.** If the number of rendered children can change between states (e.g. mapping over a list that grows or shrinks), every element must have a stable `id`. Without ids, the interpolation engine can't reconcile which elements correspond across states and will fail. Remember, no React-style `key` attributes!
