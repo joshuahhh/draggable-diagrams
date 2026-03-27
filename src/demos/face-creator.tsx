@@ -32,7 +32,6 @@ type State = {
   cp1dy: number;
   cp2dx: number;
   cp2dy: number;
-  pinned: { eyes: boolean; mouth: boolean };
   // Face shape
   faceRx: number;
   faceRyTop: number;
@@ -50,7 +49,6 @@ const initialState: State = {
   cp1dy: 30,
   cp2dx: -20,
   cp2dy: 30,
-  pinned: { eyes: false, mouth: false },
   faceRx: FACE_R,
   faceRyTop: FACE_R,
   faceRyBot: FACE_R,
@@ -285,23 +283,10 @@ function mouthPath(s: State): string {
 }
 
 function evalMouthBezier(s: State, t: number): { x: number; y: number } {
-  const p0 = mouthLeft(s);
-  const p1 = cp1(s);
-  const p2 = cp2(s);
-  const p3 = mouthRight(s);
-  const mt = 1 - t;
-  return {
-    x:
-      mt ** 3 * p0.x +
-      3 * mt ** 2 * t * p1.x +
-      3 * mt * t ** 2 * p2.x +
-      t ** 3 * p3.x,
-    y:
-      mt ** 3 * p0.y +
-      3 * mt ** 2 * t * p1.y +
-      3 * mt * t ** 2 * p2.y +
-      t ** 3 * p3.y,
-  };
+  return evalBezier(
+    { p0: mouthLeft(s), cp1: cp1(s), cp2: cp2(s), p3: mouthRight(s) },
+    t,
+  );
 }
 
 function dist(
@@ -481,52 +466,44 @@ function expandFaceForFeatures(s: State): State {
   return result;
 }
 
-function clampInsideFace(
-  s: State,
-  skipEyes: boolean = false,
-  skipMouth: boolean = false,
-): State {
+function clampInsideFace(s: State): State {
   const samples = sampleFaceOutline(s);
   let result = s;
 
   // Clamp eyes
-  if (!skipEyes) {
-    const le = leftEye(result);
-    const re = rightEye(result);
-    const clampedLE = clampPointInsideFace(samples, le, FACE_MARGIN);
-    const clampedRE = clampPointInsideFace(samples, re, FACE_MARGIN);
-    if (clampedLE.x !== le.x || clampedLE.y !== le.y ||
-        clampedRE.x !== re.x || clampedRE.y !== re.y) {
-      const newEyeY = Math.min(clampedLE.y, clampedRE.y);
-      const newEyeDx = Math.max(
-        MIN_EYE_SPACING,
-        Math.min(
-          Math.abs(clampedLE.x - FACE_CX),
-          Math.abs(clampedRE.x - FACE_CX),
-        ),
-      );
-      result = { ...result, eyeY: newEyeY, eyeDx: newEyeDx };
-    }
+  const le = leftEye(result);
+  const re = rightEye(result);
+  const clampedLE = clampPointInsideFace(samples, le, FACE_MARGIN);
+  const clampedRE = clampPointInsideFace(samples, re, FACE_MARGIN);
+  if (clampedLE.x !== le.x || clampedLE.y !== le.y ||
+      clampedRE.x !== re.x || clampedRE.y !== re.y) {
+    const newEyeY = Math.min(clampedLE.y, clampedRE.y);
+    const newEyeDx = Math.max(
+      MIN_EYE_SPACING,
+      Math.min(
+        Math.abs(clampedLE.x - FACE_CX),
+        Math.abs(clampedRE.x - FACE_CX),
+      ),
+    );
+    result = { ...result, eyeY: newEyeY, eyeDx: newEyeDx };
   }
 
   // Clamp mouth endpoints
-  if (!skipMouth) {
-    const ml = mouthLeft(result);
-    const mr = mouthRight(result);
-    const clampedML = clampPointInsideFace(samples, ml, FACE_MARGIN);
-    const clampedMR = clampPointInsideFace(samples, mr, FACE_MARGIN);
-    if (clampedML.x !== ml.x || clampedML.y !== ml.y ||
-        clampedMR.x !== mr.x || clampedMR.y !== mr.y) {
-      const newMouthEy = Math.max(clampedML.y, clampedMR.y);
-      const newMouthDx = Math.max(
-        10,
-        Math.min(
-          Math.abs(clampedML.x - FACE_CX),
-          Math.abs(clampedMR.x - FACE_CX),
-        ),
-      );
-      result = { ...result, mouthEy: newMouthEy, mouthDx: newMouthDx };
-    }
+  const ml = mouthLeft(result);
+  const mr = mouthRight(result);
+  const clampedML = clampPointInsideFace(samples, ml, FACE_MARGIN);
+  const clampedMR = clampPointInsideFace(samples, mr, FACE_MARGIN);
+  if (clampedML.x !== ml.x || clampedML.y !== ml.y ||
+      clampedMR.x !== mr.x || clampedMR.y !== mr.y) {
+    const newMouthEy = Math.max(clampedML.y, clampedMR.y);
+    const newMouthDx = Math.max(
+      10,
+      Math.min(
+        Math.abs(clampedML.x - FACE_CX),
+        Math.abs(clampedMR.x - FACE_CX),
+      ),
+    );
+    result = { ...result, mouthEy: newMouthEy, mouthDx: newMouthDx };
   }
 
   return result;
@@ -598,28 +575,27 @@ const tValues = Array.from(
 );
 
 const ENDPOINT_R = 6;
-const PIN_R = 5;
 
 const FACE_PERIMETER_SAMPLES = 7;
-const facePerimeterTs = Array.from(
-  { length: FACE_PERIMETER_SAMPLES },
-  (_, i) => (i + 1) / (FACE_PERIMETER_SAMPLES + 1),
-);
+const facePerimeterTs = [
+  0, // junction handle at segment start
+  ...Array.from(
+    { length: FACE_PERIMETER_SAMPLES },
+    (_, i) => (i + 1) / (FACE_PERIMETER_SAMPLES + 1),
+  ),
+];
 
 function makeDraggable(
   scaleCurve: boolean,
   eyesAboveMouth: boolean,
   constrainFaceShape: boolean,
   expandFace: boolean,
-  showLockHandles: boolean,
 ): Draggable<State> {
   return ({ state, d, draggedId }) => {
     const ml = mouthLeft(state);
     const mr = mouthRight(state);
     const le = leftEye(state);
     const re = rightEye(state);
-    const eyesPinned = state.pinned.eyes;
-    const mouthPinned = state.pinned.mouth;
 
     const segs = faceSegments(state);
 
@@ -637,24 +613,17 @@ function makeDraggable(
       return clampInsideFace(result);
     }
 
-    // Pin indicator x position (relative to rightmost face edge)
-    const pinX = FACE_CX + state.faceRx + 18;
-
     function eyeDragology() {
       const spec = d.vary(state, [param("eyeY"), param("eyeDx")], {
         constraint: featureConstraint,
       });
-      if (mouthPinned && !eyesAboveMouth) return spec;
       const origMouthEy = state.mouthEy;
       const origCp1dy = state.cp1dy;
       const origCp2dy = state.cp2dy;
       return spec.during((s) => {
-        let result = s;
-        if (!mouthPinned) {
-          result = eyesAboveMouth
-            ? pushMouthBelowEyes(result)
-            : pushMouthAway(result);
-        }
+        let result = eyesAboveMouth
+          ? pushMouthBelowEyes(s)
+          : pushMouthAway(s);
         if (result.mouthEy !== origMouthEy) {
           const fb = FACE_CY + state.faceRyBot - FACE_MARGIN;
           const origSpace = fb - origMouthEy;
@@ -681,7 +650,7 @@ function makeDraggable(
       const origCp2dx = state.cp2dx;
       const origCp2dy = state.cp2dy;
       return spec.during((s) => {
-        let result = eyesPinned ? s : pushEyesAway(s);
+        let result = pushEyesAway(s);
         if (scaleCurve) {
           const dxScale = origDx > 0 ? result.mouthDx / origDx : 1;
           const fb = FACE_CY + state.faceRyBot - FACE_MARGIN;
@@ -708,51 +677,22 @@ function makeDraggable(
             ? [param("cp2dx"), param("cp2dy")]
             : [param("cp1dx"), param("cp1dy"), param("cp2dx"), param("cp2dy")];
       const spec = d.vary(state, paths, { constraint: featureConstraint });
-      return spec.during((s) => {
-        const result = eyesPinned ? s : pushEyesAway(s);
-        return finalizeDuring(result);
-      });
+      return spec.during((s) => finalizeDuring(pushEyesAway(s)));
     }
 
     function faceConstraint(s: State): number[] {
       const results = faceOnlyConstraints(s);
       if (constrainFaceShape) results.push(...faceShapeConstraints(s));
-      // Pinned features block the face from shrinking past them
-      const samples = sampleFaceOutline(s);
-      if (eyesPinned) {
-        results.push(faceContains(samples, leftEye(s), FACE_MARGIN));
-        results.push(faceContains(samples, rightEye(s), FACE_MARGIN));
-      }
-      if (mouthPinned) {
-        results.push(faceContains(samples, mouthLeft(s), FACE_MARGIN));
-        results.push(faceContains(samples, mouthRight(s), FACE_MARGIN));
-        const N = 8;
-        for (let i = 0; i <= N; i++) {
-          results.push(
-            faceContains(samples, evalMouthBezier(s, i / N), FACE_MARGIN),
-          );
-        }
-      }
       return results;
     }
 
     function faceDuring(s: State): State {
-      let result = s;
-      if (!mouthPinned && !eyesPinned) {
-        result = eyesAboveMouth
-          ? pushMouthBelowEyes(result)
-          : pushMouthAway(result);
-        result = pushEyesAway(result);
-      } else if (!mouthPinned) {
-        result = eyesAboveMouth
-          ? pushMouthBelowEyes(result)
-          : pushMouthAway(result);
-      } else if (!eyesPinned) {
-        result = pushEyesAway(result);
-      }
+      let result = eyesAboveMouth
+        ? pushMouthBelowEyes(s)
+        : pushMouthAway(s);
+      result = pushEyesAway(result);
       if (eyesAboveMouth) result = clampEyesAboveCurve(result);
-      // Only clamp unpinned features — pinned ones are held by COBYLA constraints
-      return clampInsideFace(result, eyesPinned, mouthPinned);
+      return clampInsideFace(result);
     }
 
     // Face perimeter: pin-by-t selects which param to vary per segment.
@@ -785,24 +725,28 @@ function makeDraggable(
           dragologyZIndex={0}
         />
 
-        {/* Face perimeter drag handles (invisible, like mouth curve handles) */}
-        {segs.flatMap((seg, segIdx) =>
-          facePerimeterTs.map((t) => {
-            const pt = evalBezier(seg, t);
-            const id = `face-${segIdx}-${t}`;
-            const isDragged = draggedId === id;
-            return (
-              <circle
-                id={id}
-                transform={translate(pt.x, pt.y)}
-                r={isDragged ? 6 : 12}
-                fill={isDragged ? "rgba(230, 167, 86, 0.4)" : "transparent"}
-                dragologyZIndex={5}
-                dragologyOnDrag={() => facePerimeterDragology(segIdx, t)}
-              />
-            );
-          }),
-        )}
+        {/* Face perimeter drag handles (invisible, below features so eyes/mouth win) */}
+        {(() => {
+          const maxR = Math.max(state.faceRx, state.faceRyTop, state.faceRyBot);
+          const hitR = Math.max(16, maxR * 0.13);
+          return segs.flatMap((seg, segIdx) =>
+            facePerimeterTs.map((t) => {
+              const pt = evalBezier(seg, t);
+              const id = `face-${segIdx}-${t}`;
+              const isDragged = draggedId === id;
+              return (
+                <circle
+                  id={id}
+                  transform={translate(pt.x, pt.y)}
+                  r={isDragged ? 6 : hitR}
+                  fill={isDragged ? "rgba(230, 167, 86, 0.4)" : "transparent"}
+                  dragologyZIndex={0}
+                  dragologyOnDrag={() => facePerimeterDragology(segIdx, t)}
+                />
+              );
+            }),
+          );
+        })()}
 
         {/* Eyes */}
         <circle
@@ -873,63 +817,6 @@ function makeDraggable(
           dragologyOnDrag={endpointDragology}
         />
 
-        {/* Pin toggles (hidden unless showLockHandles is on) */}
-        <g id="pin-eyes" dragologyZIndex={4} opacity={showLockHandles ? 1 : 0}>
-          <circle
-            transform={translate(pinX, state.eyeY)}
-            r={PIN_R}
-            fill={eyesPinned ? "#666" : "transparent"}
-            stroke={eyesPinned ? "#666" : "#ccc"}
-            strokeWidth={1.5}
-            dragologyOnDrag={
-              showLockHandles
-                ? () =>
-                    d.fixed({
-                      ...state,
-                      pinned: { ...state.pinned, eyes: !eyesPinned },
-                    })
-                : undefined
-            }
-          />
-          <line
-            x1={pinX}
-            y1={state.eyeY - PIN_R + 1}
-            x2={pinX}
-            y2={state.eyeY + PIN_R + 3}
-            stroke="#666"
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            opacity={eyesPinned ? 1 : 0}
-          />
-        </g>
-        <g id="pin-mouth" dragologyZIndex={4} opacity={showLockHandles ? 1 : 0}>
-          <circle
-            transform={translate(pinX, state.mouthEy)}
-            r={PIN_R}
-            fill={mouthPinned ? "#666" : "transparent"}
-            stroke={mouthPinned ? "#666" : "#ccc"}
-            strokeWidth={1.5}
-            dragologyOnDrag={
-              showLockHandles
-                ? () =>
-                    d.fixed({
-                      ...state,
-                      pinned: { ...state.pinned, mouth: !mouthPinned },
-                    })
-                : undefined
-            }
-          />
-          <line
-            x1={pinX}
-            y1={state.mouthEy - PIN_R + 1}
-            x2={pinX}
-            y2={state.mouthEy + PIN_R + 3}
-            stroke="#666"
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            opacity={mouthPinned ? 1 : 0}
-          />
-        </g>
       </g>
     );
   };
@@ -937,27 +824,14 @@ function makeDraggable(
 
 export default demo(
   () => {
-    const [scaleCurve, setScaleCurve] = useState(false);
-    const [eyesAboveMouth, setEyesAboveMouth] = useState(false);
+    const [scaleCurve, setScaleCurve] = useState(true);
+    const [eyesAboveMouth, setEyesAboveMouth] = useState(true);
     const [constrainFaceShape, setConstrainFaceShape] = useState(true);
-    const [expandFace, setExpandFace] = useState(false);
-    const [showLockHandles, setShowLockHandles] = useState(false);
+    const [expandFace, setExpandFace] = useState(true);
     const draggable = useMemo(
       () =>
-        makeDraggable(
-          scaleCurve,
-          eyesAboveMouth,
-          constrainFaceShape,
-          expandFace,
-          showLockHandles,
-        ),
-      [
-        scaleCurve,
-        eyesAboveMouth,
-        constrainFaceShape,
-        expandFace,
-        showLockHandles,
-      ],
+        makeDraggable(scaleCurve, eyesAboveMouth, constrainFaceShape, expandFace),
+      [scaleCurve, eyesAboveMouth, constrainFaceShape, expandFace],
     );
     return (
       <DemoWithConfig>
@@ -980,11 +854,6 @@ export default demo(
             onChange={setEyesAboveMouth}
           />
           <ConfigCheckbox
-            label="Enable Mickey mode"
-            value={!constrainFaceShape}
-            onChange={(v) => setConstrainFaceShape(!v)}
-          />
-          <ConfigCheckbox
             label="Features move face"
             value={expandFace}
             onChange={setExpandFace}
@@ -995,13 +864,13 @@ export default demo(
             onChange={setScaleCurve}
           />
           <ConfigCheckbox
-            label="Show lock handles"
-            value={showLockHandles}
-            onChange={setShowLockHandles}
+            label="Enable Mickey mode"
+            value={!constrainFaceShape}
+            onChange={(v) => setConstrainFaceShape(!v)}
           />
         </ConfigPanel>
       </DemoWithConfig>
     );
   },
-  { tags: ["d.vary [w/constraint]", "spec.during", "d.fixed"] },
+  { tags: ["d.vary [w/constraint]", "spec.during"] },
 );
