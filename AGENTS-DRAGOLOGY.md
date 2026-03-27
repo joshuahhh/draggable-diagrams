@@ -115,7 +115,7 @@ dragologyOnDrag={() => {
 
 ### `d.closest(...).withFloating()` — Float Freely, Snap on Drop
 
-Adding `.withFloating()` to a `closest` spec changes the drag experience: the **dragged element floats freely** following your cursor, while the **remaining elements** rearrange to preview the closest drop position. On drop, the element snaps into place.
+Adding `.withFloating()` to a `closest` spec changes the drag experience: the **dragged element floats freely** following your cursor, while the **remaining elements** rearrange to preview the closest drop position. On drop, the element snaps into place. The dragged element must have an `id` for this to work.
 
 This is usually what you want for reordering, kanban boards, and similar interactions where the dragged item should feel "picked up":
 
@@ -237,12 +237,22 @@ dragologyOnDrag={() =>
 
 ## Element Identity and Layering
 
-### Use `id` for Element Identity
+### Use `id` for Element Identity — Never `key`
 
-The library tracks elements by their `id` attribute. Use `id` (not React `key`) for elements that need to be individually identifiable — especially draggable ones and anything referenced by `draggedId`.
+**Do not use React `key` props.** Dragology does its own reconciliation using `id` attributes, not React's. Adding `key` will interfere. Anywhere you'd normally reach for `key` (e.g. rendering a list of elements), use `id` instead.
+
+IDs must be **globally unique** across the entire SVG tree (unlike React keys, which only need to be unique among siblings).
 
 ```tsx
-<g id={`node-${key}`} ...>
+// Good — unique id, no key
+{items.map((item) => (
+  <g id={`item-${item.id}`} ...>
+))}
+
+// Bad — don't use key
+{items.map((item) => (
+  <g key={item.id} ...>
+))}
 ```
 
 **No slashes in IDs.** Use hyphens: `id="node-1-2"` not `id="node/1/2"`.
