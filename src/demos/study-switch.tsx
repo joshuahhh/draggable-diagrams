@@ -5,9 +5,9 @@ import { translate } from "../svgx/helpers";
 
 type State = { status: "on" | "off" };
 
-const initialState: State = { status: "off" };
+export const initialState: State = { status: "off" };
 
-const draggable: Draggable<State> = ({ state, d }) => (
+export const draggable: Draggable<State> = ({ state, d }) => (
   <g transform={translate(50, 50)}>
     {/* Track */}
     <rect

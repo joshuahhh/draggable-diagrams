@@ -8,6 +8,7 @@ import { OrderPreservingSection } from "./OrderPreservingSection";
 import qrA from "./qr_A.png";
 import { RingOfBeadsSection } from "./RingOfBeadsSection";
 import { SpecWorkshopSection } from "./SpecWorkshopSection";
+import { StudySection } from "./StudySection";
 import { TeaserSection } from "./TeaserSection";
 import { TessellationSection } from "./TessellationSection";
 
@@ -102,6 +103,8 @@ export const StudioPage = () => {
       <NoolTreeSection />
       <Divider />
       <OrderPreservingSection />
+      <Divider />
+      <StudySection />
     </div>
   );
 };

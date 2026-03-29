@@ -11,7 +11,7 @@ import { translate } from "../svgx/helpers";
 
 type State = { name: "r" | "g" | "b" };
 
-const initialState: State = { name: "r" };
+export const initialState: State = { name: "r" };
 
 const POS = {
   r: { x: 50, y: 20 },
@@ -25,7 +25,7 @@ const COLOR = {
   b: "#3b82f6",
 };
 
-const makeDraggable = (
+export const makeDraggable = (
   useFloating: boolean,
   clockwiseOnly: boolean,
 ): Draggable<State> => {

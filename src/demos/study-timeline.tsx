@@ -9,7 +9,7 @@ import { translate } from "../svgx/helpers";
 type Block = { id: string; pos: number; track: number; color: string };
 type State = { blocks: Block[] };
 
-const initialState: State = {
+export const initialState: State = {
   blocks: [
     { id: "Cats", pos: 10, track: 0, color: "#3b82f6" },
     { id: "Dogs", pos: 100, track: 1, color: "#ef4444" },
@@ -23,7 +23,7 @@ const GAP = 6;
 const BLOCK_W = 80;
 const TRACK_W = 340;
 
-const draggable: Draggable<State> = ({ state, d, draggedId }) => (
+export const draggable: Draggable<State> = ({ state, d, draggedId }) => (
   <g transform={translate(10, 10)}>
     {/* Track backgrounds */}
     {_.range(NUM_TRACKS).map((t) => (

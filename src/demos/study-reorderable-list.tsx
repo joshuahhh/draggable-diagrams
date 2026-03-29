@@ -11,7 +11,7 @@ import { translate } from "../svgx/helpers";
 
 type State = { items: string[] };
 
-const initialState: State = {
+export const initialState: State = {
   items: ["Apples", "Bananas", "Cherries", "Dates"],
 };
 
@@ -19,7 +19,7 @@ const W = 160;
 const H = 40;
 const GAP = 8;
 
-function makeDraggable(
+export function makeDraggable(
   useFloating: boolean,
   useSnapRadius: boolean,
 ): Draggable<State> {
