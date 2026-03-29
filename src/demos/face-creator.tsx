@@ -307,12 +307,8 @@ function featureConstraints(s: State): number[] {
   results.push(moreThan(s.mouthDx, 10));
 
   const MAX_CP_OFFSET = 100;
-  results.push(
-    lessThan(Math.sqrt(s.cp1dx ** 2 + s.cp1dy ** 2), MAX_CP_OFFSET),
-  );
-  results.push(
-    lessThan(Math.sqrt(s.cp2dx ** 2 + s.cp2dy ** 2), MAX_CP_OFFSET),
-  );
+  results.push(lessThan(Math.sqrt(s.cp1dx ** 2 + s.cp1dy ** 2), MAX_CP_OFFSET));
+  results.push(lessThan(Math.sqrt(s.cp2dx ** 2 + s.cp2dy ** 2), MAX_CP_OFFSET));
 
   const N = 8;
   for (let i = 0; i < N; i++) {
@@ -372,7 +368,7 @@ function faceShapeConstraints(s: State): number[] {
     let diff = angles[(i + 1) % n] - angles[i];
     if (diff < -Math.PI) diff += 2 * Math.PI;
     // Each step must be at least 25% of uniform spacing (prevents sharp pinches)
-    results.push(moreThan(diff, (2 * Math.PI) / n * 0.25));
+    results.push(moreThan(diff, ((2 * Math.PI) / n) * 0.25));
   }
   return results;
 }
@@ -475,8 +471,12 @@ function clampInsideFace(s: State): State {
   const re = rightEye(result);
   const clampedLE = clampPointInsideFace(samples, le, FACE_MARGIN);
   const clampedRE = clampPointInsideFace(samples, re, FACE_MARGIN);
-  if (clampedLE.x !== le.x || clampedLE.y !== le.y ||
-      clampedRE.x !== re.x || clampedRE.y !== re.y) {
+  if (
+    clampedLE.x !== le.x ||
+    clampedLE.y !== le.y ||
+    clampedRE.x !== re.x ||
+    clampedRE.y !== re.y
+  ) {
     const newEyeY = Math.min(clampedLE.y, clampedRE.y);
     const newEyeDx = Math.max(
       MIN_EYE_SPACING,
@@ -493,8 +493,12 @@ function clampInsideFace(s: State): State {
   const mr = mouthRight(result);
   const clampedML = clampPointInsideFace(samples, ml, FACE_MARGIN);
   const clampedMR = clampPointInsideFace(samples, mr, FACE_MARGIN);
-  if (clampedML.x !== ml.x || clampedML.y !== ml.y ||
-      clampedMR.x !== mr.x || clampedMR.y !== mr.y) {
+  if (
+    clampedML.x !== ml.x ||
+    clampedML.y !== ml.y ||
+    clampedMR.x !== mr.x ||
+    clampedMR.y !== mr.y
+  ) {
     const newMouthEy = Math.max(clampedML.y, clampedMR.y);
     const newMouthDx = Math.max(
       10,
@@ -621,9 +625,7 @@ function makeDraggable(
       const origCp1dy = state.cp1dy;
       const origCp2dy = state.cp2dy;
       return spec.during((s) => {
-        let result = eyesAboveMouth
-          ? pushMouthBelowEyes(s)
-          : pushMouthAway(s);
+        let result = eyesAboveMouth ? pushMouthBelowEyes(s) : pushMouthAway(s);
         if (result.mouthEy !== origMouthEy) {
           const fb = FACE_CY + state.faceRyBot - FACE_MARGIN;
           const origSpace = fb - origMouthEy;
@@ -687,9 +689,7 @@ function makeDraggable(
     }
 
     function faceDuring(s: State): State {
-      let result = eyesAboveMouth
-        ? pushMouthBelowEyes(s)
-        : pushMouthAway(s);
+      let result = eyesAboveMouth ? pushMouthBelowEyes(s) : pushMouthAway(s);
       result = pushEyesAway(result);
       if (eyesAboveMouth) result = clampEyesAboveCurve(result);
       return clampInsideFace(result);
@@ -697,12 +697,13 @@ function makeDraggable(
 
     // Face perimeter: pin-by-t selects which param to vary per segment.
     // [startParam, midParam (bulge), endParam] for each segment.
-    const faceSegParams: [VaryPath<State>, VaryPath<State>, VaryPath<State>][] = [
-      [param("faceRyTop"), param("faceBulgeTR"), param("faceRx")],   // seg 0: top → right
-      [param("faceRx"), param("faceBulgeBR"), param("faceRyBot")],   // seg 1: right → bottom
-      [param("faceRyBot"), param("faceBulgeBR"), param("faceRx")],   // seg 2: bottom → left (mirror)
-      [param("faceRx"), param("faceBulgeTR"), param("faceRyTop")],   // seg 3: left → top (mirror)
-    ];
+    const faceSegParams: [VaryPath<State>, VaryPath<State>, VaryPath<State>][] =
+      [
+        [param("faceRyTop"), param("faceBulgeTR"), param("faceRx")], // seg 0: top → right
+        [param("faceRx"), param("faceBulgeBR"), param("faceRyBot")], // seg 1: right → bottom
+        [param("faceRyBot"), param("faceBulgeBR"), param("faceRx")], // seg 2: bottom → left (mirror)
+        [param("faceRx"), param("faceBulgeTR"), param("faceRyTop")], // seg 3: left → top (mirror)
+      ];
 
     function facePerimeterDragology(segIdx: number, t: number) {
       const [startP, midP, endP] = faceSegParams[segIdx];
@@ -816,7 +817,6 @@ function makeDraggable(
           dragologyZIndex={3}
           dragologyOnDrag={endpointDragology}
         />
-
       </g>
     );
   };
@@ -830,7 +830,12 @@ export default demo(
     const [expandFace, setExpandFace] = useState(true);
     const draggable = useMemo(
       () =>
-        makeDraggable(scaleCurve, eyesAboveMouth, constrainFaceShape, expandFace),
+        makeDraggable(
+          scaleCurve,
+          eyesAboveMouth,
+          constrainFaceShape,
+          expandFace,
+        ),
       [scaleCurve, eyesAboveMouth, constrainFaceShape, expandFace],
     );
     return (
