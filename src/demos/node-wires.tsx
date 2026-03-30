@@ -144,7 +144,7 @@ export const draggable: Draggable<State> = ({ state, d, draggedId }) => {
         const dx = Math.max(Math.abs(tx - fx) * 0.4, 30);
 
         return (
-          <g id={`wire-${wid}`}>
+          <g id={`wire-${wid}`} dragologyZIndex={3}>
             <path
               id={`wire-path-${wid}`}
               d={`M${fx},${fy} C${fx + dx},${fy} ${tx - dx},${ty} ${tx},${ty}`}
@@ -164,7 +164,6 @@ export const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                   ? { cursor: "crosshair" }
                   : undefined
               }
-              dragologyZIndex={3}
               dragologyOnDrag={() => endDragSpec(wid, "from")}
             />
             <circle
@@ -177,7 +176,6 @@ export const draggable: Draggable<State> = ({ state, d, draggedId }) => {
               style={
                 wire.to.type === "on-port" ? { cursor: "crosshair" } : undefined
               }
-              dragologyZIndex={3}
               dragologyOnDrag={() => endDragSpec(wid, "to")}
             />
           </g>
@@ -243,9 +241,9 @@ export const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                     end.port === port
                   );
                 });
+                const id = `${side === "in" ? "port" : "oport"}-${nid}-${port}`;
                 return (
                   <g
-                    id={`${side === "in" ? "port" : "oport"}-${nid}-${port}`}
                     transform={translate(lx, ly)}
                     style={{ cursor: "crosshair" }}
                     dragologyOnDrag={
@@ -279,6 +277,9 @@ export const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                       fill={connected ? colors[0] : colors[1]}
                       stroke="white"
                       strokeWidth={1.5}
+                      id={id}
+                      dragologyZIndex="/10"
+                      style={{ pointerEvents: connected ? "none" : undefined }}
                     />
                     <text
                       x={side === "in" ? PORT_R + 4 : -(PORT_R + 4)}
