@@ -345,9 +345,12 @@ function whenFarBehavior<T extends object>(
 ): DragBehavior<T> {
   const foregroundBehavior = dragSpecToBehavior(spec.foreground, ctx);
   const backdropBehavior = dragSpecToBehavior(spec.background, ctx);
+  let lastInForeground = true;
   return (frame) => {
     const foregroundResult = foregroundBehavior(frame);
-    const inForeground = foregroundResult.gap <= spec.gap;
+    const threshold = lastInForeground ? spec.gapOut : spec.gapIn;
+    const inForeground = foregroundResult.gap <= threshold;
+    lastInForeground = inForeground;
     if (!inForeground) {
       const bgResult = backdropBehavior(frame);
       return {

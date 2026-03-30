@@ -26,7 +26,8 @@ export type DragSpecData<T extends object> = {
       type: "when-far";
       foreground: DragSpecData<T>;
       background: DragSpecData<T>;
-      gap: number;
+      gapIn: number;
+      gapOut: number;
     }
   | {
       type: "on-drop";
@@ -108,6 +109,10 @@ export type DragSpecData<T extends object> = {
     }
 );
 
+export type WhenFarOptions =
+  | { gap?: number; gapIn?: never; gapOut?: never }
+  | { gap?: never; gapIn?: number; gapOut?: number };
+
 export type FloatingOptions = {
   ghost?: SVGProps<SVGElement> | true;
   tether?: (dist: number) => number;
@@ -157,7 +162,7 @@ export interface DragSpecMethods<T extends object> {
    * a certain distance ("gap") away. This distance is 50 pixels by
    * default, but can be configured via the `gap` option.
    */
-  whenFar(background: DragSpecLike<T>, opts?: { gap?: number }): DragSpec<T>;
+  whenFar(background: DragSpecLike<T>, opts?: WhenFarOptions): DragSpec<T>;
 
   /**
    * Set a "snap radius" for the behavior. If the dragged element
@@ -248,12 +253,20 @@ const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
       onDropState: state,
     });
   },
-  whenFar(bg, { gap = 50 } = {}) {
+  whenFar(bg, opts: WhenFarOptions = {}) {
+    const gap = opts.gap ?? 50;
+    const gapIn = opts.gapIn ?? gap;
+    const gapOut = opts.gapOut ?? gap;
+    assert(
+      gapIn <= gapOut,
+      `whenFar: gapIn (${gapIn}) must be <= gapOut (${gapOut}), otherwise the behavior oscillates`,
+    );
     return attachMethods({
       type: "when-far",
       foreground: this,
       background: resolveDragSpecLike(bg),
-      gap,
+      gapIn,
+      gapOut,
     });
   },
   withSnapRadius(radius, { transition = false, chain = false } = {}) {

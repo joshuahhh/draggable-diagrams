@@ -61,6 +61,7 @@ export const demoList = [
   "sprouting-tree",
   "weird-floating-vs-fixed",
   "snap-to-islands",
+  "snap-to-islands-in-out",
   "magnetic-targets",
   "bluefish-static",
   "bluefish-perm",

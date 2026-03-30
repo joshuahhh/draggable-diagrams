@@ -161,8 +161,12 @@ function SpecNode<T extends object>({
       </Box>
     );
   } else if (spec.type === "when-far") {
+    const gapLabel =
+      spec.gapIn === spec.gapOut
+        ? `gap=${spec.gapIn}`
+        : `gapIn=${spec.gapIn} gapOut=${spec.gapOut}`;
     return (
-      <Box label={`whenFar (d=${spec.gap})`}>
+      <Box label={`whenFar (${gapLabel})`}>
         <div style={{ display: "flex", flexDirection: "row", gap: 4 }}>
           <Slot label="fg">
             <SpecNode spec={spec.foreground} path={path + "fg/"} />
