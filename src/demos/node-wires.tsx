@@ -239,38 +239,34 @@ export const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                   );
                 });
                 const id = `${side === "in" ? "port" : "oport"}-${nid}-${port}`;
+                const onDrag =
+                  !connected &&
+                  (() => {
+                    const [px, py] = portPos(state, nid, port);
+                    const wid = nextWireId(state);
+                    const fixed: WireEnd = {
+                      type: "on-port",
+                      nodeId: nid,
+                      port,
+                    };
+                    const free: WireEnd = { type: "free", x: px, y: py };
+                    const freeEndKey =
+                      side === "out" ? "to" : ("from" as const);
+                    const newState = produce(state, (draft) => {
+                      draft.wires[wid] =
+                        side === "out"
+                          ? { from: fixed, to: free }
+                          : { from: free, to: fixed };
+                    });
+                    return d
+                      .switchToStateAndFollow(
+                        newState,
+                        `wire-${wid}-${freeEndKey}`,
+                      )
+                      .withInitContext({ anchorPos: Vec2(0) });
+                  });
                 return (
-                  <g
-                    transform={translate(lx, ly)}
-                    style={{ cursor: "crosshair" }}
-                    dragologyOnDrag={
-                      !connected &&
-                      (() => {
-                        const [px, py] = portPos(state, nid, port);
-                        const wid = nextWireId(state);
-                        const fixed: WireEnd = {
-                          type: "on-port",
-                          nodeId: nid,
-                          port,
-                        };
-                        const free: WireEnd = { type: "free", x: px, y: py };
-                        const freeEndKey =
-                          side === "out" ? "to" : ("from" as const);
-                        const newState = produce(state, (draft) => {
-                          draft.wires[wid] =
-                            side === "out"
-                              ? { from: fixed, to: free }
-                              : { from: free, to: fixed };
-                        });
-                        return d
-                          .switchToStateAndFollow(
-                            newState,
-                            `wire-${wid}-${freeEndKey}`,
-                          )
-                          .withInitContext({ anchorPos: Vec2(0) });
-                      })
-                    }
-                  >
+                  <g transform={translate(lx, ly)}>
                     <circle
                       r={PORT_R}
                       fill={connected ? colors[0] : colors[1]}
@@ -278,7 +274,11 @@ export const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                       strokeWidth={1.5}
                       id={id}
                       dragologyZIndex="/10"
-                      style={{ pointerEvents: connected ? "none" : undefined }}
+                      style={{
+                        pointerEvents: connected ? "none" : undefined,
+                        cursor: "crosshair",
+                      }}
+                      dragologyOnDrag={onDrag}
                     />
                     <text
                       x={side === "in" ? PORT_R + 4 : -(PORT_R + 4)}
@@ -286,6 +286,8 @@ export const draggable: Draggable<State> = ({ state, d, draggedId }) => {
                       textAnchor={side === "in" ? "start" : "end"}
                       fontSize={9}
                       fill="#999"
+                      style={{ cursor: "crosshair" }}
+                      dragologyOnDrag={onDrag}
                     >
                       {port}
                     </text>
