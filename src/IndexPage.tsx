@@ -23,13 +23,6 @@ export function IndexPage() {
             Demos
           </Link>
 
-          <Link
-            to="/docs"
-            className="block w-64 px-6 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors no-underline text-center font-medium"
-          >
-            Documentation
-          </Link>
-
           <a
             href="https://github.com/joshuahhh/draggable-diagrams"
             target="_blank"

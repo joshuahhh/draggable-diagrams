@@ -31,7 +31,6 @@ npm run typecheck # Type check
 | `src/demos/` | Individual demo implementations |
 | `src/demo/DemoPage.tsx` | Gallery page showing all demos |
 | `src/demo/SingleDemoPage.tsx` | Single demo page |
-| `src/docs/LiveEditor.tsx` | Interactive code editor for docs (evaluates user code that exports `draggable` + `initialState`) |
 | `src/svgx/` | SVG representation (`Svgx`, `LayeredSvgx`), transforms, interpolation |
 
 ### Architecture
