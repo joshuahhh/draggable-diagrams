@@ -11,7 +11,7 @@ import {
 } from "./trees";
 
 describe("getAllMorphs", () => {
-  it("works on Elliot's example", () => {
+  it("works on reference example", () => {
     const tree = addParents({
       id: "root",
       children: [
@@ -234,7 +234,7 @@ describe("buildHasseDiagram", () => {
     expect(diagram.edges[0]).toEqual([pMorphIndex, cMorphIndex, "x"]);
   });
 
-  it("builds diagram for Elliot's example", () => {
+  it("builds diagram for reference example", () => {
     const tree = addParents({
       id: "root",
       children: [
@@ -280,7 +280,7 @@ describe("layoutHasse", () => {
     expect(pPos.y).toBeLessThan(cPos.y);
   });
 
-  it("lays out Elliot's example with proper positioning", () => {
+  it("lays out reference example with proper positioning", () => {
     const tree = addParents({
       id: "r",
       children: [

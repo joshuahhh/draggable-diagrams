@@ -8,7 +8,7 @@ import {
   ConfigPanel,
   ConfigSelect,
   DemoDraggable,
-  DemoLink,
+
   DemoNotes,
   DemoWithConfig,
 } from "../../demo/ui";
@@ -652,8 +652,7 @@ export default demo(
     return (
       <div>
         <DemoNotes>
-          Featuring multi-drag from{" "}
-          <DemoLink href="https://elliot.website/">Elliot Evans</DemoLink>.
+          Featuring multi-drag.
         </DemoNotes>
         <DemoWithConfig>
           <div>

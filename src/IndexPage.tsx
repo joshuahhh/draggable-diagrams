@@ -23,18 +23,7 @@ export function IndexPage() {
             Demos
           </Link>
 
-          <a
-            href="https://github.com/joshuahhh/draggable-diagrams"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-64 px-6 py-4 text-lg text-gray-700 hover:text-gray-900 no-underline"
-          >
-            GitHub
-          </a>
         </div>
-      </div>
-      <div className="absolute bottom-4 text-xs text-gray-400 font-mono">
-        {__COMMIT_HASH__}
       </div>
     </div>
   );

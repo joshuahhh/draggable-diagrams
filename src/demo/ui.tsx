@@ -1,4 +1,4 @@
-import { PrettyPrint } from "@joshuahhh/pretty-print";
+
 import {
   createContext,
   ReactNode,
@@ -455,46 +455,25 @@ export function DemoDraggable<T extends object>({
                   <div className="flex gap-4">
                     <div className="min-w-[50%]">
                       <div className="text-xs text-slate-500">drop state</div>
-                      <PrettyPrint
-                        value={
+                      <pre style={{ fontSize: "11px", margin: 0, fontFamily: "monospace" }}>
+                        {JSON.stringify(
                           status.type === "dragging"
                             ? status.startState
-                            : status.state
-                        }
-                        precision={2}
-                        style={{ fontSize: "11px" }}
-                        niceId={false}
-                        niceType={false}
-                      />
+                            : status.state,
+                          null,
+                          2,
+                        )}
+                      </pre>
                     </div>
                     {status.type === "dragging" && (
                       <div className="min-w-[50%]">
                         <div className="text-xs text-slate-500">drag state</div>
-                        <PrettyPrint
-                          value={status.result.dropState}
-                          precision={2}
-                          style={{ fontSize: "11px" }}
-                          niceId={false}
-                          niceType={false}
-                        />
+                        <pre style={{ fontSize: "11px", margin: 0, fontFamily: "monospace" }}>
+                          {JSON.stringify(status.result.dropState, null, 2)}
+                        </pre>
                       </div>
                     )}
                   </div>
-                  {/* {status.springOrigin && (
-                    <div>
-                      <div className="text-xs text-slate-500 mb-1">
-                        Spring origin
-                      </div>
-                      <svg
-                        width={120}
-                        height={120 * (height / width)}
-                        viewBox={`0 0 ${width} ${height}`}
-                        className="border border-slate-200 rounded bg-white"
-                      >
-                        {drawLayered(status.springOrigin.layered)}
-                      </svg>
-                    </div>
-                  )} */}
                 </ErrorBoundary>
               )}
             </div>
@@ -790,7 +769,7 @@ export function DemoCard({
   linkTitle?: boolean;
   onTagClick?: (label: string) => void;
 }) {
-  const sourceUrl = `https://github.com/joshuahhh/draggable-diagrams/blob/main/src/demos/${demo.sourcePath}`;
+  const sourceUrl = `src/demos/${demo.sourcePath}`;
   return (
     <div
       className={`bg-white rounded-lg p-5 shadow-sm ${demo.cardClassName ?? ""}`}

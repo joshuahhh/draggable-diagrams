@@ -1,4 +1,3 @@
-// mini Vec2 library by Elliot & Josh
 
 import { clamp } from "../utils";
 import { assertNever } from "../utils/assert";
