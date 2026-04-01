@@ -145,6 +145,8 @@ export function dragSpecToBehavior<T extends object>(
       return reactToBehavior(spec, ctx);
     case "with-init-context":
       return withInitContextBehavior(spec, ctx);
+    case "custom":
+      return customBehavior(spec, ctx);
     default:
       assertNever(spec);
   }
@@ -1058,6 +1060,13 @@ function withInitContextBehavior<T extends object>(
       tracedSpec: { ...spec, inner: result.tracedSpec },
     };
   };
+}
+
+function customBehavior<T extends object>(
+  spec: DragSpecData<T> & { type: "custom" },
+  ctx: DragInitContext<T>,
+): DragBehavior<T> {
+  return spec.fn(ctx);
 }
 
 // # Shared helpers

@@ -1,5 +1,5 @@
 import { SVGProps } from "react";
-import type { DragInitContext, DragResult } from "./DragBehavior";
+import type { DragBehavior, DragInitContext, DragResult } from "./DragBehavior";
 import { PathIn, ValueAtPath, getAtPath } from "./paths";
 import {
   Transition,
@@ -106,6 +106,10 @@ export type DragSpecData<T extends object> = {
       type: "with-init-context";
       inner: DragSpecData<T>;
       f: Reader<Partial<DragInitContext<T>>, DragInitContext<T>>;
+    }
+  | {
+      type: "custom";
+      fn: (ctx: DragInitContext<T>) => DragBehavior<T>;
     }
 );
 
@@ -437,6 +441,13 @@ export class DragSpecBuilder<T extends object> {
       >[],
       options: (options ?? {}) as VaryOptions<T>,
     });
+  }
+
+  /**
+   * Escape hatch: define a drag behavior from scratch.
+   */
+  custom(fn: (ctx: DragInitContext<T>) => DragBehavior<T>): DragSpec<T> {
+    return attachMethods({ type: "custom", fn });
   }
 
   /**

@@ -50,6 +50,7 @@ export type DragSpecTraceInfoByType = {
     tracedInner: DragSpecData<any>;
   };
   "with-init-context": Record<string, never>;
+  custom: Record<string, never>;
 };
 
 /** Get typed trace info from a spec node, or undefined if not annotated. */

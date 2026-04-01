@@ -351,6 +351,8 @@ function SpecNode<T extends object>({
         <SpecNode spec={spec.inner} path={childPath} />
       </Box>
     );
+  } else if (spec.type === "custom") {
+    return <Box label="custom">not supported yet</Box>;
   } else {
     assertNever(spec);
   }

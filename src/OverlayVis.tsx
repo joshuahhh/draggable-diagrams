@@ -242,6 +242,9 @@ export function OverlayVis<T extends object>({
       ) : null;
     }
 
+    case "custom":
+      return null;
+
     default:
       assertNever(spec);
   }

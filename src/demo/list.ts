@@ -85,4 +85,5 @@ export const demoList = [
   "between-with-vary",
   "stickiness",
   "controlled",
+  "simple-triangle-custom",
 ];
