@@ -329,16 +329,15 @@ export function DemoDraggable<T extends object>({
   initialState,
   width,
   height,
-  onDropState,
   stateRef,
 }: {
   draggable: Draggable<T>;
   initialState: T;
   width: number;
   height: number;
-  onDropState?: (state: T) => void;
   stateRef?: React.RefObject<T | null>;
 }) {
+  const [state, setState] = useState(initialState);
   const {
     showTreeView,
     showDropZones,
@@ -386,12 +385,12 @@ export function DemoDraggable<T extends object>({
           <div className="relative">
             <DraggableRenderer
               draggable={draggable}
-              initialState={initialState}
+              state={state}
               width={width}
               height={height}
               onDragStatus={setStatus}
               showDebugOverlay={showDebugOverlay}
-              onDropState={onDropState}
+              onDropState={setState}
             />
             {showDropZones && overlayData && (
               <DropZonesSvg data={overlayData} width={width} height={height} />
