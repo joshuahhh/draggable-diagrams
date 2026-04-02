@@ -569,7 +569,8 @@ function withSnapRadiusBehavior<T extends object>(
       preview,
       activePath,
       activePathTransition: spec.transition || undefined,
-      chainNow: spec.chain && snapped ? {} : undefined,
+      chainNow:
+        spec.chain && snapped ? { transition: spec.transition } : undefined,
       tracedSpec: setTraceInfo(
         { ...spec, inner: result.tracedSpec },
         { snapped, outputPreview: preview },

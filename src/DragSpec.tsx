@@ -134,6 +134,7 @@ export type FloatingOptions = {
 export type Chaining<T extends object> = {
   draggedId?: string;
   followSpec?: DragSpec<T>;
+  transition: Transition | false;
 };
 
 export type BetweenInterpolation = "delaunay" | "natural-neighbor";
@@ -180,17 +181,20 @@ export interface DragSpecMethods<T extends object> {
   ): DragSpec<T>;
 
   /**
-   * Set a transition to be used when dropping an element. By default
-   * this is 200ms cubic-out.
+   * Set a transition to be used when dropping an element. You don't
+   * need to call this to get a drop transition – by default you get
+   * a 200ms cubic-out. This is for customization.
    */
-  withDropTransition(transition?: TransitionLike): DragSpec<T>;
+  withDropTransition(transition: TransitionLike): DragSpec<T>;
 
   /**
    * Set a transition to be used when switching between branches of a
    * behavior. "Branches" isn't yet a very well-established concept,
    * but this includes, e.g., switching between behaviors in a
    * `closest`, or switching between the "foreground" and
-   * "background" in a `whenFar`.
+   * "background" in a `whenFar`. You don't need to call this to get
+   * a branch transition – by default you get a 200ms cubic-out. This
+   * is for customization.
    *
    * NOTE: There is currently no way to say, e.g., "do transition X
    * when switching between branches of a `closest` but do transition
@@ -230,7 +234,11 @@ export interface DragSpecMethods<T extends object> {
    * element). Options can optionally be provided to fine-tune the
    * behavior of the chaining.
    */
-  withChaining(chaining?: Chaining<T>): DragSpec<T>;
+  withChaining(opts?: {
+    draggedId?: string;
+    followSpec?: DragSpec<T>;
+    transition?: TransitionLike;
+  }): DragSpec<T>;
 
   /**
    * Transform the state on every frame, rendering it as a preview.
@@ -278,11 +286,11 @@ const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
       type: "with-snap-radius",
       inner: this,
       radius,
-      transition: resolveTransitionLike(transition) ?? false,
+      transition: resolveTransitionLike(transition),
       chain,
     });
   },
-  withDropTransition(transition = true) {
+  withDropTransition(transition) {
     return attachMethods({
       type: "with-drop-transition",
       inner: this,
@@ -293,7 +301,7 @@ const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
     return attachMethods({
       type: "with-branch-transition",
       inner: this,
-      transition: resolveTransitionLike(transition) ?? false,
+      transition: resolveTransitionLike(transition),
     });
   },
   changeResult(f) {
@@ -310,8 +318,13 @@ const dragSpecMethods: DragSpecMethods<any> & ThisType<DragSpec<any>> = {
       tether,
     });
   },
-  withChaining(chaining = {}) {
-    return attachMethods({ type: "with-chaining", inner: this, chaining });
+  withChaining({ transition: transitionLike = true, ...rest } = {}) {
+    const transition = resolveTransitionLike(transitionLike);
+    return attachMethods({
+      type: "with-chaining",
+      inner: this,
+      chaining: { ...rest, transition },
+    });
   },
   during(fn) {
     return attachMethods({ type: "during", inner: this, duringFn: fn });

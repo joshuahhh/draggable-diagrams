@@ -522,7 +522,8 @@ function resolveChainNows<T extends object>(
 
   // We construct a spring origin to emulate what was rendered here
   // before. That means: no references to the new `result`!
-  const newSpringOrigin = makeSpringOrigin(true, () =>
+  const chainTransition = result.chainNow.transition;
+  const newSpringOrigin = makeSpringOrigin(chainTransition, () =>
     runSpring(status.springOrigin, status.result.preview),
   );
 
@@ -568,10 +569,18 @@ function initDrag<T extends object>(
     springOrigin,
   };
 
-  // If the result chains immediately (e.g. switchToStateAndFollow),
-  // process it now so the first rendered frame is the chained drag,
-  // avoiding a single-frame flash of the intermediate state.
-  return resolveChainNows(status, frame, result);
+  // This code used to check for chaining, via:
+  //
+  // return resolveChainNows(status, frame, result);
+  //
+  // That was (maybe?) important because `switchToStateAndFollow`
+  // used chaining, and we wanted the switch to occur without delay.
+  // But now switchToStateAndFollow does its own thing. And we want
+  // to support "chain on every frame" for things like
+  // chain-of-links, which suggests that you only chain once per
+  // frame. So:
+
+  return status;
 }
 
 // # Render context

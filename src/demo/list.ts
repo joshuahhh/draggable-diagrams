@@ -57,6 +57,7 @@ export const demoList = [
   "point-on-curve",
   "multi-circle-points",
   "multi-circle-points-vanilla",
+  "chain-of-links",
   "node-wires",
   "sprouting-tree",
   "weird-floating-vs-fixed",
