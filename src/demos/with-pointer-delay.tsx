@@ -70,9 +70,10 @@ export default demo(
       <div>
         <DemoNotes>
           <p>
-            Demonstration of making a new operator (using <code>d.custom</code>
-            ): <code>withPointerDelay</code> lags the pointer before feeding it
-            to a nested behavior.
+            Demonstration of making a new operator using <code>d.custom</code>:{" "}
+            <code>withPointerDelay</code> lags the pointer before feeding it to
+            a nested behavior. (This reveals a current framework limitation: you
+            can't keep running a behavior after drop.)
           </p>
         </DemoNotes>
         <DemoWithConfig>
