@@ -1,6 +1,5 @@
 import _ from "lodash";
 import { DemoDraggable, DemoNotes } from "../demo/ui";
-import { DragBehavior, DragInitContext } from "../DragBehavior";
 import { Draggable } from "../draggable";
 import { Vec2 } from "../math/vec2";
 import { renderDraggableInert } from "../renderDraggable";
@@ -13,6 +12,7 @@ type State = {
 };
 
 const POSITIONS = [Vec2(10, 10), Vec2(100, 10), Vec2(55, 90)];
+const STATES = POSITIONS.map((pos, i) => ({ posIndex: i }));
 const CENTER = Vec2(
   (POSITIONS[0].x + POSITIONS[1].x + POSITIONS[2].x) / 3,
   (POSITIONS[0].y + POSITIONS[1].y + POSITIONS[2].y) / 3,
@@ -44,39 +44,29 @@ const draggable: Draggable<State> = ({ state, d }) => (
       width={SQUARE_SIZE}
       height={SQUARE_SIZE}
       rx={4}
-      dragologyOnDrag={() => {
-        const states: State[] = _.range(POSITIONS.length).map((i) => ({
-          posIndex: i,
-        }));
-
-        return d.custom((ctx: DragInitContext<State>): DragBehavior<State> => {
-          // Anchor-relative positions for each candidate state.
-          const candidatePositions = states.map((s) =>
-            POSITIONS[s.posIndex].add(ctx.anchorPos),
+      dragologyOnDrag={() =>
+        d.custom((ctx) => (frame) => {
+          const draggedPos = frame.pointer.sub(ctx.anchorPos);
+          const [bestIndex] = _.minBy(
+            Array.from(POSITIONS.entries()),
+            ([, pos]) => draggedPos.dist(pos),
+          )!;
+          const bestState = STATES[bestIndex];
+          const preview = renderDraggableInert(
+            ctx.draggable,
+            bestState,
+            ctx.draggedId,
+            false,
           );
-
-          return (frame) => {
-            const [bestIndex] = _.minBy(
-              Array.from(candidatePositions.entries()),
-              ([, pos]) => frame.pointer.dist(pos),
-            )!;
-            const bestState = states[bestIndex];
-            const preview = renderDraggableInert(
-              ctx.draggable,
-              bestState,
-              ctx.draggedId,
-              false,
-            );
-            return {
-              preview,
-              dropState: bestState,
-              gap: frame.pointer.dist(candidatePositions[bestIndex]),
-              activePath: `custom/${bestIndex}`,
-              tracedSpec: { type: "custom", fn: null! },
-            };
+          return {
+            preview,
+            dropState: bestState,
+            gap: draggedPos.dist(POSITIONS[bestIndex]),
+            activePath: `custom/${bestIndex}`,
+            tracedSpec: { type: "custom", fn: null! },
           };
-        });
-      }}
+        })
+      }
     />
     {/* extra line to see how background interpolates */}
     <line
