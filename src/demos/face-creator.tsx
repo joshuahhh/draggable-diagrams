@@ -9,11 +9,11 @@ import {
 } from "../demo/ui";
 import { Draggable } from "../draggable";
 import { VaryPath, lessThan, moreThan, param } from "../DragSpec";
-import { translate } from "../svgx/helpers";
+import { Vec2, Vec2able } from "../math/vec2";
+import { path, translate } from "../svgx/helpers";
 
 // Face center (fixed)
-const FACE_CX = 200;
-const FACE_CY = 180;
+const CENTER = Vec2(200, 180);
 const FACE_R = 120; // default radius
 
 const EYE_R = 12;
@@ -28,10 +28,8 @@ type State = {
   eyeDx: number;
   mouthDx: number;
   mouthEy: number;
-  cp1dx: number;
-  cp1dy: number;
-  cp2dx: number;
-  cp2dy: number;
+  cp1d: { x: number; y: number };
+  cp2d: { x: number; y: number };
   // Face shape
   faceRx: number;
   faceRyTop: number;
@@ -41,14 +39,12 @@ type State = {
 };
 
 const initialState: State = {
-  eyeY: FACE_CY - 25,
+  eyeY: CENTER.y - 25,
   eyeDx: 40,
   mouthDx: 50,
-  mouthEy: FACE_CY + 40,
-  cp1dx: 20,
-  cp1dy: 30,
-  cp2dx: -20,
-  cp2dy: 30,
+  mouthEy: CENTER.y + 40,
+  cp1d: { x: 20, y: 30 },
+  cp2d: { x: -20, y: 30 },
   faceRx: FACE_R,
   faceRyTop: FACE_R,
   faceRyBot: FACE_R,
@@ -58,30 +54,18 @@ const initialState: State = {
 
 // ── Face outline geometry ──────────────────────────────────────────
 
-type BezierSeg = {
-  p0: { x: number; y: number };
-  cp1: { x: number; y: number };
-  cp2: { x: number; y: number };
-  p3: { x: number; y: number };
-};
+type BezierSeg = { p0: Vec2; cp1: Vec2; cp2: Vec2; p3: Vec2 };
 
-function evalBezier(seg: BezierSeg, t: number): { x: number; y: number } {
+function evalBezier({ p0, cp1, cp2, p3 }: BezierSeg, t: number): Vec2 {
   const mt = 1 - t;
-  return {
-    x:
-      mt ** 3 * seg.p0.x +
-      3 * mt ** 2 * t * seg.cp1.x +
-      3 * mt * t ** 2 * seg.cp2.x +
-      t ** 3 * seg.p3.x,
-    y:
-      mt ** 3 * seg.p0.y +
-      3 * mt ** 2 * t * seg.cp1.y +
-      3 * mt * t ** 2 * seg.cp2.y +
-      t ** 3 * seg.p3.y,
-  };
+  return p0
+    .mul(mt ** 3)
+    .add(cp1.mul(3 * mt ** 2 * t))
+    .add(cp2.mul(3 * mt * t ** 2))
+    .add(p3.mul(t ** 3));
 }
 
-// Compute 4 Bezier segments for the face outline (relative to FACE_CX/CY).
+// Compute 4 Bezier segments for the face outline (relative to CENTER).
 // Bilateral symmetry: left segments mirror right.
 function faceSegments(s: State): BezierSeg[] {
   const { faceRx: rx, faceRyTop: ryT, faceRyBot: ryB } = s;
@@ -93,13 +77,8 @@ function faceSegments(s: State): BezierSeg[] {
 
   // Top-right: top (0, -ryT) → right (rx, 0)
   // Desired midpoint = default + bulge along radial direction
-  const trMidDef = { x: rx * mid45, y: -ryT * mid45 };
-  const trMidR = Math.sqrt(trMidDef.x ** 2 + trMidDef.y ** 2);
-  const trDir = { x: trMidDef.x / trMidR, y: trMidDef.y / trMidR };
-  const trMid = {
-    x: trMidDef.x + bTR * trDir.x,
-    y: trMidDef.y + bTR * trDir.y,
-  };
+  const trMidDef = Vec2(rx * mid45, -ryT * mid45);
+  const trMid = trMidDef.add(trMidDef.norm().mul(bTR));
   // Solve for CPs from midpoint (t=0.5):
   // Pmid.x = 0.375*cp1x + 0.5*rx  →  cp1x = (Pmid.x - 0.5*rx) / 0.375
   // Pmid.y = -0.5*ryT + 0.375*cp2y  →  cp2y = (Pmid.y + 0.5*ryT) / 0.375
@@ -107,66 +86,58 @@ function faceSegments(s: State): BezierSeg[] {
   const trCP2y = (trMid.y + 0.5 * ryT) / 0.375;
 
   // Bottom-right: right (rx, 0) → bottom (0, ryB)
-  const brMidDef = { x: rx * mid45, y: ryB * mid45 };
-  const brMidR = Math.sqrt(brMidDef.x ** 2 + brMidDef.y ** 2);
-  const brDir = { x: brMidDef.x / brMidR, y: brMidDef.y / brMidR };
-  const brMid = {
-    x: brMidDef.x + bBR * brDir.x,
-    y: brMidDef.y + bBR * brDir.y,
-  };
+  const brMidDef = Vec2(rx * mid45, ryB * mid45);
+  const brMid = brMidDef.add(brMidDef.norm().mul(bBR));
   // Pmid.x = 0.5*rx + 0.375*cp2x  →  cp2x = (Pmid.x - 0.5*rx) / 0.375
   // Pmid.y = 0.375*cp1y + 0.5*ryB  →  cp1y = (Pmid.y - 0.5*ryB) / 0.375
   const brCP1y = (brMid.y - 0.5 * ryB) / 0.375;
   const brCP2x = (brMid.x - 0.5 * rx) / 0.375;
 
-  const cx = FACE_CX;
-  const cy = FACE_CY;
-
   return [
     // Top-right
     {
-      p0: { x: cx, y: cy - ryT },
-      cp1: { x: cx + trCP1x, y: cy - ryT },
-      cp2: { x: cx + rx, y: cy + trCP2y },
-      p3: { x: cx + rx, y: cy },
+      p0: CENTER.add([0, -ryT]),
+      cp1: CENTER.add([trCP1x, -ryT]),
+      cp2: CENTER.add([rx, trCP2y]),
+      p3: CENTER.add([rx, 0]),
     },
     // Bottom-right
     {
-      p0: { x: cx + rx, y: cy },
-      cp1: { x: cx + rx, y: cy + brCP1y },
-      cp2: { x: cx + brCP2x, y: cy + ryB },
-      p3: { x: cx, y: cy + ryB },
+      p0: CENTER.add([rx, 0]),
+      cp1: CENTER.add([rx, brCP1y]),
+      cp2: CENTER.add([brCP2x, ryB]),
+      p3: CENTER.add([0, ryB]),
     },
     // Bottom-left (mirror of bottom-right)
     {
-      p0: { x: cx, y: cy + ryB },
-      cp1: { x: cx - brCP2x, y: cy + ryB },
-      cp2: { x: cx - rx, y: cy + brCP1y },
-      p3: { x: cx - rx, y: cy },
+      p0: CENTER.add([0, ryB]),
+      cp1: CENTER.add([-brCP2x, ryB]),
+      cp2: CENTER.add([-rx, brCP1y]),
+      p3: CENTER.add([-rx, 0]),
     },
     // Top-left (mirror of top-right)
     {
-      p0: { x: cx - rx, y: cy },
-      cp1: { x: cx - rx, y: cy + trCP2y },
-      cp2: { x: cx - trCP1x, y: cy - ryT },
-      p3: { x: cx, y: cy - ryT },
+      p0: CENTER.add([-rx, 0]),
+      cp1: CENTER.add([-rx, trCP2y]),
+      cp2: CENTER.add([-trCP1x, -ryT]),
+      p3: CENTER.add([0, -ryT]),
     },
   ];
 }
 
 function faceSvgPath(s: State): string {
   const segs = faceSegments(s);
-  let d = `M ${segs[0].p0.x} ${segs[0].p0.y}`;
-  for (const seg of segs) {
-    d += ` C ${seg.cp1.x} ${seg.cp1.y}, ${seg.cp2.x} ${seg.cp2.y}, ${seg.p3.x} ${seg.p3.y}`;
-  }
-  d += " Z";
-  return d;
+  return path(
+    "M",
+    segs[0].p0,
+    ...segs.flatMap((seg) => ["C", seg.cp1, ",", seg.cp2, ",", seg.p3]),
+    "Z",
+  );
 }
 
 // Sample the face outline and build a radial lookup (angle → radius from center).
 // Returns samples sorted by angle in [-π, π).
-type FaceSample = { x: number; y: number; angle: number; radius: number };
+type FaceSample = { angle: number; radius: number };
 
 function sampleFaceOutline(
   s: State,
@@ -176,16 +147,8 @@ function sampleFaceOutline(
   const samples: FaceSample[] = [];
   for (const seg of segs) {
     for (let i = 0; i < pointsPerSegment; i++) {
-      const t = i / pointsPerSegment;
-      const pt = evalBezier(seg, t);
-      const dx = pt.x - FACE_CX;
-      const dy = pt.y - FACE_CY;
-      samples.push({
-        x: pt.x,
-        y: pt.y,
-        angle: Math.atan2(dy, dx),
-        radius: Math.sqrt(dx * dx + dy * dy),
-      });
+      const offset = evalBezier(seg, i / pointsPerSegment).sub(CENTER);
+      samples.push({ angle: offset.angleRad(), radius: offset.len() });
     }
   }
   // Sort by angle for binary search
@@ -220,80 +183,59 @@ function faceRadiusAtAngle(samples: FaceSample[], angle: number): number {
 // Constraint-compatible: returns ≤ 0 if point is inside face (with margin), > 0 if outside.
 function faceContains(
   samples: FaceSample[],
-  point: { x: number; y: number },
+  point: Vec2able,
   margin: number,
 ): number {
-  const dx = point.x - FACE_CX;
-  const dy = point.y - FACE_CY;
-  const pointDist = Math.sqrt(dx * dx + dy * dy);
-  const angle = Math.atan2(dy, dx);
-  const maxDist = faceRadiusAtAngle(samples, angle) - margin;
-  return pointDist - maxDist;
+  const offset = Vec2(point).sub(CENTER);
+  const maxDist = faceRadiusAtAngle(samples, offset.angleRad()) - margin;
+  return offset.len() - maxDist;
 }
 
 // Clamp a point to be inside the face outline (with margin).
 // Pushes the point toward the center along the radial direction.
 function clampPointInsideFace(
   samples: FaceSample[],
-  point: { x: number; y: number },
+  point: Vec2able,
   margin: number,
-): { x: number; y: number } {
-  const dx = point.x - FACE_CX;
-  const dy = point.y - FACE_CY;
-  const pointDist = Math.sqrt(dx * dx + dy * dy);
-  if (pointDist === 0) return point;
-  const angle = Math.atan2(dy, dx);
-  const maxDist = faceRadiusAtAngle(samples, angle) - margin;
-  if (pointDist <= maxDist) return point;
-  return {
-    x: FACE_CX + (dx / pointDist) * maxDist,
-    y: FACE_CY + (dy / pointDist) * maxDist,
-  };
+): Vec2 {
+  const offset = Vec2(point).sub(CENTER);
+  const pointDist = offset.len();
+  if (pointDist === 0) return Vec2(point);
+  const maxDist = faceRadiusAtAngle(samples, offset.angleRad()) - margin;
+  if (pointDist <= maxDist) return Vec2(point);
+  return CENTER.add(offset.withLen(maxDist));
 }
 
 // ── Mouth / eye positions ──────────────────────────────────────────
 
 function mouthLeft(s: State) {
-  return { x: FACE_CX - s.mouthDx, y: s.mouthEy };
+  return Vec2(CENTER.x - s.mouthDx, s.mouthEy);
 }
 function mouthRight(s: State) {
-  return { x: FACE_CX + s.mouthDx, y: s.mouthEy };
+  return Vec2(CENTER.x + s.mouthDx, s.mouthEy);
 }
 function cp1(s: State) {
-  const ml = mouthLeft(s);
-  return { x: ml.x + s.cp1dx, y: ml.y + s.cp1dy };
+  return mouthLeft(s).add(s.cp1d);
 }
 function cp2(s: State) {
-  const mr = mouthRight(s);
-  return { x: mr.x + s.cp2dx, y: mr.y + s.cp2dy };
+  return mouthRight(s).add(s.cp2d);
 }
 function leftEye(s: State) {
-  return { x: FACE_CX - s.eyeDx, y: s.eyeY };
+  return Vec2(CENTER.x - s.eyeDx, s.eyeY);
 }
 function rightEye(s: State) {
-  return { x: FACE_CX + s.eyeDx, y: s.eyeY };
+  return Vec2(CENTER.x + s.eyeDx, s.eyeY);
 }
 
 function mouthPath(s: State): string {
-  const ml = mouthLeft(s);
-  const mr = mouthRight(s);
-  const c1 = cp1(s);
-  const c2 = cp2(s);
-  return `M ${ml.x} ${ml.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${mr.x} ${mr.y}`;
+  return path("M", mouthLeft(s), "C", cp1(s), ",", cp2(s), ",", mouthRight(s));
 }
 
-function evalMouthBezier(s: State, t: number): { x: number; y: number } {
+function evalMouthBezier(s: State, t: number): Vec2 {
   return evalBezier(
     { p0: mouthLeft(s), cp1: cp1(s), cp2: cp2(s), p3: mouthRight(s) },
     t,
   );
-}
-
-function dist(
-  a: { x: number; y: number },
-  b: { x: number; y: number },
-): number {
-  return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 }
 
 // ── Constraints ────────────────────────────────────────────────────
@@ -307,8 +249,8 @@ function featureConstraints(s: State): number[] {
   results.push(moreThan(s.mouthDx, 10));
 
   const MAX_CP_OFFSET = 100;
-  results.push(lessThan(Math.sqrt(s.cp1dx ** 2 + s.cp1dy ** 2), MAX_CP_OFFSET));
-  results.push(lessThan(Math.sqrt(s.cp2dx ** 2 + s.cp2dy ** 2), MAX_CP_OFFSET));
+  results.push(lessThan(Vec2(s.cp1d).len(), MAX_CP_OFFSET));
+  results.push(lessThan(Vec2(s.cp2d).len(), MAX_CP_OFFSET));
 
   const N = 8;
   for (let i = 0; i < N; i++) {
@@ -358,8 +300,7 @@ function faceShapeConstraints(s: State): number[] {
   for (const seg of segs) {
     for (let i = 0; i < FACE_SHAPE_SAMPLES_PER_SEG; i++) {
       const t = i / FACE_SHAPE_SAMPLES_PER_SEG;
-      const pt = evalBezier(seg, t);
-      angles.push(Math.atan2(pt.y - FACE_CY, pt.x - FACE_CX));
+      angles.push(evalBezier(seg, t).sub(CENTER).angleRad());
     }
   }
   const results: number[] = [];
@@ -419,17 +360,12 @@ function clampEyesAboveCurve(s: State): State {
 
 // Expand face radii so a point fits inside (instead of clamping the point).
 // Decomposes the deficit into horizontal/vertical and expands the relevant radii.
-function expandFaceForPoint(
-  s: State,
-  point: { x: number; y: number },
-  margin: number,
-): State {
+function expandFaceForPoint(s: State, point: Vec2able, margin: number): State {
   const samples = sampleFaceOutline(s);
-  const dx = point.x - FACE_CX;
-  const dy = point.y - FACE_CY;
-  const pointDist = Math.sqrt(dx * dx + dy * dy);
+  const offset = Vec2(point).sub(CENTER);
+  const pointDist = offset.len();
   if (pointDist === 0) return s;
-  const angle = Math.atan2(dy, dx);
+  const angle = offset.angleRad();
   const maxDist = faceRadiusAtAngle(samples, angle) - margin;
   if (pointDist <= maxDist) return s;
 
@@ -440,8 +376,8 @@ function expandFaceForPoint(
   return {
     ...s,
     faceRx: s.faceRx + deficit * cosA,
-    faceRyTop: dy < 0 ? s.faceRyTop + deficit * sinA : s.faceRyTop,
-    faceRyBot: dy > 0 ? s.faceRyBot + deficit * sinA : s.faceRyBot,
+    faceRyTop: offset.y < 0 ? s.faceRyTop + deficit * sinA : s.faceRyTop,
+    faceRyBot: offset.y > 0 ? s.faceRyBot + deficit * sinA : s.faceRyBot,
   };
 }
 
@@ -471,18 +407,13 @@ function clampInsideFace(s: State): State {
   const re = rightEye(result);
   const clampedLE = clampPointInsideFace(samples, le, FACE_MARGIN);
   const clampedRE = clampPointInsideFace(samples, re, FACE_MARGIN);
-  if (
-    clampedLE.x !== le.x ||
-    clampedLE.y !== le.y ||
-    clampedRE.x !== re.x ||
-    clampedRE.y !== re.y
-  ) {
+  if (!clampedLE.eq(le) || !clampedRE.eq(re)) {
     const newEyeY = Math.min(clampedLE.y, clampedRE.y);
     const newEyeDx = Math.max(
       MIN_EYE_SPACING,
       Math.min(
-        Math.abs(clampedLE.x - FACE_CX),
-        Math.abs(clampedRE.x - FACE_CX),
+        Math.abs(clampedLE.x - CENTER.x),
+        Math.abs(clampedRE.x - CENTER.x),
       ),
     );
     result = { ...result, eyeY: newEyeY, eyeDx: newEyeDx };
@@ -493,18 +424,13 @@ function clampInsideFace(s: State): State {
   const mr = mouthRight(result);
   const clampedML = clampPointInsideFace(samples, ml, FACE_MARGIN);
   const clampedMR = clampPointInsideFace(samples, mr, FACE_MARGIN);
-  if (
-    clampedML.x !== ml.x ||
-    clampedML.y !== ml.y ||
-    clampedMR.x !== mr.x ||
-    clampedMR.y !== mr.y
-  ) {
+  if (!clampedML.eq(ml) || !clampedMR.eq(mr)) {
     const newMouthEy = Math.max(clampedML.y, clampedMR.y);
     const newMouthDx = Math.max(
       10,
       Math.min(
-        Math.abs(clampedML.x - FACE_CX),
-        Math.abs(clampedMR.x - FACE_CX),
+        Math.abs(clampedML.x - CENTER.x),
+        Math.abs(clampedMR.x - CENTER.x),
       ),
     );
     result = { ...result, mouthEy: newMouthEy, mouthDx: newMouthDx };
@@ -523,7 +449,7 @@ function pushMouthAway(s: State): State {
     for (let i = 0; i <= 8; i++) {
       const pt = evalMouthBezier(result, i / 8);
       for (const eye of [le, re]) {
-        const d = dist(pt, eye);
+        const d = pt.dist(eye);
         if (d < minDist) {
           maxPush = Math.max(maxPush, minDist - d);
         }
@@ -548,18 +474,17 @@ function pushEyesAway(s: State): State {
     for (let i = 0; i <= 8; i++) {
       const pt = evalMouthBezier(result, i / 8);
       for (const eye of [le, re]) {
-        const d = dist(pt, eye);
+        const d = pt.dist(eye);
         if (d < minDist && d > 0) {
           const deficit = minDist - d;
-          const dirX = (eye.x - pt.x) / d;
-          const dirY = (eye.y - pt.y) / d;
-          totalPushY += dirY * deficit;
-          const isLeftEye = eye.x < FACE_CX;
-          totalPushDx += (isLeftEye ? -dirX : dirX) * deficit;
+          const dir = eye.sub(pt).div(d);
+          totalPushY += dir.y * deficit;
+          const isLeftEye = eye.x < CENTER.x;
+          totalPushDx += (isLeftEye ? -dir.x : dir.x) * deficit;
         }
       }
     }
-    const mag = Math.sqrt(totalPushY ** 2 + totalPushDx ** 2);
+    const mag = Vec2(totalPushY, totalPushDx).len();
     if (mag < 0.1) break;
     const pushY = totalPushY * EYE_PUSH_VERTICAL_BIAS;
     const pushDx = totalPushDx * (1 - EYE_PUSH_VERTICAL_BIAS);
@@ -622,19 +547,19 @@ function makeDraggable(
         constraint: featureConstraint,
       });
       const origMouthEy = state.mouthEy;
-      const origCp1dy = state.cp1dy;
-      const origCp2dy = state.cp2dy;
+      const origCp1d = state.cp1d;
+      const origCp2d = state.cp2d;
       return spec.during((s) => {
         let result = eyesAboveMouth ? pushMouthBelowEyes(s) : pushMouthAway(s);
         if (result.mouthEy !== origMouthEy) {
-          const fb = FACE_CY + state.faceRyBot - FACE_MARGIN;
+          const fb = CENTER.y + state.faceRyBot - FACE_MARGIN;
           const origSpace = fb - origMouthEy;
           const newSpace = fb - result.mouthEy;
           const scale = origSpace > 0 ? newSpace / origSpace : 1;
           result = {
             ...result,
-            cp1dy: origCp1dy * scale,
-            cp2dy: origCp2dy * scale,
+            cp1d: { ...result.cp1d, y: origCp1d.y * scale },
+            cp2d: { ...result.cp2d, y: origCp2d.y * scale },
           };
         }
         return finalizeDuring(result);
@@ -647,25 +572,19 @@ function makeDraggable(
       });
       const origDx = state.mouthDx;
       const origEy = state.mouthEy;
-      const origCp1dx = state.cp1dx;
-      const origCp1dy = state.cp1dy;
-      const origCp2dx = state.cp2dx;
-      const origCp2dy = state.cp2dy;
+      const origCp1d = Vec2(state.cp1d);
+      const origCp2d = Vec2(state.cp2d);
       return spec.during((s) => {
         let result = pushEyesAway(s);
         if (scaleCurve) {
           const dxScale = origDx > 0 ? result.mouthDx / origDx : 1;
-          const fb = FACE_CY + state.faceRyBot - FACE_MARGIN;
+          const fb = CENTER.y + state.faceRyBot - FACE_MARGIN;
           const origSpace = fb - origEy;
           const newSpace = fb - result.mouthEy;
           const vyScale = origSpace > 0 ? newSpace / origSpace : 1;
-          result = {
-            ...result,
-            cp1dx: origCp1dx * dxScale,
-            cp2dx: origCp2dx * dxScale,
-            cp1dy: origCp1dy * vyScale,
-            cp2dy: origCp2dy * vyScale,
-          };
+          const cp1d = origCp1d.scale([dxScale, vyScale]);
+          const cp2d = origCp2d.scale([dxScale, vyScale]);
+          result = { ...result, cp1d, cp2d };
         }
         return finalizeDuring(result);
       });
@@ -674,10 +593,15 @@ function makeDraggable(
     function curveDragology(t: number) {
       const paths: VaryPath<State>[] =
         t < 0.4
-          ? [param("cp1dx"), param("cp1dy")]
+          ? [param("cp1d", "x"), param("cp1d", "y")]
           : t > 0.6
-            ? [param("cp2dx"), param("cp2dy")]
-            : [param("cp1dx"), param("cp1dy"), param("cp2dx"), param("cp2dy")];
+            ? [param("cp2d", "x"), param("cp2d", "y")]
+            : [
+                param("cp1d", "x"),
+                param("cp1d", "y"),
+                param("cp2d", "x"),
+                param("cp2d", "y"),
+              ];
       const spec = d.vary(state, paths, { constraint: featureConstraint });
       return spec.during((s) => finalizeDuring(pushEyesAway(s)));
     }
@@ -738,7 +662,7 @@ function makeDraggable(
               return (
                 <circle
                   id={id}
-                  transform={translate(pt.x, pt.y)}
+                  transform={translate(pt)}
                   r={isDragged ? 6 : hitR}
                   fill={isDragged ? "rgba(230, 167, 86, 0.4)" : "transparent"}
                   dragologyZIndex={0}
@@ -752,7 +676,7 @@ function makeDraggable(
         {/* Eyes */}
         <circle
           id="left-eye"
-          transform={translate(le.x, le.y)}
+          transform={translate(le)}
           r={EYE_R}
           fill="#333"
           dragologyZIndex={1}
@@ -760,7 +684,7 @@ function makeDraggable(
         />
         <circle
           id="right-eye"
-          transform={translate(re.x, re.y)}
+          transform={translate(re)}
           r={EYE_R}
           fill="#333"
           dragologyZIndex={1}
@@ -787,7 +711,7 @@ function makeDraggable(
           return (
             <circle
               id={id}
-              transform={translate(pt.x, pt.y)}
+              transform={translate(pt)}
               r={isDragged ? 8 : 14}
               fill={isDragged ? "rgba(192, 57, 43, 0.4)" : "transparent"}
               dragologyZIndex={2}
@@ -799,7 +723,7 @@ function makeDraggable(
         {/* Mouth endpoint handles */}
         <circle
           id="mouth-endpoint-left"
-          transform={translate(ml.x, ml.y)}
+          transform={translate(ml)}
           r={ENDPOINT_R}
           fill={draggedId === "mouth-endpoint-left" ? "#e74c3c" : "#c0392b"}
           stroke="#c0392b"
@@ -809,7 +733,7 @@ function makeDraggable(
         />
         <circle
           id="mouth-endpoint-right"
-          transform={translate(mr.x, mr.y)}
+          transform={translate(mr)}
           r={ENDPOINT_R}
           fill={draggedId === "mouth-endpoint-right" ? "#e74c3c" : "#c0392b"}
           stroke="#c0392b"
