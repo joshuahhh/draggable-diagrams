@@ -38,12 +38,13 @@ export function Lens({
   zoom: number;
   children: ReactNode;
 }) {
+  const qrSize = QR_SIZE / zoom;
   return (
     <div
       style={{
         zoom,
-        paddingLeft: QR_SIZE,
-        paddingRight: QR_SIZE,
+        paddingLeft: qrSize,
+        paddingRight: qrSize,
         width: "fit-content",
       }}
     >
@@ -54,9 +55,9 @@ export function Lens({
           style={{
             position: "absolute",
             top: 0,
-            left: -QR_SIZE,
-            width: QR_SIZE,
-            height: QR_SIZE,
+            left: -qrSize,
+            width: qrSize,
+            height: qrSize,
             pointerEvents: "none",
             imageRendering: "pixelated",
           }}
@@ -66,9 +67,9 @@ export function Lens({
           style={{
             position: "absolute",
             bottom: 0,
-            right: -QR_SIZE,
-            width: QR_SIZE,
-            height: QR_SIZE,
+            right: -qrSize,
+            width: qrSize,
+            height: qrSize,
             pointerEvents: "none",
             imageRendering: "pixelated",
           }}
