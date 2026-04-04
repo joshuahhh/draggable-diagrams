@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@tailwindcss/vite": "^4.1.17",
+    "@tailwindcss/vite": "^4.2.2",
     "@testing-library/react": "^16.3.2",
     "@types/d3-delaunay": "^6.0.4",
     "@types/d3-ease": "^3.0.2",
@@ -51,7 +51,7 @@
     "@types/parse-gitignore": "^1.0.2",
     "@types/react": "^19.2.4",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.1",
+    "@vitejs/plugin-react": "^6.0.1",
     "bluefish-js": "^0.0.38",
     "d3-shape": "^3.2.0",
     "dagre": "^0.8.5",
@@ -72,8 +72,8 @@
     "ts-pegjs": "^4.2.1",
     "typescript": "^5.2.2",
     "typescript-eslint": "^8.46.4",
-    "vite": "^7.3.1",
-    "vite-plugin-qrcode": "^0.3.0",
-    "vitest": "^4.0.6"
+    "vite": "^8.0.3",
+    "vite-plugin-qrcode": "^0.4.1",
+    "vitest": "^4.1.2"
   }
 }
