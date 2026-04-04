@@ -39,7 +39,7 @@ export function TessellationSection() {
           </label>
           <CopyStateButton stateRef={stateRef} />
         </div>
-        <Lens zoom={2}>
+        <Lens zoom={2} filenamePrefix="tessellation">
           <StudioHackContext.Provider
             value={{
               overlayFullOpacity: true,

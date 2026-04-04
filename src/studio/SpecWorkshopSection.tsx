@@ -104,7 +104,7 @@ export function SpecWorkshopSection() {
           </label>
           <CopyStateButton stateRef={stateRef} />
         </div>
-        <Lens zoom={2}>
+        <Lens zoom={2} filenamePrefix="spec-workshop">
           <StudioHackContext.Provider
             value={{
               overlayFullOpacity: true,

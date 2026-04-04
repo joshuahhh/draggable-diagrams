@@ -40,7 +40,7 @@ export function OrderPreservingSection() {
           </label>
           <CopyStateButton stateRef={stateRef} />
         </div>
-        <Lens zoom={1.5}>
+        <Lens zoom={1.5} filenamePrefix="order-preserving">
           <StudioHackContext.Provider
             value={{
               overlayFullOpacity: true,

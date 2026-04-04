@@ -58,7 +58,7 @@ export function NodeWiresSection() {
           </label>
           <CopyStateButton stateRef={stateRef} />
         </div>
-        <Lens zoom={4}>
+        <Lens zoom={4} filenamePrefix="node-wires">
           <StudioHackContext.Provider
             value={{
               overlayFullOpacity: true,

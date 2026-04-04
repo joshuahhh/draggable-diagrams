@@ -77,7 +77,7 @@ export function CanvasOfListsNestedSection() {
           </label>
           <CopyStateButton stateRef={stateRef} />
         </div>
-        <Lens zoom={2}>
+        <Lens zoom={2} filenamePrefix="canvas-of-lists-nested">
           <StudioHackContext.Provider
             value={{
               overlayFullOpacity: true,

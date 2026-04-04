@@ -64,7 +64,7 @@ export function IntervalGraphSection() {
           </label>
           <CopyStateButton stateRef={stateRef} />
         </div>
-        <Lens zoom={2}>
+        <Lens zoom={2} filenamePrefix="interval-graph">
           <StudioHackContext.Provider
             value={{
               overlayFullOpacity: true,

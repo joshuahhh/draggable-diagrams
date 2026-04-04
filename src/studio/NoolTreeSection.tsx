@@ -66,7 +66,7 @@ export function NoolTreeSection() {
           </label>
           <CopyStateButton stateRef={stateRef} />
         </div>
-        <Lens zoom={3}>
+        <Lens zoom={3} filenamePrefix="nool-tree">
           <StudioHackContext.Provider
             value={{
               overlayFullOpacity: true,

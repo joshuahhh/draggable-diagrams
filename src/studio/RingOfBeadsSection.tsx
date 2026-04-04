@@ -50,7 +50,7 @@ export function RingOfBeadsSection() {
           </select>
           <CopyStateButton stateRef={stateRef} />
         </div>
-        <Lens zoom={3}>
+        <Lens zoom={3} filenamePrefix="ring-of-beads">
           <StudioHackContext.Provider
             value={{
               overlayFullOpacity: true,
