@@ -12,7 +12,7 @@ type State = {
 };
 
 const POSITIONS = [Vec2(10, 10), Vec2(100, 10), Vec2(55, 90)];
-const STATES = POSITIONS.map((pos, i) => ({ posIndex: i }));
+const STATES = POSITIONS.map((_pos, i) => ({ posIndex: i }));
 const CENTER = Vec2(
   (POSITIONS[0].x + POSITIONS[1].x + POSITIONS[2].x) / 3,
   (POSITIONS[0].y + POSITIONS[1].y + POSITIONS[2].y) / 3,
