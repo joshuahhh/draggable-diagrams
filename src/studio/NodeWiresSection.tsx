@@ -3,7 +3,6 @@ import { useRef, useState } from "react";
 import { defaultDemoContext, DemoContext, DemoDraggable } from "../demo/ui";
 import { draggable, initialState } from "../demos/node-wires";
 import { CopyStateButton } from "./CopyStateButton";
-import { StudioHackContext } from "./StudioHackContext";
 import { Lens, Section } from "./StudioPage";
 
 const myInitialState: typeof initialState = {
@@ -59,20 +58,13 @@ export function NodeWiresSection() {
           <CopyStateButton stateRef={stateRef} />
         </div>
         <Lens zoom={4} filenamePrefix="node-wires">
-          <StudioHackContext.Provider
-            value={{
-              overlayFullOpacity: true,
-              overlayHideDistances: true,
-            }}
-          >
-            <DemoDraggable
-              draggable={draggable}
-              initialState={myInitialState}
-              width={300}
-              height={120}
-              stateRef={stateRef}
-            />
-          </StudioHackContext.Provider>
+          <DemoDraggable
+            draggable={draggable}
+            initialState={myInitialState}
+            width={300}
+            height={120}
+            stateRef={stateRef}
+          />
         </Lens>
       </DemoContext.Provider>
     </Section>

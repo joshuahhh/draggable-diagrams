@@ -3,7 +3,6 @@ import { useRef, useState } from "react";
 import { defaultDemoContext, DemoContext, DemoDraggable } from "../demo/ui";
 import { draggable, State } from "../demos/tessellation";
 import { CopyStateButton } from "./CopyStateButton";
-import { StudioHackContext } from "./StudioHackContext";
 import { Lens, Section } from "./StudioPage";
 
 const initialState: State = {
@@ -40,22 +39,15 @@ export function TessellationSection() {
           <CopyStateButton stateRef={stateRef} />
         </div>
         <Lens zoom={2} filenamePrefix="tessellation">
-          <StudioHackContext.Provider
-            value={{
-              overlayFullOpacity: true,
-              overlayHideDistances: true,
-            }}
-          >
-            <div style={{ padding: 15 }}>
-              <DemoDraggable
-                draggable={draggable}
-                initialState={initialState}
-                width={600}
-                height={450}
-                stateRef={stateRef}
-              />
-            </div>
-          </StudioHackContext.Provider>
+          <div style={{ padding: 15 }}>
+            <DemoDraggable
+              draggable={draggable}
+              initialState={initialState}
+              width={600}
+              height={450}
+              stateRef={stateRef}
+            />
+          </div>
         </Lens>
       </DemoContext.Provider>
     </Section>

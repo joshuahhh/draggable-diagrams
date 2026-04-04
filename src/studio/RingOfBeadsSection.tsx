@@ -3,7 +3,6 @@ import { useMemo, useRef, useState } from "react";
 import { defaultDemoContext, DemoContext, DemoDraggable } from "../demo/ui";
 import { initialState, makeDraggable } from "../demos/ring-of-beads";
 import { CopyStateButton } from "./CopyStateButton";
-import { StudioHackContext } from "./StudioHackContext";
 import { Lens, Section } from "./StudioPage";
 
 const versions = [
@@ -51,20 +50,13 @@ export function RingOfBeadsSection() {
           <CopyStateButton stateRef={stateRef} />
         </div>
         <Lens zoom={3} filenamePrefix="ring-of-beads">
-          <StudioHackContext.Provider
-            value={{
-              overlayFullOpacity: true,
-              overlayHideDistances: true,
-            }}
-          >
-            <DemoDraggable
-              draggable={draggable}
-              initialState={initialState}
-              width={300}
-              height={300}
-              stateRef={stateRef}
-            />
-          </StudioHackContext.Provider>
+          <DemoDraggable
+            draggable={draggable}
+            initialState={initialState}
+            width={300}
+            height={300}
+            stateRef={stateRef}
+          />
         </Lens>
       </DemoContext.Provider>
     </Section>

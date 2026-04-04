@@ -21,45 +21,89 @@ export function OrderPreservingSection() {
     [],
   );
   return (
-    <Section title="Order-Preserving">
-      <DemoContext.Provider
-        value={produce(defaultDemoContext, (draft) => {
-          draft.settings.showDebugOverlay = showDebugOverlay;
-        })}
-      >
-        <div className="mb-6 text-sm text-gray-500 space-y-2">
-          <p>Record with cursor off.</p>
-          <label className="inline-flex items-center gap-1 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={showDebugOverlay}
-              onChange={(e) => setShowDebugOverlay(e.target.checked)}
-              className="accent-fuchsia-500"
-            />
-            <span className="text-fuchsia-600 font-medium">debug overlay</span>
-          </label>
-          <CopyStateButton stateRef={stateRef} />
-        </div>
-        <Lens zoom={1.5} filenamePrefix="order-preserving">
-          <StudioHackContext.Provider
-            value={{
-              overlayFullOpacity: true,
-              overlayHideDistances: true,
-            }}
-          >
-            <DemoDraggable
-              draggable={draggable}
-              initialState={{ morph: allMorphs7[3681] }}
-              width={460}
-              height={400}
-              stateRef={stateRef}
-              // onDropState={(state) => {
-              //   console.log(allMorphs7.indexOf(state.morph));
-              // }}
-            />
-          </StudioHackContext.Provider>
-        </Lens>
-      </DemoContext.Provider>
-    </Section>
+    <>
+      <Section title="Order-Preserving">
+        <DemoContext.Provider
+          value={produce(defaultDemoContext, (draft) => {
+            draft.settings.showDebugOverlay = showDebugOverlay;
+          })}
+        >
+          <div className="mb-6 text-sm text-gray-500 space-y-2">
+            <p>Record with cursor off.</p>
+            <label className="inline-flex items-center gap-1 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showDebugOverlay}
+                onChange={(e) => setShowDebugOverlay(e.target.checked)}
+                className="accent-fuchsia-500"
+              />
+              <span className="text-fuchsia-600 font-medium">
+                debug overlay
+              </span>
+            </label>
+            <CopyStateButton stateRef={stateRef} />
+          </div>
+          <Lens zoom={1.5} filenamePrefix="order-preserving">
+            <StudioHackContext.Provider
+              value={{
+                overlayHideDistances: true,
+              }}
+            >
+              <DemoDraggable
+                draggable={draggable}
+                initialState={{ morph: allMorphs7[3681] }}
+                width={460}
+                height={400}
+                stateRef={stateRef}
+                // onDropState={(state) => {
+                //   console.log(allMorphs7.indexOf(state.morph));
+                // }}
+              />
+            </StudioHackContext.Provider>
+          </Lens>
+        </DemoContext.Provider>
+      </Section>
+      <Section title="Order-Preserving Video">
+        <DemoContext.Provider
+          value={produce(defaultDemoContext, (draft) => {
+            draft.settings.showDebugOverlay = showDebugOverlay;
+          })}
+        >
+          <div className="mb-6 text-sm text-gray-500 space-y-2">
+            <p>Record with cursor off.</p>
+            <label className="inline-flex items-center gap-1 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showDebugOverlay}
+                onChange={(e) => setShowDebugOverlay(e.target.checked)}
+                className="accent-fuchsia-500"
+              />
+              <span className="text-fuchsia-600 font-medium">
+                debug overlay
+              </span>
+            </label>
+            <CopyStateButton stateRef={stateRef} />
+          </div>
+          <Lens zoom={1.5} filenamePrefix="order-preserving">
+            <StudioHackContext.Provider
+              value={{
+                overlayHideDistances: true,
+              }}
+            >
+              <DemoDraggable
+                draggable={draggable}
+                initialState={{ morph: allMorphs7[3681] }}
+                width={460}
+                height={500}
+                stateRef={stateRef}
+                // onDropState={(state) => {
+                //   console.log(allMorphs7.indexOf(state.morph));
+                // }}
+              />
+            </StudioHackContext.Provider>
+          </Lens>
+        </DemoContext.Provider>
+      </Section>
+    </>
   );
 }

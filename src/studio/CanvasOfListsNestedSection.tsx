@@ -3,7 +3,6 @@ import { useRef, useState } from "react";
 import { defaultDemoContext, DemoContext, DemoDraggable } from "../demo/ui";
 import { draggable, initialState } from "../demos/canvas-of-lists-nested";
 import { CopyStateButton } from "./CopyStateButton";
-import { StudioHackContext } from "./StudioHackContext";
 import { Lens, Section } from "./StudioPage";
 
 const myInitialState: typeof initialState = {
@@ -78,22 +77,15 @@ export function CanvasOfListsNestedSection() {
           <CopyStateButton stateRef={stateRef} />
         </div>
         <Lens zoom={2} filenamePrefix="canvas-of-lists-nested">
-          <StudioHackContext.Provider
-            value={{
-              overlayFullOpacity: true,
-              overlayHideDistances: true,
-            }}
-          >
-            <div style={{ padding: 10 }}>
-              <DemoDraggable
-                draggable={draggable}
-                initialState={myInitialState}
-                width={350}
-                height={170}
-                stateRef={stateRef}
-              />
-            </div>
-          </StudioHackContext.Provider>
+          <div style={{ padding: 10 }}>
+            <DemoDraggable
+              draggable={draggable}
+              initialState={myInitialState}
+              width={350}
+              height={170}
+              stateRef={stateRef}
+            />
+          </div>
         </Lens>
       </DemoContext.Provider>
     </Section>

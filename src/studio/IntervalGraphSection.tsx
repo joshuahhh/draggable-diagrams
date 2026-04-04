@@ -8,7 +8,6 @@ import {
   initialState,
 } from "../demos/interval-graph";
 import { CopyStateButton } from "./CopyStateButton";
-import { StudioHackContext } from "./StudioHackContext";
 import { Lens, Section } from "./StudioPage";
 
 const myInitialState: typeof initialState = {
@@ -65,22 +64,15 @@ export function IntervalGraphSection() {
           <CopyStateButton stateRef={stateRef} />
         </div>
         <Lens zoom={2} filenamePrefix="interval-graph">
-          <StudioHackContext.Provider
-            value={{
-              overlayFullOpacity: true,
-              overlayHideDistances: true,
-            }}
-          >
-            <div style={{ padding: 15 }}>
-              <DemoDraggable
-                draggable={draggable}
-                initialState={myInitialState}
-                width={CANVAS_W}
-                height={CANVAS_H}
-                stateRef={stateRef}
-              />
-            </div>
-          </StudioHackContext.Provider>
+          <div style={{ padding: 15 }}>
+            <DemoDraggable
+              draggable={draggable}
+              initialState={myInitialState}
+              width={CANVAS_W}
+              height={CANVAS_H}
+              stateRef={stateRef}
+            />
+          </div>
         </Lens>
       </DemoContext.Provider>
     </Section>

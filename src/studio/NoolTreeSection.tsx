@@ -69,7 +69,6 @@ export function NoolTreeSection() {
         <Lens zoom={3} filenamePrefix="nool-tree">
           <StudioHackContext.Provider
             value={{
-              overlayFullOpacity: true,
               overlayHideDistances: true,
             }}
           >
