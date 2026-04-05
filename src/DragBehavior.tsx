@@ -194,9 +194,6 @@ function withFloatingBehavior<T extends object>(
   // doesn't contain the dragged element.
   let cachedFloatLayered: LayeredSvgx | null = null;
   let cachedFloatPos: Vec2 | null = null;
-  // The element position on the first frame (used to keep the float
-  // anchored to the cursor regardless of inner-result interpolation).
-  let startFloatPos: Vec2 | null = null;
 
   return (frame) => {
     const innerResult = innerBehavior(frame);
@@ -213,6 +210,8 @@ function withFloatingBehavior<T extends object>(
     let backdrop: LayeredSvgx;
     if (!draggedLayer) {
       if (cachedFloatLayered === null) {
+        // TODO: I feel like this shouldn't be necessary
+
         // The dragged element isn't in the inner result on the first
         // frame (e.g. switchToStateAndFollow created it in a new state
         // that the inner spec doesn't know about). Fall back to
@@ -232,7 +231,6 @@ function withFloatingBehavior<T extends object>(
               ctx.anchorPos,
             )
           : Vec2(0);
-        startFloatPos = ctx.pointerStart;
       }
       floatLayered = cachedFloatLayered;
       floatPos = cachedFloatPos!;
@@ -243,7 +241,6 @@ function withFloatingBehavior<T extends object>(
       floatPos = elementPos;
       cachedFloatLayered = extracted;
       cachedFloatPos = floatPos;
-      if (startFloatPos === null) startFloatPos = ctx.pointerStart;
 
       if (spec.ghost !== undefined) {
         backdrop = layeredMerge(
@@ -258,25 +255,20 @@ function withFloatingBehavior<T extends object>(
       }
     }
 
-    // Compute float translation. With tether, we limit how far the
-    // float can deviate from the inner spec's element position.
-    let floatDelta = frame.pointer.sub(ctx.pointerStart);
+    // Compute where the float should be. With tether, we limit how far
+    // it can deviate from the inner spec's element position.
+    let target = frame.pointer;
     if (spec.tether) {
       const v = frame.pointer.sub(elementPos);
       const dist = v.len();
       if (dist > 1e-6) {
         const newDist = spec.tether(dist);
-        const adjusted = elementPos.add(v.mul(newDist / dist));
-        floatDelta = adjusted.sub(ctx.pointerStart);
+        target = elementPos.add(v.mul(newDist / dist));
       }
     }
-
-    // Correct for the element being at its inner-result position
-    // rather than the start-of-drag position.
-    const posCorrection = startFloatPos!.sub(floatPos);
     const floatPositioned = layeredTransform(
       floatLayered,
-      translate(floatDelta.add(posCorrection)),
+      translate(target.sub(floatPos)),
     );
     const preview = layeredMerge(
       backdrop,
