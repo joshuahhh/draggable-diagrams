@@ -23,8 +23,8 @@ export function OverlayVis<T extends object>({
     case "fixed": {
       const info = getTraceInfo(spec);
       if (!info) return null;
-      const pos = info.renderedStates[0].position;
-      const distance = pointer.dist(pos);
+      const pos = info.position;
+      if (!pos) return null;
       return (
         <g opacity={opacity}>
           <circle
@@ -35,7 +35,7 @@ export function OverlayVis<T extends object>({
             stroke="magenta"
             strokeWidth={1.5}
           />
-          <DistanceLine from={pos} to={pointer} distance={distance} />
+          <DistanceLine from={pos} to={pointer} distance={pointer.dist(pos)} />
         </g>
       );
     }
@@ -43,23 +43,24 @@ export function OverlayVis<T extends object>({
     case "with-floating": {
       const info = getTraceInfo(spec);
       if (!info) return null;
-      const distance = pointer.dist(info.elementPos);
       return (
         <g>
           <OverlayVis spec={spec.inner} pointer={pointer} active={active} />
-          <g opacity={opacity}>
-            <circle
-              cx={info.elementPos.x}
-              cy={info.elementPos.y}
-              r={5}
-              fill="magenta"
-            />
-            <DistanceLine
-              from={info.elementPos}
-              to={pointer}
-              distance={distance}
-            />
-          </g>
+          {info.elementPos && (
+            <g opacity={opacity}>
+              <circle
+                cx={info.elementPos.x}
+                cy={info.elementPos.y}
+                r={5}
+                fill="magenta"
+              />
+              <DistanceLine
+                from={info.elementPos}
+                to={pointer}
+                distance={pointer.dist(info.elementPos)}
+              />
+            </g>
+          )}
         </g>
       );
     }

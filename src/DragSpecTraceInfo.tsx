@@ -10,8 +10,15 @@ export type RenderedState = { layered: LayeredSvgx; position: Vec2 };
  * shape.
  */
 export type DragSpecTraceInfoByType = {
-  fixed: { renderedStates: RenderedState[] };
-  "with-floating": { outputPreview: LayeredSvgx; elementPos: Vec2 };
+  fixed: { outputPreview: LayeredSvgx; position: Vec2 | null };
+  "with-floating": {
+    outputPreview: LayeredSvgx;
+    /**
+     * Where the element is floated FROM. Will be null if the element
+     * is not found (is floating from memory).
+     */
+    elementPos: Vec2 | null;
+  };
   closest: { bestIndex: number };
   "when-far": { inForeground: boolean };
   "on-drop": Record<string, never>;

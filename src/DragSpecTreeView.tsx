@@ -82,7 +82,7 @@ function SpecNode<T extends object>({
     return (
       <Box label="fixed" active={active} color={color}>
         {traceInfo && (
-          <StateThumbnails renderedStates={traceInfo.renderedStates} />
+          <OutputThumbnail outputPreview={traceInfo.outputPreview} />
         )}
       </Box>
     );

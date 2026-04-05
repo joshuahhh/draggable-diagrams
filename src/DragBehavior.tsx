@@ -41,7 +41,7 @@ import { lerpLayeredWeighted } from "./svgx/lerp";
 import { findByPath } from "./svgx/path";
 import { localToGlobal } from "./svgx/transform";
 import { Transition } from "./transition";
-import { assert, assertNever } from "./utils/assert";
+import { assert, assertDefined, assertNever } from "./utils/assert";
 import {
   ManyReader,
   manyReaderToArray,
@@ -163,10 +163,11 @@ function fixedBehavior<T extends object>(
   const preview = renderStateReadOnly(ctx, spec.state);
   const elementPos = getElementPosition(ctx, preview);
   const tracedSpec = setTraceInfo(spec, {
-    renderedStates: [{ layered: preview, position: elementPos }],
+    outputPreview: preview,
+    position: elementPos,
   });
   return (frame) => {
-    const gap = frame.pointer.dist(elementPos);
+    const gap = elementPos ? frame.pointer.dist(elementPos) : Infinity;
     return {
       preview,
       dropState: spec.state,
@@ -188,26 +189,20 @@ function withFloatingBehavior<T extends object>(
   );
   const innerBehavior = dragSpecToBehavior(spec.inner, ctx);
 
-  // Cache the latest float element for frames where the inner result
-  // doesn't contain the dragged element.
-  let cachedFloatLayered: LayeredSvgx | null = null;
-  let cachedFloatPos: Vec2 | null = null;
+  // Cache the float element (pre-translated to the origin) for frames
+  // where the inner result doesn't contain the dragged element.
+  let cachedFloatAnchored: LayeredSvgx | null = null;
 
   return (frame) => {
     const innerResult = innerBehavior(frame);
     const layered = innerResult.preview;
-    // On a layer, the transform prop IS the accumulated transform.
     const draggedLayer = layered.byId.get(draggedId);
-    const elementPos = draggedLayer
-      ? localToGlobal(draggedLayer.element.props.transform, ctx.anchorPos)
-      : Vec2(Infinity, Infinity);
 
-    // Extract the float element from the inner result, or fall back to cache.
-    let floatLayered: LayeredSvgx;
-    let floatPos: Vec2;
+    let elementPos: Vec2 | null = null;
+    let floatAnchored: LayeredSvgx;
     let backdrop: LayeredSvgx;
     if (!draggedLayer) {
-      if (cachedFloatLayered === null) {
+      if (cachedFloatAnchored === null) {
         // TODO: I feel like this shouldn't be necessary
 
         // The dragged element isn't in the inner result on the first
@@ -221,24 +216,31 @@ function withFloatingBehavior<T extends object>(
           false,
         );
         const { extracted } = layeredExtract(startLayered, draggedId);
-        cachedFloatLayered = extracted;
         const startDraggedLayer = startLayered.byId.get(draggedId);
-        cachedFloatPos = startDraggedLayer
+        const floatPos = startDraggedLayer
           ? localToGlobal(
               startDraggedLayer.element.props.transform,
               ctx.anchorPos,
             )
           : Vec2(0);
+        cachedFloatAnchored = layeredTransform(
+          extracted,
+          translate(floatPos.mul(-1)),
+        );
       }
-      floatLayered = cachedFloatLayered;
-      floatPos = cachedFloatPos!;
+      floatAnchored = cachedFloatAnchored;
       backdrop = layered;
     } else {
+      elementPos = localToGlobal(
+        draggedLayer.element.props.transform,
+        ctx.anchorPos,
+      );
       const { remaining, extracted } = layeredExtract(layered, draggedId);
-      floatLayered = extracted;
-      floatPos = elementPos;
-      cachedFloatLayered = extracted;
-      cachedFloatPos = floatPos;
+      floatAnchored = layeredTransform(
+        extracted,
+        translate(elementPos.mul(-1)),
+      );
+      cachedFloatAnchored = floatAnchored;
 
       if (spec.ghost !== undefined) {
         backdrop = layeredMerge(
@@ -253,10 +255,8 @@ function withFloatingBehavior<T extends object>(
       }
     }
 
-    // Compute where the float should be. With tether, we limit how far
-    // it can deviate from the inner spec's element position.
     let target = frame.pointer;
-    if (spec.tether) {
+    if (elementPos && spec.tether) {
       const v = frame.pointer.sub(elementPos);
       const dist = v.len();
       if (dist > 1e-6) {
@@ -264,10 +264,8 @@ function withFloatingBehavior<T extends object>(
         target = elementPos.add(v.mul(newDist / dist));
       }
     }
-    const floatPositioned = layeredTransform(
-      floatLayered,
-      translate(target.sub(floatPos)),
-    );
+
+    const floatPositioned = layeredTransform(floatAnchored, translate(target));
     const preview = layeredMerge(
       backdrop,
       pipe(
@@ -394,7 +392,7 @@ function duringBehavior<T extends object>(
     const result = subBehavior(frame);
     const transformedState = spec.duringFn(result.dropState);
     const preview = renderStateReadOnly(ctx, transformedState);
-    const elementPos = getElementPosition(ctx, preview);
+    const elementPos = getElementPositionOrThrow(ctx, preview);
     return {
       ...result,
       preview,
@@ -431,7 +429,7 @@ function varyBehavior<T extends object>(
       true,
     );
     const found = findByPath(ctx.draggedPath, content);
-    if (!found) return Vec2(Infinity, Infinity);
+    if (!found) return Vec2(Infinity, Infinity); // only used for optimization, not exposed
     return localToGlobal(found.accumulatedTransform, ctx.anchorPos);
   };
 
@@ -498,7 +496,7 @@ function varyBehavior<T extends object>(
 
     const newState = stateFromParams(resultParams);
     let preview = renderStateReadOnly(ctx, newState);
-    const achievedPos = getElementPosition(ctx, preview);
+    const achievedPos = getElementPositionOrThrow(ctx, preview);
     const gap = achievedPos.dist(frame.pointer);
 
     if (ctx.debug.varyVisualizer) {
@@ -589,9 +587,9 @@ function withSnapRadiusBehavior<T extends object>(
   };
   return (frame) => {
     const result = subBehavior(frame);
-    const elementPos = getElementPosition(ctx, result.preview);
+    const elementPos = getElementPositionOrThrow(ctx, result.preview);
     const dropRendered = getDropRendered(result.dropState);
-    const dropElementPos = getElementPosition(ctx, dropRendered);
+    const dropElementPos = getElementPositionOrThrow(ctx, dropRendered);
     let preview = result.preview;
     const snapped = dropElementPos.dist2(elementPos) <= radiusSq;
     if (snapped) {
@@ -889,7 +887,11 @@ function betweenFixedBehavior<T extends object>(
     assert(s.type === "fixed");
     const state = s.state;
     const layered = renderStateReadOnly(ctx, state);
-    return { state, layered, position: getElementPosition(ctx, layered) };
+    return {
+      state,
+      layered,
+      position: getElementPositionOrThrow(ctx, layered),
+    };
   });
   const delaunay = betweenMakeDelaunay(renderedStates, ctx);
 
@@ -906,7 +908,7 @@ function betweenDynamicBehavior<T extends object>(
   return (frame) => {
     const subResults = subBehaviors.map((b) => b(frame));
     const renderedStates = subResults.map((result) => {
-      const position = getElementPosition(ctx, result.preview);
+      const position = getElementPositionOrThrow(ctx, result.preview);
       return { state: result.dropState, layered: result.preview, position };
     });
     const tracedSpec = {
@@ -1113,8 +1115,15 @@ function renderStateReadOnly<T extends object>(
 function getElementPosition<T extends object>(
   ctx: DragInitContext<T>,
   layered: LayeredSvgx,
-): Vec2 {
+): Vec2 | null {
   const found = findByPathInLayered(ctx.draggedPath, layered);
-  if (!found) return Vec2(Infinity, Infinity);
+  if (!found) return null;
   return localToGlobal(found.accumulatedTransform, ctx.anchorPos);
+}
+
+function getElementPositionOrThrow<T extends object>(
+  ctx: DragInitContext<T>,
+  layered: LayeredSvgx,
+): Vec2 {
+  return assertDefined(getElementPosition(ctx, layered));
 }
