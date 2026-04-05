@@ -39,6 +39,17 @@ export function TactileTessellationsSection() {
         padding={15}
         demoSettings={{ showDebugOverlay }}
       />
+      <div style={{ height: 200 }} />
+      <StudioDraggable
+        draggable={draggable}
+        initialState={{ shapes: [] }}
+        width={600}
+        height={450}
+        zoom={2}
+        filenamePrefix="tactile-tessellations"
+        padding={15}
+        demoSettings={{ showDebugOverlay }}
+      />
     </Section>
   );
 }

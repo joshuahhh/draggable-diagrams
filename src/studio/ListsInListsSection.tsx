@@ -61,7 +61,7 @@ function ListsInListsWithTree() {
           checked={showTree}
           onChange={(e) => setShowTree(e.target.checked)}
         />
-        <span className="text-fuchsia-600 font-medium">debug overlay</span>
+        <span>spec tree</span>
       </label>
       <Lens zoom={1} filenamePrefix="lists-in-lists">
         <div style={{ display: "flex", gap: 16, padding: 10 }}>
