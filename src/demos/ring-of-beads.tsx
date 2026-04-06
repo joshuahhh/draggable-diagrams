@@ -68,7 +68,7 @@ function makeDraggable(stage: Stage): Draggable<State> {
                     removedState.beads.splice(idx, 1);
                     return d
                       .closest(newStates)
-                      .whenFar(d.fixed(removedState).onDrop(state))
+                      .whenFar(d.fixed(removedState).onDrop(state), { gap: 65 })
                       .withFloating();
                   case "d.between()":
                     return d.between(newStates);
