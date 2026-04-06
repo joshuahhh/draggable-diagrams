@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { initialState, makeDraggable } from "../demos/ring-of-beads";
 import { DraggableRenderer, type DragStatus } from "../DraggableRenderer";
-import { DragSpecTreeView } from "../DragSpecTreeView";
-import { Vec2 } from "../lib";
+import {
+  DragSpecTreeView,
+  DragSpecTreeViewNodeProps,
+} from "../DragSpecTreeView";
+import { Vec2, type Vec2able } from "../lib";
 import { StudioDraggable } from "./StudioDraggable";
 import { Lens, Section } from "./StudioPage";
 
@@ -17,122 +20,84 @@ const versions: {
 
 type State = typeof initialState;
 
-function RingOfBeadsWithTree({ versionIdx }: { versionIdx: number }) {
+function RingOfBeadsWithTree({
+  versionIdx,
+  thumbArea,
+  treeWidth = 500,
+  dragOffset,
+  simulateDrag = true,
+  nodeProps,
+}: {
+  versionIdx: number;
+  thumbArea: number;
+  treeWidth?: number;
+  dragOffset?: Vec2able;
+  simulateDrag?: boolean;
+  nodeProps?: Record<string, DragSpecTreeViewNodeProps>;
+}) {
   const draggable = useMemo(
     () => makeDraggable(versions[versionIdx].stage),
     [versionIdx],
   );
-  const [showTree, setShowTree] = useState(true);
   const [dragStatus, setDragStatus] = useState<DragStatus<State> | null>(null);
-
   const draggingStatus = dragStatus?.type === "dragging" ? dragStatus : null;
 
   const WIDTH = 300;
   const HEIGHT = 300;
 
-  const basicTreeProps = draggingStatus && {
-    spec: draggingStatus.result.tracedSpec,
-    activePath: draggingStatus.result.activePath,
-    colorMap: null as Map<string, string> | null,
-  };
-
   return (
-    <>
-      <label className="inline-flex items-center gap-1 cursor-pointer select-none">
-        <input
-          type="checkbox"
-          checked={showTree}
-          onChange={(e) => setShowTree(e.target.checked)}
-        />
-        <span>spec tree</span>
-      </label>
-      <Lens zoom={1} filenamePrefix="ring-of-beads">
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 16,
-            padding: 10,
-            width: 960,
-            height: 540,
-          }}
-        >
-          <div style={{ alignSelf: "flex-end", zoom: 1.2 }}>
-            <DraggableRenderer
-              draggable={draggable}
-              initialState={initialState}
-              width={WIDTH}
-              height={HEIGHT}
-              onDragStatus={setDragStatus}
-              simulateDrag={{ id: "A", offset: Vec2(0, -80) }}
-              key={versionIdx}
+    <Lens zoom={1} filenamePrefix="ring-of-beads">
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 16,
+          padding: 10,
+          width: 960,
+          height: 540,
+        }}
+      >
+        <div style={{ alignSelf: "flex-end", zoom: 1.2 }}>
+          <DraggableRenderer
+            key={simulateDrag ? "simulating" : "not-simulating"}
+            draggable={draggable}
+            initialState={initialState}
+            width={WIDTH}
+            height={HEIGHT}
+            onDragStatus={setDragStatus}
+            simulateDrag={
+              simulateDrag ? { id: "A", offset: dragOffset } : undefined
+            }
+          />
+        </div>
+        {draggingStatus && (
+          <div
+            style={{
+              width: treeWidth,
+              overflow: "hidden",
+            }}
+          >
+            <DragSpecTreeView
+              spec={draggingStatus.result.tracedSpec}
+              activePath={draggingStatus.result.activePath}
+              colorMap={null}
+              svgWidth={WIDTH}
+              svgHeight={HEIGHT}
+              thumbArea={thumbArea}
+              nodeProps={nodeProps}
             />
           </div>
-          {showTree &&
-            draggingStatus &&
-            {
-              "0": (
-                <div
-                  style={{
-                    width: 500,
-                    height: 500,
-                    zoom: 1,
-                    overflow: "hidden",
-                  }}
-                >
-                  <DragSpecTreeView
-                    {...basicTreeProps!}
-                    svgWidth={WIDTH}
-                    svgHeight={HEIGHT}
-                    thumbArea={13000}
-                  />
-                </div>
-              ),
-              "1": (
-                <div
-                  style={{
-                    width: 500,
-                    height: 500,
-                    zoom: 1,
-                    overflow: "hidden",
-                  }}
-                >
-                  <DragSpecTreeView
-                    {...basicTreeProps!}
-                    svgWidth={WIDTH}
-                    svgHeight={HEIGHT}
-                    thumbArea={12000}
-                  />
-                </div>
-              ),
-              "2": (
-                <div
-                  style={{
-                    width: 500,
-                    height: 500,
-                    zoom: 1,
-                    overflow: "hidden",
-                  }}
-                >
-                  <DragSpecTreeView
-                    {...basicTreeProps!}
-                    svgWidth={WIDTH}
-                    svgHeight={HEIGHT}
-                    thumbArea={12000}
-                  />
-                </div>
-              ),
-            }[versionIdx]}
-        </div>
-      </Lens>
-    </>
+        )}
+      </div>
+    </Lens>
   );
 }
 
 export function RingOfBeadsSection() {
   const [showDebugOverlay, setShowDebugOverlay] = useState(false);
   const [cleanOverlay, setCleanOverlay] = useState(false);
+  const [simulateDrag, setSimulateDrag] = useState(true);
   const [versionIdx, setVersionIdx] = useState(2);
 
   useEffect(() => {
@@ -149,6 +114,7 @@ export function RingOfBeadsSection() {
     () => makeDraggable(versions[versionIdx].stage),
     [versionIdx],
   );
+
   return (
     <Section title="Section 2">
       <div
@@ -204,9 +170,38 @@ export function RingOfBeadsSection() {
         }}
       />
       <div style={{ height: 200 }} />
-      <RingOfBeadsWithTree versionIdx={0} />
-      <RingOfBeadsWithTree versionIdx={1} />
-      <RingOfBeadsWithTree versionIdx={2} />
+      <label className="inline-flex items-center gap-1 cursor-pointer select-none mb-4">
+        <input
+          type="checkbox"
+          checked={simulateDrag}
+          onChange={(e) => setSimulateDrag(e.target.checked)}
+          className="accent-violet-500"
+        />
+        <span className="text-violet-600 font-medium">simulate drag</span>
+      </label>
+      <RingOfBeadsWithTree
+        versionIdx={0}
+        thumbArea={21000}
+        simulateDrag={simulateDrag}
+      />
+      <RingOfBeadsWithTree
+        versionIdx={1}
+        thumbArea={13000}
+        simulateDrag={simulateDrag}
+      />
+      {[Vec2(0), Vec2(0, -80)].map((dragOffset) => (
+        <RingOfBeadsWithTree
+          versionIdx={2}
+          thumbArea={7000}
+          dragOffset={dragOffset}
+          nodeProps={{
+            "with-floating/when-far/bg/": {
+              width: 150,
+            },
+          }}
+          simulateDrag={simulateDrag}
+        />
+      ))}
     </Section>
   );
 }
