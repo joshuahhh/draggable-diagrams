@@ -158,6 +158,16 @@ function lerpValue(key: string, valA: any, valB: any, t: number): any {
 
     const colorInterp = interpolateColor(valA, valB);
     return colorInterp(t);
+  } else if (
+    (key === "filter" || key === "WebkitFilter") &&
+    typeof valA === "string" &&
+    typeof valB === "string"
+  ) {
+    const result = tryLerpFilter(valA, valB, t);
+    if (result) return result;
+    throw new Error(
+      `Cannot lerp prop "${key}": unrecognized filter values (${valA} vs ${valB})`,
+    );
   } else if (typeof valA === "string" && typeof valB === "string") {
     // Try to parse both as numbers
     const numA = parseFloat(valA);
@@ -311,6 +321,58 @@ export function lerpSvgx(a: Svgx, b: Svgx, t: number): Svgx {
     ...(lerpedTransform ? { transform: lerpedTransform } : {}),
     children: lerpedChildren.length === 0 ? undefined : lerpedChildren,
   });
+}
+
+// # CSS filter interpolation
+
+type DropShadow = {
+  offsetX: number;
+  offsetY: number;
+  blur: number;
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+};
+
+const DROP_SHADOW_RE =
+  /^drop-shadow\(\s*([\d.+-]+)(?:px)?\s+([\d.+-]+)(?:px)?\s+([\d.+-]+)(?:px)?\s+rgba\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)\s*\)$/;
+
+function parseDropShadow(s: string): DropShadow | null {
+  const m = s.match(DROP_SHADOW_RE);
+  if (!m) return null;
+  return {
+    offsetX: parseFloat(m[1]),
+    offsetY: parseFloat(m[2]),
+    blur: parseFloat(m[3]),
+    r: parseFloat(m[4]),
+    g: parseFloat(m[5]),
+    b: parseFloat(m[6]),
+    a: parseFloat(m[7]),
+  };
+}
+
+function serializeDropShadow(ds: DropShadow): string {
+  return `drop-shadow(${ds.offsetX}px ${ds.offsetY}px ${ds.blur}px rgba(${ds.r},${ds.g},${ds.b},${ds.a}))`;
+}
+
+function lerpDropShadow(a: DropShadow, b: DropShadow, t: number): string {
+  return serializeDropShadow({
+    offsetX: lerp(a.offsetX, b.offsetX, t),
+    offsetY: lerp(a.offsetY, b.offsetY, t),
+    blur: lerp(a.blur, b.blur, t),
+    r: lerp(a.r, b.r, t),
+    g: lerp(a.g, b.g, t),
+    b: lerp(a.b, b.b, t),
+    a: lerp(a.a, b.a, t),
+  });
+}
+
+function tryLerpFilter(a: string, b: string, t: number): string | null {
+  const dsA = parseDropShadow(a);
+  const dsB = parseDropShadow(b);
+  if (dsA && dsB) return lerpDropShadow(dsA, dsB, t);
+  return null;
 }
 
 // # Emerge animation support
