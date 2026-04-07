@@ -71,12 +71,15 @@ export function updateElement(
 export type FindElementResult = {
   element: Svgx;
   accumulatedTransform: string;
+  /** Does not include element itself */
+  ancestors: Svgx[];
 };
 
 export function findElement(
   element: Svgx,
   predicate: (el: Svgx) => boolean,
   accumulatedTransform: string = "",
+  ancestors: Svgx[] = [],
 ): FindElementResult | null {
   const elementTransform = (element.props as any).transform || "";
   const newAccumulatedTransform = combineTransforms(
@@ -85,8 +88,14 @@ export function findElement(
   );
 
   if (predicate(element)) {
-    return { element, accumulatedTransform: newAccumulatedTransform };
+    return {
+      element,
+      accumulatedTransform: newAccumulatedTransform,
+      ancestors,
+    };
   }
+
+  const childAncestors = [...ancestors, element];
 
   if (shouldRecurseIntoChildren(element)) {
     const children = React.Children.toArray(element.props.children);
@@ -96,6 +105,7 @@ export function findElement(
           child as Svgx,
           predicate,
           newAccumulatedTransform,
+          childAncestors,
         );
         if (found) return found;
       }

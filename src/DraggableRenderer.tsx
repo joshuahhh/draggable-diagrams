@@ -28,12 +28,7 @@ import {
   renderDraggableInert,
   renderDraggableInertUnlayered,
 } from "./renderDraggable";
-import {
-  Svgx,
-  findElement,
-  shouldRecurseIntoChildren,
-  updatePropsDownTree,
-} from "./svgx";
+import { Svgx, findElement, updatePropsDownTree } from "./svgx";
 import { boundsCenter, getLocalBounds } from "./svgx/bounds";
 import { LayeredSvgx, drawLayered, layerSvg } from "./svgx/layers";
 import { lerpLayered } from "./svgx/lerp";
@@ -673,24 +668,11 @@ function ancestorOrSelfHasClickHandler(
   root: Svgx,
   targetPath: string,
 ): boolean {
-  const nodePath = getPath(root);
-
-  // Not on the path to the target — skip this subtree
-  if (nodePath && !targetPath.startsWith(nodePath)) return false;
-
-  if (root.props.onClick || root.props.onDoubleClick) return true;
-
-  // Reached the target — no need to go deeper
-  if (nodePath === targetPath) return false;
-
-  if (!shouldRecurseIntoChildren(root)) return false;
-  const children = React.Children.toArray(root.props.children);
-  for (const child of children) {
-    if (React.isValidElement(child)) {
-      if (ancestorOrSelfHasClickHandler(child as Svgx, targetPath)) return true;
-    }
-  }
-  return false;
+  const found = findByPath(targetPath, root);
+  if (!found) return false;
+  return [...found.ancestors, found.element].some(
+    (el) => el.props.onClick || el.props.onDoubleClick,
+  );
 }
 
 function postProcessForInteraction<T extends object>(
