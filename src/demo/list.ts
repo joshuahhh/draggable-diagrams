@@ -29,6 +29,7 @@ export const demoList = [
   "outline",
   "braid",
   "todo",
+  "text-box",
   "carousel",
   "rush-hour",
   "fifteen",
