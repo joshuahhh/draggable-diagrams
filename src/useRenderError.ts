@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 export function useThrowRenderError() {
   const [error, setError] = useState<unknown>(null);
@@ -7,26 +7,29 @@ export function useThrowRenderError() {
     throw error;
   }
 
-  return (err: unknown) => {
+  return useCallback((err: unknown) => {
     setError(err);
     throw err;
-  };
+  }, []);
 }
 
 export function useCatchToRenderError() {
   const throwRenderError = useThrowRenderError();
 
-  return function catchToRenderError<TArgs extends any[], TReturn>(
-    fn: (...args: TArgs) => TReturn,
-  ) {
-    return (...args: TArgs) => {
-      try {
-        return fn(...args);
-      } catch (error) {
-        return throwRenderError(error);
-      }
-    };
-  };
+  return useCallback(
+    function catchToRenderError<TArgs extends any[], TReturn>(
+      fn: (...args: TArgs) => TReturn,
+    ) {
+      return (...args: TArgs) => {
+        try {
+          return fn(...args);
+        } catch (error) {
+          return throwRenderError(error);
+        }
+      };
+    },
+    [throwRenderError],
+  );
 }
 
 export type CatchToRenderError = ReturnType<typeof useCatchToRenderError>;
