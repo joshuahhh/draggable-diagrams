@@ -345,8 +345,9 @@ function DraggableRendererControlled<T extends object>({
 
   // Document-level pointer listeners during drag or pending drag
   const shouldListenToPointer =
-    status.type === "dragging" ||
-    (status.type === "idle" && !!status.pendingDrag);
+    !simulateDrag &&
+    (status.type === "dragging" ||
+      (status.type === "idle" && !!status.pendingDrag));
   useEffect(() => {
     if (!shouldListenToPointer) return;
 
