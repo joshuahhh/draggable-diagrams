@@ -1,4 +1,4 @@
-import { PrettyPrint } from "@joshuahhh/pretty-print";
+
 import {
   createContext,
   ReactNode,
@@ -583,46 +583,25 @@ export function DemoDraggable<T extends object>({
                   <div className="flex gap-4">
                     <div className="min-w-[50%]">
                       <div className="text-xs text-slate-500">drop state</div>
-                      <PrettyPrint
-                        value={
+                      <pre style={{ fontSize: "11px", margin: 0, fontFamily: "monospace" }}>
+                        {JSON.stringify(
                           status.type === "dragging"
                             ? status.startState
-                            : status.state
-                        }
-                        precision={2}
-                        style={{ fontSize: "11px" }}
-                        niceId={false}
-                        niceType={false}
-                      />
+                            : status.state,
+                          null,
+                          2,
+                        )}
+                      </pre>
                     </div>
                     {status.type === "dragging" && (
                       <div className="min-w-[50%]">
                         <div className="text-xs text-slate-500">drag state</div>
-                        <PrettyPrint
-                          value={status.result.dropState}
-                          precision={2}
-                          style={{ fontSize: "11px" }}
-                          niceId={false}
-                          niceType={false}
-                        />
+                        <pre style={{ fontSize: "11px", margin: 0, fontFamily: "monospace" }}>
+                          {JSON.stringify(status.result.dropState, null, 2)}
+                        </pre>
                       </div>
                     )}
                   </div>
-                  {/* {status.springOrigin && (
-                    <div>
-                      <div className="text-xs text-slate-500 mb-1">
-                        Spring origin
-                      </div>
-                      <svg
-                        width={120}
-                        height={120 * (height / width)}
-                        viewBox={`0 0 ${width} ${height}`}
-                        className="border border-slate-200 rounded bg-white"
-                      >
-                        {drawLayered(status.springOrigin.layered)}
-                      </svg>
-                    </div>
-                  )} */}
                 </ErrorBoundary>
               )}
               {showLayers && status && (
@@ -736,6 +715,10 @@ export function DemoTag({
   );
 }
 
+function isOperatorTag(text: string): boolean {
+  return text.startsWith("d.") || text.startsWith("spec.") || text === "setState";
+}
+
 function TagNodeView({
   node,
   ancestorPath,
@@ -759,11 +742,16 @@ function TagNodeView({
     : undefined;
 
   const clickable = onTagClick ? "cursor-pointer" : "";
+  const isOp = isRoot && isOperatorTag(node.text);
+
+  const rootStyle = isOp
+    ? `text-[#008f88] bg-[#ecf6f2] font-semibold italic ${onTagClick ? "hover:bg-[#ddf0ea]" : ""}`
+    : `text-slate-600 bg-slate-100 ${onTagClick ? "hover:bg-slate-200" : ""}`;
 
   if (isRoot && !hasChildren) {
     return (
       <span
-        className={`inline-flex items-center text-xs border rounded px-1.5 py-0.5 text-slate-500 bg-slate-50 border-slate-200 ${clickable} ${onTagClick ? "hover:bg-slate-100" : ""}`}
+        className={`inline-flex items-center text-xs rounded px-1.5 py-0.5 ${rootStyle} ${clickable}`}
         onClick={handleClick}
       >
         {node.text}
@@ -774,7 +762,7 @@ function TagNodeView({
   if (isRoot) {
     return (
       <span
-        className={`inline-flex items-center gap-1 text-xs border rounded pl-1.5 pr-0.5 py-0.5 text-slate-500 bg-slate-50 border-slate-200 ${clickable} ${onTagClick ? "hover:bg-slate-100" : ""}`}
+        className={`inline-flex items-center gap-1 text-xs rounded pl-1.5 pr-0.5 py-0.5 ${rootStyle} ${clickable}`}
         onClick={handleClick}
       >
         {node.text}
@@ -791,10 +779,12 @@ function TagNodeView({
     );
   }
 
-  // Sub-tag
+  // Sub-tag: use a complementary inner color for operator parents
+  const subStyle = `text-slate-500 bg-white ${onTagClick ? "hover:bg-slate-100" : ""}`;
+
   return (
     <span
-      className={`inline-flex items-center gap-0.5 text-[11px] border rounded px-1 py-0 text-slate-500 bg-white border-slate-300 ${clickable} ${onTagClick ? "hover:bg-slate-100" : ""}`}
+      className={`inline-flex items-center gap-0.5 text-[11px] rounded px-1 py-0 ${subStyle} ${clickable}`}
       onClick={handleClick}
     >
       {node.text}
@@ -925,7 +915,7 @@ export function DemoCard({
   linkTitle?: boolean;
   onTagClick?: (label: string) => void;
 }) {
-  const sourceUrl = `https://github.com/joshuahhh/draggable-diagrams/blob/main/src/demos/${demo.sourcePath}`;
+  const sourceUrl = `https://github.com/declarative-dragging/declarative-dragging.github.io/blob/main/src/demos/${demo.sourcePath}`;
   return (
     <div
       className={`bg-white rounded-lg p-5 shadow-sm ${demo.cardClassName ?? ""}`}

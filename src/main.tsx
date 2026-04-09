@@ -1,19 +1,28 @@
-import React from "react";
+import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
-import { HashRouter, Routes } from "react-router-dom";
+import { HashRouter, Routes, useLocation } from "react-router-dom";
 import { autoRoute } from "./autoRoute";
 import { DemoPage } from "./demo/DemoPage";
 import { SingleDemoPage } from "./demo/SingleDemoPage";
 import "./index.css";
-import { IndexPage } from "./IndexPage";
+import { FiguresPage } from "./figures/FiguresPage";
 import { NaturalNeighborTestPage } from "./NaturalNeighborTestPage";
 import { StudioPage } from "./studio/StudioPage";
 import { SingleStudyPage } from "./study/SingleStudyPage";
 import { StudyPage } from "./study/StudyPage";
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <HashRouter>
+      <ScrollToTop />
       {typeof __VITE_REACT_PROD__ !== "undefined" && (
         <div
           style={{
@@ -35,7 +44,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         </div>
       )}
       <Routes>
-        {autoRoute("/", IndexPage)}
+        {autoRoute("/", FiguresPage)}
         {autoRoute("/study", StudyPage)}
         {autoRoute("/study/:id", SingleStudyPage)}
         {autoRoute("/demos", DemoPage)}

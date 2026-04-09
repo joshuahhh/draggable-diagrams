@@ -1,4 +1,4 @@
-import { PrettyPrint } from "@joshuahhh/pretty-print";
+
 import _ from "lodash";
 import {
   Draggable,
@@ -724,13 +724,9 @@ function CoincidentStatePreview<T extends object>({
         )}
       </svg>
       <div style={{ fontStyle: "italic" }}>from</div>
-      <PrettyPrint
-        value={state}
-        precision={2}
-        style={{ fontSize: "11px" }}
-        niceId={false}
-        niceType={false}
-      />
+      <pre style={{ fontSize: "11px", margin: 0, fontFamily: "monospace" }}>
+        {JSON.stringify(state, null, 2)}
+      </pre>
     </div>
   );
 }

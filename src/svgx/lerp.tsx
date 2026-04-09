@@ -1,4 +1,4 @@
-import { prettyLog, PrettyPrint } from "@joshuahhh/pretty-print";
+
 import { rgb } from "d3-color";
 import * as d3Interpolate from "d3-interpolate";
 import { interpolatePath } from "d3-interpolate-path";
@@ -217,9 +217,9 @@ export function lerpSvgx(a: Svgx, b: Svgx, t: number): Svgx {
             paths, and they don't match up.)
           </p>
         )}
-        <PrettyPrint value={a} />
+        <pre style={{ fontSize: "11px" }}>{JSON.stringify(a, null, 2)}</pre>
         <div style={{ marginTop: 16, marginBottom: 16 }}>vs</div>
-        <PrettyPrint value={b} />
+        <pre style={{ fontSize: "11px" }}>{JSON.stringify(b, null, 2)}</pre>
       </>,
     );
   }
@@ -304,14 +304,14 @@ export function lerpSvgx(a: Svgx, b: Svgx, t: number): Svgx {
     });
   } else {
     // Children counts differ
-    prettyLog(childrenA, { label: "Children A" });
-    prettyLog(childrenB, { label: "Children B" });
+    console.log("Children A", childrenA);
+    console.log("Children B", childrenB);
     throw new ErrorWithJSX(
       `Cannot lerp children: different child counts (${childrenA.length} vs ${childrenB.length})`,
       <div>
-        <PrettyPrint value={a} />
+        <pre style={{ fontSize: "11px" }}>{JSON.stringify(a, null, 2)}</pre>
         <div style={{ marginTop: 16, marginBottom: 16 }}>vs</div>
-        <PrettyPrint value={b} />
+        <pre style={{ fontSize: "11px" }}>{JSON.stringify(b, null, 2)}</pre>
       </div>,
     );
   }

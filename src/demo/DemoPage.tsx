@@ -4,34 +4,64 @@ import { useTitle } from "../useTitle";
 import { Demo, listedDemos, unlistedDemos } from "./registry";
 import { tagMatches } from "./tags";
 import { DemoCard, DemoSettingsBar, DemoSettingsProvider, DemoTag } from "./ui";
+import { type DemoCategory, demoCategories } from "./categories";
 
 function hasTag(demo: Demo, filter: string) {
   return demo.tags?.some((tag) => tagMatches(tag, filter));
+}
+
+const categories: { key: DemoCategory | "all"; label: string }[] = [
+  { key: "basic", label: "Basic" },
+  { key: "fun", label: "Fun" },
+  { key: "technical", label: "Technical" },
+  { key: "all", label: "All" },
+];
+
+function inCategory(demo: Demo, cat: DemoCategory | "all"): boolean {
+  if (cat === "all") return true;
+  return demoCategories[demo.id] === cat;
 }
 
 export function DemoPage() {
   useTitle("Demos — Dragology");
   const [searchParams, setSearchParams] = useSearchParams();
   const tagFilter = searchParams.get("tag");
+  const catParam = searchParams.get("cat") as DemoCategory | null;
+  const activeCat = catParam ?? "fun";
   const [showHidden, setShowHidden] = useState(false);
 
-  const onTagClick = (label: string) =>
-    setSearchParams(tagFilter === label ? {} : { tag: label }, {
-      replace: false,
-    });
+  const setCat = (cat: DemoCategory | "all") => {
+    const next = new URLSearchParams(searchParams);
+    if (cat === "fun") {
+      next.delete("cat");
+    } else {
+      next.set("cat", cat);
+    }
+    setSearchParams(next, { replace: false });
+  };
+
+  const onTagClick = (label: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (tagFilter === label) {
+      next.delete("tag");
+    } else {
+      next.set("tag", label);
+    }
+    setSearchParams(next, { replace: false });
+  };
 
   const visibleListedDemos = showHidden
     ? listedDemos
     : listedDemos.filter((d) => !d.hideByDefault);
-  const filteredDemos = tagFilter
-    ? visibleListedDemos.filter((d) => hasTag(d, tagFilter))
-    : visibleListedDemos;
+  const filteredDemos = visibleListedDemos
+    .filter((d) => inCategory(d, activeCat))
+    .filter((d) => !tagFilter || hasTag(d, tagFilter));
   const visibleUnlisted = showHidden
     ? unlistedDemos
     : unlistedDemos.filter((d) => !d.hideByDefault);
-  const filteredUnlisted = tagFilter
-    ? visibleUnlisted.filter((d) => hasTag(d, tagFilter))
-    : visibleUnlisted;
+  const filteredUnlisted = visibleUnlisted
+    .filter((d) => inCategory(d, activeCat))
+    .filter((d) => !tagFilter || hasTag(d, tagFilter));
   const hiddenCount =
     listedDemos.filter((d) => d.hideByDefault).length +
     unlistedDemos.filter((d) => d.hideByDefault).length;
@@ -44,9 +74,26 @@ export function DemoPage() {
             to="/"
             className="inline-block mb-4 text-sm text-gray-600 hover:text-gray-800 no-underline"
           >
-            ← Back to home
+            &larr; Back to home
           </Link>
-          <h1 className="text-3xl font-normal text-gray-800">Demos</h1>
+          <h1 className="text-3xl font-normal text-gray-800 mb-4">Demos</h1>
+
+          {/* Category selector */}
+          <div className="flex items-center gap-1.5">
+            {categories.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setCat(key)}
+                className={`px-4 py-1.5 text-sm rounded-full transition-colors cursor-pointer ${
+                  activeCat === key
+                    ? "bg-gray-800 text-white"
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
         {tagFilter && (
           <div className="sticky top-0 left-0 right-0 z-10 flex justify-center pointer-events-none py-2">
@@ -54,7 +101,11 @@ export function DemoPage() {
               <span className="text-sm text-gray-400">Filtering by</span>
               <DemoTag tag={tagFilter} />
               <button
-                onClick={() => setSearchParams({})}
+                onClick={() => {
+                  const next = new URLSearchParams(searchParams);
+                  next.delete("tag");
+                  setSearchParams(next);
+                }}
                 className="text-xs text-gray-400 hover:text-gray-600"
               >
                 clear
@@ -100,6 +151,11 @@ export function DemoPage() {
               <DemoCard demo={demo} linkTitle onTagClick={onTagClick} />
             </div>
           ))}
+          {filteredDemos.length === 0 && filteredUnlisted.length === 0 && (
+            <p className="text-sm text-gray-400 py-8 text-center">
+              No demos match the current filters.
+            </p>
+          )}
         </div>
         {hiddenCount > 0 && (
           <div className="px-5 pb-5 max-w-3xl mx-auto w-full">

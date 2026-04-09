@@ -15,7 +15,7 @@ set -euo pipefail
 #   - Force-pushes to the org repo's main branch
 #   - The existing GitHub Action builds and deploys to Pages
 
-ANON_REMOTE="${ANON_REMOTE:-git@github.com:declarative-dragging/dragology.git}"
+ANON_REMOTE="${ANON_REMOTE:-git@github.com:declarative-dragging/declarative-dragging.github.io.git}"
 
 if [[ "$ANON_REMOTE" == *"ORG_NAME"* ]]; then
   echo "Error: Set ANON_REMOTE first."
