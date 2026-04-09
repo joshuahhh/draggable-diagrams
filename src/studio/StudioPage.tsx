@@ -1,5 +1,6 @@
 import qrcode from "qrcode-generator";
 import { ReactNode, useMemo } from "react";
+import { useParams } from "react-router-dom";
 import { useTitle } from "../useTitle";
 import { AnimateAlgebraSection } from "./AnimateAlgebraSection";
 import { DragSpecDesignerSection } from "./DragSpecDesignerSection";
@@ -20,6 +21,10 @@ export function Section({
   title: string;
   children?: ReactNode;
 }) {
+  const { filter } = useParams<{ filter?: string }>();
+  if (filter && !title.toLowerCase().includes(filter.toLowerCase())) {
+    return null;
+  }
   return (
     <section className="min-h-screen flex flex-col px-16 py-24">
       <h2 className="text-sm font-medium uppercase tracking-widest text-gray-400 mb-8">

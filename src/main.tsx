@@ -42,6 +42,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         {autoRoute("/demos/:id", SingleDemoPage)}
         {autoRoute("/natural-neighbor", NaturalNeighborTestPage)}
         {autoRoute("/studio", StudioPage)}
+        {autoRoute("/studio/:filter", StudioPage)}
       </Routes>
     </HashRouter>
   </React.StrictMode>,
