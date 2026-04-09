@@ -63,7 +63,7 @@ export function AnimateAlgebraSection() {
         height={140}
         zoom={3}
         filenamePrefix="animate-algebra-tree"
-        padding={15}
+        innerStyle={{ padding: 15 }}
         demoSettings={{ showDebugOverlay }}
         hackSettings={{ overlayHideDistances: true }}
       />

@@ -18,7 +18,7 @@ export function StudioDraggable<T extends object>({
   stateOverride,
   zoom,
   filenamePrefix,
-  padding,
+  innerStyle,
   hackSettings,
   demoSettings,
   cursorScale,
@@ -30,7 +30,7 @@ export function StudioDraggable<T extends object>({
   stateOverride?: Partial<T>;
   zoom: number;
   filenamePrefix: string;
-  padding?: number;
+  innerStyle?: React.CSSProperties;
   hackSettings?: StudioHackSettings;
   demoSettings?: Partial<DemoSettings>;
   cursorScale?: number;
@@ -53,7 +53,7 @@ export function StudioDraggable<T extends object>({
           filenamePrefix={filenamePrefix}
           belowLeftQr={<CopyStateButton stateRef={stateRef} />}
         >
-          <div style={{ padding: padding ?? 0 }}>
+          <div style={innerStyle}>
             <DemoDraggable
               draggable={draggable}
               initialState={initialState}

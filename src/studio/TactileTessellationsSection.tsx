@@ -36,7 +36,7 @@ export function TactileTessellationsSection() {
         height={450}
         zoom={2}
         filenamePrefix="tactile-tessellations"
-        padding={15}
+        innerStyle={{ padding: 15 }}
         demoSettings={{ showDebugOverlay }}
       />
       <div style={{ height: 200 }} />
@@ -47,7 +47,7 @@ export function TactileTessellationsSection() {
         height={450}
         zoom={2}
         filenamePrefix="tactile-tessellations"
-        padding={15}
+        innerStyle={{ padding: 15 }}
         demoSettings={{ showDebugOverlay }}
       />
     </Section>

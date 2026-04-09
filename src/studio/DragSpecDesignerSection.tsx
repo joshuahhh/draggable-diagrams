@@ -101,7 +101,7 @@ export function DragSpecDesignerSection() {
         height={CANVAS_H}
         zoom={2}
         filenamePrefix="drag-spec-designer"
-        padding={15}
+        innerStyle={{ padding: 15 }}
         demoSettings={{ showDebugOverlay }}
       />
     </Section>

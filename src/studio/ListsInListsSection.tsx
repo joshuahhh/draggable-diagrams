@@ -132,7 +132,7 @@ export function ListsInListsSection() {
         height={170}
         zoom={2}
         filenamePrefix="lists-in-lists"
-        padding={10}
+        innerStyle={{ padding: 10 }}
         demoSettings={{ showDebugOverlay, showDropZones }}
       />
       <div style={{ height: 200 }} />

@@ -43,7 +43,14 @@ export function SchedulerSection() {
   const [showVaryVisualizer, setShowVaryVisualizer] = useState(false);
   return (
     <Section title="Scheduler">
-      <div className="mb-6 text-sm text-gray-500 space-y-2">
+      <div
+        className="mb-6 text-sm text-gray-500 space-y-2"
+        style={{
+          position: "sticky",
+          top: 16,
+          zIndex: 50,
+        }}
+      >
         <p>Record with cursor off.</p>
         <label className="inline-flex items-center gap-1 cursor-pointer select-none">
           <input
@@ -71,9 +78,21 @@ export function SchedulerSection() {
         height={CANVAS_H}
         zoom={2}
         filenamePrefix="scheduler"
-        padding={15}
+        innerStyle={{ padding: 15 }}
         demoSettings={{ showDebugOverlay, showVaryVisualizer }}
       />
+      <div style={{ height: 200 }} />
+      <StudioDraggable
+        draggable={draggable}
+        initialState={myInitialState}
+        width={CANVAS_W}
+        height={CANVAS_H}
+        zoom={2}
+        filenamePrefix="scheduler"
+        innerStyle={{ padding: 15, paddingTop: 100 }}
+        demoSettings={{ showDebugOverlay, showVaryVisualizer }}
+      />
+      <div style={{ height: 200 }} />
     </Section>
   );
 }
