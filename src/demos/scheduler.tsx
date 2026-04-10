@@ -59,15 +59,26 @@ export const draggable: Draggable<State> = ({ state, d, draggedId }) => {
     <g transform={translate(10, 10)}>
       {/* Track lines */}
       {_.range(NUM_TRACKS).map((t) => (
-        <line
-          key={t}
-          x1={0}
-          y1={trackY(t)}
-          x2={END_TIME}
-          y2={trackY(t)}
-          stroke="#d1d5db"
-          strokeWidth={1.5}
-        />
+        <g>
+          <line
+            key={t}
+            x1={0}
+            y1={trackY(t)}
+            x2={END_TIME}
+            y2={trackY(t)}
+            stroke="#d1d5db"
+            strokeWidth={1.5}
+          />
+          <text
+            x={END_TIME}
+            y={trackY(t) + 9}
+            textAnchor="end"
+            fontSize={10}
+            fill="#d1d5db"
+          >
+            room {t}
+          </text>
+        </g>
       ))}
 
       {/* Meetings */}
