@@ -28,6 +28,7 @@ export type DragSpecTraceInfoByType = {
     currentParams: number[];
     exploredPositions?: Vec2[];
   };
+  "change-frame": Record<string, never>;
   "change-result": Record<string, never>;
   "change-gap": Record<string, never>;
   "with-snap-radius": {

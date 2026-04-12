@@ -220,6 +220,13 @@ function SpecNode<T extends object>({
         <SpecNode spec={spec.inner} path={childPath} />
       </Box>
     );
+  } else if (spec.type === "change-frame") {
+    const { childPath } = info(spec);
+    return (
+      <Box label="changeFrame" path={path}>
+        <SpecNode spec={spec.inner} path={childPath} />
+      </Box>
+    );
   } else if (spec.type === "change-result") {
     const { childPath } = info(spec);
     return (

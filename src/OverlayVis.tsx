@@ -234,6 +234,7 @@ export function OverlayVis<T extends object>({
     // Passthrough to inner:
     case "on-drop":
     case "during":
+    case "change-frame":
     case "change-result":
     case "change-gap":
     case "with-snap-radius":
