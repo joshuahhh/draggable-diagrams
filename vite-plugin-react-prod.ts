@@ -21,7 +21,10 @@ export function reactProd(): Plugin[] {
       name: "react-prod:config",
       config(_, { mode }): UserConfig | undefined {
         const env = loadEnv(mode, process.cwd());
-        enabled = env.VITE_REACT_PROD === "true" && !process.env.VITEST;
+        enabled =
+          env.VITE_REACT_PROD === "true" &&
+          !process.env.VITEST &&
+          mode === "development";
         if (!enabled) return;
 
         return {
