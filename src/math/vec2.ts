@@ -174,9 +174,17 @@ class Vec2Class {
     return Math.atan2(this.y, this.x);
   }
 
+  angleDeg(): number {
+    return radToDeg(this.angleRad());
+  }
+
   angleToRad(v: Vec2able): number {
     v = Vec2(v);
     return Math.atan2(v.y - this.y, v.x - this.x);
+  }
+
+  angleToDeg(v: Vec2able): number {
+    return radToDeg(this.angleToRad(v));
   }
 
   dist2(v: Vec2able): number {
@@ -222,7 +230,7 @@ class Vec2Class {
   }
 
   rotateDeg(angleDeg: number): Vec2 {
-    return this.rotateRad((angleDeg * Math.PI) / 180);
+    return this.rotateRad(degToRad(angleDeg));
   }
 
   round(): Vec2 {
@@ -238,4 +246,12 @@ class Vec2Class {
 
 export function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
+}
+
+export function degToRad(deg: number): number {
+  return (deg * Math.PI) / 180;
+}
+
+export function radToDeg(rad: number): number {
+  return (rad * 180) / Math.PI;
 }
