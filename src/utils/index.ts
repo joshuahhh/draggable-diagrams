@@ -12,12 +12,26 @@ export function clamp(a: number, b: number, c: number): number {
 export const memoGeneric = <C extends (...props: any) => ReactNode>(c: C) =>
   memo(c as any) as unknown as C;
 
+/**
+ * unordered pairs of distinct elements from the array
+ */
 export function uPairs<T>(l: T[]): [T, T][] {
   const result: [T, T][] = [];
   for (let i = 0; i < l.length; i++) {
     for (let j = i + 1; j < l.length; j++) {
       result.push([l[i], l[j]]);
     }
+  }
+  return result;
+}
+
+/**
+ * adjacent pairs of distinct elements from the array
+ */
+export function adjPairs<T>(l: T[]): [T, T][] {
+  const result: [T, T][] = [];
+  for (let i = 0; i < l.length - 1; i++) {
+    result.push([l[i], l[i + 1]]);
   }
   return result;
 }

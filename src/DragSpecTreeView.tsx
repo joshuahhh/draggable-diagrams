@@ -121,20 +121,18 @@ function SpecNode<T extends object>({
         <SpecNode spec={spec.inner} path={childPath} />
       </Box>
     );
-  } else if (spec.type === "vary") {
+  } else if (spec.type === "vary" || spec.type === "vary-func") {
     const { active, color, traceInfo } = info(spec);
-    const paramNames = spec.paramPaths.map((p) => p.join("."));
+    const label =
+      spec.type === "vary"
+        ? `vary [${spec.paramPaths.map((p) => p.join(".")).join(", ")}]`
+        : `varyFunc [${spec.initParams.length} params]`;
     const constraintSrc = spec.options.constraint
       ? truncate(spec.options.constraint.toString(), 60)
       : null;
     // TODO: pins?
     return (
-      <Box
-        label={`vary [${paramNames.join(", ")}]`}
-        active={active}
-        color={color}
-        path={path}
-      >
+      <Box label={label} active={active} color={color} path={path}>
         {constraintSrc && (
           <div
             style={{

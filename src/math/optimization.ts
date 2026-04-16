@@ -1,3 +1,5 @@
+import { adjPairs } from "../utils";
+import { Many, manyToArray } from "../utils/flexible-types";
 import { FindMinimum } from "./cobyla";
 import { Vec2 } from "./vec2";
 
@@ -152,12 +154,8 @@ export function equal(a: number, b: number): number[] {
 }
 
 /** Constraint helper: ensure numbers are in ascending order */
-export function inOrder(...nums: number[]): number[] {
-  const constraints: number[] = [];
-  for (let i = 0; i < nums.length - 1; i++) {
-    constraints.push(lessThan(nums[i], nums[i + 1]));
-  }
-  return constraints;
+export function inOrder(nums: Many<number>[]): number[] {
+  return adjPairs(manyToArray(nums)).map(([a, b]) => lessThan(a, b));
 }
 
 /** Constraint helper: combine multiple numeric constraints */

@@ -6,7 +6,7 @@ import {
   makeDraggableProps,
 } from "./draggable";
 import { Chaining, DragSpecData } from "./DragSpec";
-import { setTraceInfo } from "./DragSpecTraceInfo";
+import { getTraceInfo, setTraceInfo } from "./DragSpecTraceInfo";
 import { ErrorWithJSX } from "./ErrorBoundary";
 import {
   CoincidentPointsError,
@@ -123,6 +123,8 @@ export function dragSpecToBehavior<T extends object>(
       return duringBehavior(spec, ctx);
     case "vary":
       return varyBehavior(spec, ctx);
+    case "vary-func":
+      return varyFuncBehavior(spec, ctx);
     case "change-frame":
       return changeFrameBehavior(spec, ctx);
     case "change-result":
@@ -421,9 +423,32 @@ function varyBehavior<T extends object>(
     return s;
   };
 
+  const initParams = spec.paramPaths.map((path) => getAtPath(spec.state, path));
+
+  const myVaryFuncSpec: DragSpecData<T> & { type: "vary-func" } = {
+    type: "vary-func",
+    initParams,
+    stateFromParams,
+    options: spec.options,
+  };
+  const myVaryFuncBehavior = varyFuncBehavior(myVaryFuncSpec, ctx);
+
+  return (frame) => {
+    const result = myVaryFuncBehavior(frame);
+    const tracedSpec = getTraceInfo(
+      result.tracedSpec as DragSpecData<T> & { type: "vary-func" },
+    )!;
+    return { ...result, tracedSpec: setTraceInfo(spec, tracedSpec) };
+  };
+}
+
+function varyFuncBehavior<T extends object>(
+  spec: DragSpecData<T> & { type: "vary-func" },
+  ctx: DragInitContext<T>,
+): DragBehavior<T> {
   // Compute the element position for a given set of params
   const getElementPos = (params: number[]): Vec2 => {
-    const candidateState = stateFromParams(params);
+    const candidateState = spec.stateFromParams(params);
     const content = renderDraggableInertUnlayered(
       ctx.draggable,
       candidateState,
@@ -437,9 +462,11 @@ function varyBehavior<T extends object>(
 
   const { constraint, pin } = spec.options;
 
+  const initialState = spec.stateFromParams(spec.initParams);
+
   // Bake pins into the constraint function: evaluate pin at the
   // initial state to capture targets, then add equal() constraints.
-  const pinTargets = pin ? manyReaderToArray(pin, spec.state) : undefined;
+  const pinTargets = pin ? manyReaderToArray(pin, initialState) : undefined;
   const constraintWithPin: ManyReader<number, [T]> = pin
     ? [
         constraint,
@@ -455,17 +482,14 @@ function varyBehavior<T extends object>(
 
   // Pre-compute constraint count (flatten a dummy call to count entries)
   const numConstraints = constraintWithPin
-    ? manyReaderToArray(constraintWithPin, spec.state).length
+    ? manyReaderToArray(constraintWithPin, initialState).length
     : 0;
 
-  const initialParams = spec.paramPaths.map((path) =>
-    getAtPath(spec.state, path),
-  );
-  const minimizer = new DistanceMinimizer(initialParams, numConstraints);
+  const minimizer = new DistanceMinimizer(spec.initParams, numConstraints);
 
   const constraintsFn = constraintWithPin
     ? (params: number[]) =>
-        manyReaderToArray(constraintWithPin, stateFromParams(params))
+        manyReaderToArray(constraintWithPin, spec.stateFromParams(params))
     : undefined;
 
   const VARY_VIS_DURATION = 0.05; // seconds per explored value
@@ -496,14 +520,14 @@ function varyBehavior<T extends object>(
       // activePathSuffix = `/${varyVisCounter}`;
     }
 
-    const newState = stateFromParams(resultParams);
+    const newState = spec.stateFromParams(resultParams);
     let preview = renderStateReadOnly(ctx, newState);
     const achievedPos = getElementPositionOrThrow(ctx, preview);
     const gap = achievedPos.dist(frame.pointer);
 
     if (ctx.debug.varyVisualizer) {
       const ghosted = minimizer.exploredValues.map((params) =>
-        renderStateReadOnly(ctx, stateFromParams(params)),
+        renderStateReadOnly(ctx, spec.stateFromParams(params)),
       );
       preview = layeredMerge(
         preview,

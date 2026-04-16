@@ -175,7 +175,8 @@ export function OverlayVis<T extends object>({
       );
     }
 
-    case "vary": {
+    case "vary":
+    case "vary-func": {
       const info = getTraceInfo(spec);
       if (!info) return null;
       const pos = info.renderedStates[0].position;

@@ -46,6 +46,12 @@ export type DragSpecData<T extends object> = {
       options: VaryOptions<T>;
     }
   | {
+      type: "vary-func";
+      initParams: number[];
+      stateFromParams: (params: number[]) => T;
+      options: VaryOptions<T>;
+    }
+  | {
       type: "change-frame";
       inner: DragSpecData<T>;
       f: Reader<Partial<DragFrame>, DragFrame>;
@@ -471,6 +477,25 @@ export class DragSpecBuilder<T extends object> {
         T,
         number
       >[],
+      options: (options ?? {}) as VaryOptions<T>,
+    });
+  }
+
+  /**
+   * Like `vary`, but instead of extracting parameters from paths in
+   * the state, you provide initial parameter values and a function
+   * that builds a state from parameters. Useful when multiple
+   * parameters in state need to change in concert.
+   */
+  varyFunc(
+    initParams: number[],
+    stateFromParams: (params: number[]) => T,
+    options?: VaryOptions<T>,
+  ): DragSpec<T> {
+    return attachMethods({
+      type: "vary-func",
+      initParams,
+      stateFromParams,
       options: (options ?? {}) as VaryOptions<T>,
     });
   }
