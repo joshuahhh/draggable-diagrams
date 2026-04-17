@@ -3,7 +3,7 @@ import { rgb } from "d3-color";
 import * as d3Interpolate from "d3-interpolate";
 import { interpolatePath } from "d3-interpolate-path";
 import React, { cloneElement } from "react";
-import { shouldRecurseIntoChildren, Svgx, SvgxProps } from ".";
+import { isValidSvgx, shouldRecurseIntoChildren, Svgx, SvgxProps } from ".";
 import { ErrorWithJSX } from "../ErrorBoundary";
 import { lerp } from "../math/vec2";
 import { objectKeys } from "../utils/js";
@@ -192,6 +192,15 @@ function lerpValue(key: string, valA: any, valB: any, t: number): any {
   }
 }
 
+/** Returns a clone of `element` with its opacity scaled by `factor`, or
+ * `null` if the resulting opacity is below a small threshold. Used when an
+ * element appears on only one side of a lerp. */
+function fadeElement(element: Svgx, factor: number): Svgx | null {
+  const opacity = +(element.props.opacity ?? 1) * factor;
+  if (opacity <= 1e-3) return null;
+  return cloneElement(element, { opacity });
+}
+
 /**
  * Lerps between two SVG JSX nodes.
  * Interpolates transforms and recursively lerps children.
@@ -284,44 +293,54 @@ export function lerpSvgx(a: Svgx, b: Svgx, t: number): Svgx {
     }
   }
 
-  // Lerp children recursively (skip foreignObject children)
-  const childrenA = React.Children.toArray(propsA.children) as Svgx[];
-  const childrenB = React.Children.toArray(propsB.children) as Svgx[];
+  // Lerp children recursively (skip foreignObject children).
+  // `React.Children.toArray` returns any non-boolean, non-nullish `ReactNode`
+  // — so besides elements, text content like strings and numbers can appear
+  // (e.g. inside `<text>`/`<tspan>`).
+  type ChildNode = Exclude<React.ReactNode, boolean | null | undefined>;
+  const childrenA: ChildNode[] = React.Children.toArray(propsA.children);
+  const childrenB: ChildNode[] = React.Children.toArray(propsB.children);
 
-  let lerpedChildren: Svgx[] = [];
+  let lerpedChildren: ChildNode[] = [];
 
   if (!shouldRecurseIntoChildren(a)) {
     // For foreignObject, just use children from A
     lerpedChildren = childrenA;
   } else {
-    // Pair children by index. Children present in only one side fade in/out
-    // by opacity, mirroring how `lerpLayered` handles layers that appear on
-    // only one side.
-    const maxLen = Math.max(childrenA.length, childrenB.length);
-    for (let i = 0; i < maxLen; i++) {
-      const childA = childrenA[i];
-      const childB = childrenB[i];
+    // Pair up children into slots. A slot is identified by the same step
+    // that `assignPaths` would use: `dragologyKey` when present, otherwise
+    // the position among unkeyed siblings (as a string). Iteration order
+    // follows A first, then B-only slots at the end — preserving A's tree
+    // order when possible.
+    type Slot = { a?: ChildNode; b?: ChildNode };
+    const slots = new Map<string, Slot>();
+    const addChildren = (children: ChildNode[], side: "a" | "b") => {
+      let unkeyedIdx = 0;
+      for (const child of children) {
+        const dKey = isValidSvgx(child) ? child.props.dragologyKey : undefined;
+        const slotKey = dKey !== undefined ? dKey : String(unkeyedIdx++);
+        const slot = slots.get(slotKey) ?? {};
+        slot[side] = child;
+        slots.set(slotKey, slot);
+      }
+    };
+    addChildren(childrenA, "a");
+    addChildren(childrenB, "b");
+
+    for (const { a: childA, b: childB } of slots.values()) {
       if (childA !== undefined && childB !== undefined) {
-        if (React.isValidElement(childA) && React.isValidElement(childB)) {
+        if (isValidSvgx(childA) && isValidSvgx(childB)) {
           lerpedChildren.push(lerpSvgx(childA, childB, t));
         } else {
           // Non-element (e.g. text node) — just use A
           lerpedChildren.push(childA);
         }
-      } else if (childA !== undefined) {
-        if (React.isValidElement(childA)) {
-          const opacity = +(childA.props.opacity ?? 1) * (1 - t);
-          if (opacity > 1e-3) {
-            lerpedChildren.push(cloneElement(childA, { opacity }));
-          }
-        }
-      } else if (childB !== undefined) {
-        if (React.isValidElement(childB)) {
-          const opacity = +(childB.props.opacity ?? 1) * t;
-          if (opacity > 1e-3) {
-            lerpedChildren.push(cloneElement(childB, { opacity }));
-          }
-        }
+      } else if (childA !== undefined && isValidSvgx(childA)) {
+        const faded = fadeElement(childA, 1 - t);
+        if (faded) lerpedChildren.push(faded);
+      } else if (childB !== undefined && isValidSvgx(childB)) {
+        const faded = fadeElement(childB, t);
+        if (faded) lerpedChildren.push(faded);
       }
     }
   }
@@ -554,19 +573,13 @@ export function lerpLayered(
         stackingPath: aVal.stackingPath,
       });
     } else if (aVal) {
-      const opacity = +(aVal.element.props.opacity ?? 1) * (1 - t);
-      if (opacity > 1e-3)
-        result.set(key, {
-          element: cloneElement(aVal.element, { opacity }),
-          stackingPath: aVal.stackingPath,
-        });
+      const faded = fadeElement(aVal.element, 1 - t);
+      if (faded)
+        result.set(key, { element: faded, stackingPath: aVal.stackingPath });
     } else if (bVal) {
-      const opacity = +(bVal.element.props.opacity ?? 1) * t;
-      if (opacity > 1e-3)
-        result.set(key, {
-          element: cloneElement(bVal.element, { opacity }),
-          stackingPath: bVal.stackingPath,
-        });
+      const faded = fadeElement(bVal.element, t);
+      if (faded)
+        result.set(key, { element: faded, stackingPath: bVal.stackingPath });
     }
   }
 

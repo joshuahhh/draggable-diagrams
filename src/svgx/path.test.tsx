@@ -182,6 +182,178 @@ describe("assignPaths", () => {
       'Element id "a/b/c" contains a slash, which is not allowed',
     );
   });
+
+  it("uses dragologyKey as the path step when present", () => {
+    const tree = (
+      <g>
+        <rect dragologyKey="alpha" />
+        <circle dragologyKey="beta" />
+      </g>
+    );
+
+    expect(assignPaths(tree)).toMatchInlineSnapshot(`
+      <g
+        data-path="/"
+      >
+        <rect
+          data-path="/alpha/"
+          dragologyKey="alpha"
+        />
+        <circle
+          data-path="/beta/"
+          dragologyKey="beta"
+        />
+      </g>
+    `);
+  });
+
+  it("unkeyed siblings are numbered by position among unkeyed only", () => {
+    const tree = (
+      <g>
+        <rect />
+        <circle dragologyKey="middle" />
+        <line />
+      </g>
+    );
+
+    // <line /> is the *second* unkeyed child, so it's "/1/" not "/2/".
+    // This keeps path numbering consistent with how `lerpSvgx` pairs unkeyed
+    // children by position among unkeyed.
+    expect(assignPaths(tree)).toMatchInlineSnapshot(`
+      <g
+        data-path="/"
+      >
+        <rect
+          data-path="/0/"
+        />
+        <circle
+          data-path="/middle/"
+          dragologyKey="middle"
+        />
+        <line
+          data-path="/1/"
+        />
+      </g>
+    `);
+  });
+
+  it("throws when sibling dragologyKey collides with an unkeyed sibling's index", () => {
+    const tree = (
+      <g>
+        <rect />
+        <circle dragologyKey="1" />
+        <line />
+      </g>
+    );
+
+    // <rect> takes unkeyed step "0"; <circle dragologyKey="1"> takes "1";
+    // then <line /> as the second unkeyed child wants step "1" — collision.
+    expect(() => assignPaths(tree)).toThrow(
+      'Duplicate path step "1" among siblings',
+    );
+  });
+
+  it("does NOT hoist dragologyKey — key is appended to the parent path", () => {
+    const tree = (
+      <g id="container">
+        <rect dragologyKey="first" />
+      </g>
+    );
+
+    expect(assignPaths(tree)).toMatchInlineSnapshot(`
+      <g
+        data-path="container/"
+        id="container"
+      >
+        <rect
+          data-path="container/first/"
+          dragologyKey="first"
+        />
+      </g>
+    `);
+  });
+
+  it("throws when dragologyKey contains a slash", () => {
+    const tree = (
+      <g>
+        <rect dragologyKey="a/b" />
+      </g>
+    );
+
+    expect(() => assignPaths(tree)).toThrow(
+      'Element dragologyKey "a/b" contains a slash, which is not allowed',
+    );
+  });
+
+  it("throws when sibling dragologyKeys collide", () => {
+    const tree = (
+      <g>
+        <rect dragologyKey="dup" />
+        <circle dragologyKey="dup" />
+      </g>
+    );
+
+    expect(() => assignPaths(tree)).toThrow(
+      'Duplicate path step "dup" among siblings',
+    );
+  });
+
+  it("numbers unkeyed children independently of keyed ones, interleaved", () => {
+    const tree = (
+      <g>
+        <rect dragologyKey="A" />
+        <circle />
+        <line dragologyKey="B" />
+        <path />
+        <ellipse dragologyKey="C" />
+        <polygon />
+      </g>
+    );
+
+    // Unkeyed get /0/, /1/, /2/ regardless of where keyed siblings sit.
+    expect(assignPaths(tree)).toMatchInlineSnapshot(`
+      <g
+        data-path="/"
+      >
+        <rect
+          data-path="/A/"
+          dragologyKey="A"
+        />
+        <circle
+          data-path="/0/"
+        />
+        <line
+          data-path="/B/"
+          dragologyKey="B"
+        />
+        <path
+          data-path="/1/"
+        />
+        <ellipse
+          data-path="/C/"
+          dragologyKey="C"
+        />
+        <polygon
+          data-path="/2/"
+        />
+      </g>
+    `);
+  });
+
+  it('throws when dragologyKey "0" collides with the first unkeyed sibling', () => {
+    // Ordering should not matter: even with the keyed child coming first,
+    // the unkeyed sibling would claim step "0" and collide.
+    const tree = (
+      <g>
+        <rect dragologyKey="0" />
+        <circle />
+      </g>
+    );
+
+    expect(() => assignPaths(tree)).toThrow(
+      'Duplicate path step "0" among siblings',
+    );
+  });
 });
 
 describe("findByPath", () => {

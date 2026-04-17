@@ -8,6 +8,15 @@ export type SvgxProps = React.SVGProps<SVGElement>;
 export type Svgx = React.ReactElement<SvgxProps>;
 
 /**
+ * This doesn't actually check if it's SVG; it's just
+ * React.isValidElement for situations where you know you're in a
+ * SVGX tree but don't know if this is an element.
+ */
+export function isValidSvgx(element: unknown): element is Svgx {
+  return React.isValidElement(element);
+}
+
+/**
  * Determines if we should recurse into an element's children when
  * walking the tree. Returns false for stuff that shouldn't get
  * processed or layered.

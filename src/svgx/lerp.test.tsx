@@ -380,4 +380,244 @@ describe("lerpSvgNode", () => {
     expect(result.props.d).toBeTruthy();
     expect(typeof result.props.d).toBe("string");
   });
+
+  it("fades unmatched trailing children (positional)", () => {
+    const a = (
+      <g>
+        <rect x={0} />
+      </g>
+    );
+    const b = (
+      <g>
+        <rect x={10} />
+        <circle cx={5} />
+      </g>
+    );
+
+    const result = lerpSvgx(a, b, 0.5);
+
+    expect(result).toMatchInlineSnapshot(`
+      <g>
+        <rect
+          x={5}
+        />
+        <circle
+          cx={5}
+          opacity={0.5}
+        />
+      </g>
+    `);
+  });
+
+  it("pairs keyed children by dragologyKey, not position", () => {
+    const a = (
+      <g>
+        <rect dragologyKey="foo" x={0} />
+        <circle dragologyKey="bar" cx={0} />
+      </g>
+    );
+    // Reverse order in B — keys still pair correctly
+    const b = (
+      <g>
+        <circle dragologyKey="bar" cx={100} />
+        <rect dragologyKey="foo" x={100} />
+      </g>
+    );
+
+    const result = lerpSvgx(a, b, 0.5);
+
+    expect(result).toMatchInlineSnapshot(`
+      <g>
+        <rect
+          dragologyKey="foo"
+          x={50}
+        />
+        <circle
+          cx={50}
+          dragologyKey="bar"
+        />
+      </g>
+    `);
+  });
+
+  it("fades out a keyed child missing from B", () => {
+    const a = (
+      <g>
+        <rect dragologyKey="a" x={0} />
+        <rect dragologyKey="b" x={10} />
+      </g>
+    );
+    const b = (
+      <g>
+        <rect dragologyKey="a" x={100} />
+      </g>
+    );
+
+    const result = lerpSvgx(a, b, 0.5);
+
+    expect(result).toMatchInlineSnapshot(`
+      <g>
+        <rect
+          dragologyKey="a"
+          x={50}
+        />
+        <rect
+          dragologyKey="b"
+          opacity={0.5}
+          x={10}
+        />
+      </g>
+    `);
+  });
+
+  it("fades in a keyed child only present in B", () => {
+    const a = (
+      <g>
+        <rect dragologyKey="a" x={0} />
+      </g>
+    );
+    const b = (
+      <g>
+        <rect dragologyKey="a" x={100} />
+        <rect dragologyKey="b" x={200} />
+      </g>
+    );
+
+    const result = lerpSvgx(a, b, 0.5);
+
+    expect(result).toMatchInlineSnapshot(`
+      <g>
+        <rect
+          dragologyKey="a"
+          x={50}
+        />
+        <rect
+          dragologyKey="b"
+          opacity={0.5}
+          x={200}
+        />
+      </g>
+    `);
+  });
+
+  it("multiplies into existing opacity when fading", () => {
+    const a = (
+      <g>
+        <rect dragologyKey="a" opacity={0.5} x={0} />
+      </g>
+    );
+    const b = <g />;
+
+    const result = lerpSvgx(a, b, 0.5);
+
+    expect(result).toMatchInlineSnapshot(`
+      <g>
+        <rect
+          dragologyKey="a"
+          opacity={0.25}
+          x={0}
+        />
+      </g>
+    `);
+  });
+
+  it("handles mixed keyed and unkeyed siblings", () => {
+    const a = (
+      <g>
+        <rect x={0} />
+        <circle dragologyKey="dot" cx={0} />
+      </g>
+    );
+    const b = (
+      <g>
+        <circle dragologyKey="dot" cx={100} />
+        <rect x={100} />
+      </g>
+    );
+
+    // Unkeyed <rect>s pair positionally (one on each side); keyed circles pair
+    // by key. Output preserves A's child order (rect, then circle).
+    const result = lerpSvgx(a, b, 0.5);
+
+    expect(result).toMatchInlineSnapshot(`
+      <g>
+        <rect
+          x={50}
+        />
+        <circle
+          cx={50}
+          dragologyKey="dot"
+        />
+      </g>
+    `);
+  });
+
+  it("preserves a matching string child inside <text>", () => {
+    const a = <text x={0}>hello</text>;
+    const b = <text x={100}>hello</text>;
+
+    const result = lerpSvgx(a, b, 0.5);
+
+    expect(result).toMatchInlineSnapshot(`
+      <text
+        x={50}
+      >
+        hello
+      </text>
+    `);
+  });
+
+  it("keeps A's string content when the two strings differ (can't lerp)", () => {
+    const a = <text x={0}>foo</text>;
+    const b = <text x={100}>bar</text>;
+
+    const result = lerpSvgx(a, b, 0.5);
+
+    expect(result).toMatchInlineSnapshot(`
+      <text
+        x={50}
+      >
+        foo
+      </text>
+    `);
+  });
+
+  it("handles string siblings alongside element siblings", () => {
+    const a = (
+      <text x={0}>
+        hello <tspan fill="red">world</tspan>
+      </text>
+    );
+    const b = (
+      <text x={100}>
+        hello <tspan fill="blue">world</tspan>
+      </text>
+    );
+
+    const result = lerpSvgx(a, b, 0.5);
+
+    expect(result).toMatchInlineSnapshot(`
+      <text
+        x={50}
+      >
+        hello
+        <tspan
+          fill="rgb(193, 0, 136)"
+        >
+          world
+        </tspan>
+      </text>
+    `);
+  });
+
+  it("drops a string child that appears on only one side", () => {
+    // String children can't be opacity-faded, so they're dropped when
+    // unmatched (same behavior as pushFaded had).
+    const a = <text>solo</text>;
+    const b = <text />;
+
+    const result = lerpSvgx(a, b, 0.5);
+
+    expect(result).toMatchInlineSnapshot(`<text />`);
+  });
 });

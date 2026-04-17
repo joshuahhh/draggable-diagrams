@@ -34,10 +34,30 @@ function assignPathsRecursive(element: Svgx, currentPath: string): Svgx {
     `Element with path "${elementPath}" has a key prop (${element.key}), which is not allowed.`,
   );
 
+  const usedSteps = new Set<string>();
+  let unkeyedIndex = 0;
   return updateElement(
     element,
-    (child, index) =>
-      assignPathsRecursive(child, elementPath + String(index) + "/"),
+    (child) => {
+      let step: string;
+      const { dragologyKey } = child.props;
+      if (dragologyKey !== undefined) {
+        assert(
+          !dragologyKey.includes("/"),
+          `Element dragologyKey "${dragologyKey}" contains a slash, which is not allowed.`,
+        );
+        step = dragologyKey;
+      } else {
+        step = String(unkeyedIndex);
+        unkeyedIndex++;
+      }
+      assert(
+        !usedSteps.has(step),
+        `Duplicate path step "${step}" among siblings of path "${elementPath}" (can happen when a dragologyKey collides with an unkeyed sibling's index).`,
+      );
+      usedSteps.add(step);
+      return assignPathsRecursive(child, elementPath + step + "/");
+    },
     {
       [pathPropName as any]: elementPath,
     },
