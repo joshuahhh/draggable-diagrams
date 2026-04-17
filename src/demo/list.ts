@@ -84,6 +84,8 @@ export const demoList = [
   "study-timeline-substate",
   "study-timeline-embed",
   "error-study-reorderable-list",
+  "linked-sliders",
+  "lerping-keys",
   "between-with-vary",
   "stickiness",
   "controlled",

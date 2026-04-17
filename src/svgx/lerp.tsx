@@ -1,4 +1,4 @@
-import { prettyLog, PrettyPrint } from "@joshuahhh/pretty-print";
+import { PrettyPrint } from "@joshuahhh/pretty-print";
 import { rgb } from "d3-color";
 import * as d3Interpolate from "d3-interpolate";
 import { interpolatePath } from "d3-interpolate-path";
@@ -293,27 +293,37 @@ export function lerpSvgx(a: Svgx, b: Svgx, t: number): Svgx {
   if (!shouldRecurseIntoChildren(a)) {
     // For foreignObject, just use children from A
     lerpedChildren = childrenA;
-  } else if (childrenA.length === childrenB.length) {
-    lerpedChildren = childrenA.map((childA, i) => {
-      const childB = childrenB[i];
-      if (React.isValidElement(childA) && React.isValidElement(childB)) {
-        return lerpSvgx(childA, childB, t);
-      }
-      // For text nodes or other non-element children, just use A
-      return childA;
-    });
   } else {
-    // Children counts differ
-    prettyLog(childrenA, { label: "Children A" });
-    prettyLog(childrenB, { label: "Children B" });
-    throw new ErrorWithJSX(
-      `Cannot lerp children: different child counts (${childrenA.length} vs ${childrenB.length})`,
-      <div>
-        <PrettyPrint value={a} />
-        <div style={{ marginTop: 16, marginBottom: 16 }}>vs</div>
-        <PrettyPrint value={b} />
-      </div>,
-    );
+    // Pair children by index. Children present in only one side fade in/out
+    // by opacity, mirroring how `lerpLayered` handles layers that appear on
+    // only one side.
+    const maxLen = Math.max(childrenA.length, childrenB.length);
+    for (let i = 0; i < maxLen; i++) {
+      const childA = childrenA[i];
+      const childB = childrenB[i];
+      if (childA !== undefined && childB !== undefined) {
+        if (React.isValidElement(childA) && React.isValidElement(childB)) {
+          lerpedChildren.push(lerpSvgx(childA, childB, t));
+        } else {
+          // Non-element (e.g. text node) — just use A
+          lerpedChildren.push(childA);
+        }
+      } else if (childA !== undefined) {
+        if (React.isValidElement(childA)) {
+          const opacity = +(childA.props.opacity ?? 1) * (1 - t);
+          if (opacity > 1e-3) {
+            lerpedChildren.push(cloneElement(childA, { opacity }));
+          }
+        }
+      } else if (childB !== undefined) {
+        if (React.isValidElement(childB)) {
+          const opacity = +(childB.props.opacity ?? 1) * t;
+          if (opacity > 1e-3) {
+            lerpedChildren.push(cloneElement(childB, { opacity }));
+          }
+        }
+      }
+    }
   }
 
   return React.cloneElement(a, {
