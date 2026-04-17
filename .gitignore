@@ -23,7 +23,6 @@ dist-ssr
 *.sw?
 
 .playwright-mcp
-.prusik
 
 .env
 
