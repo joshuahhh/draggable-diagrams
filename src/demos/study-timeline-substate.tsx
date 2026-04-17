@@ -51,7 +51,7 @@ const draggable: Draggable<State> = ({ state, d, draggedId }) => (
                 .closest(
                   _.range(NUM_TRACKS).map((t) =>
                     d.vary({ ...block, track: t }, param("pos"), {
-                      constraint: (s) => inOrder(0, s.pos, TRACK_W - BLOCK_W),
+                      constraint: (s) => inOrder([0, s.pos, TRACK_W - BLOCK_W]),
                     }),
                   ),
                 )

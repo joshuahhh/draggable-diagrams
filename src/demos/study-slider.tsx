@@ -30,7 +30,7 @@ export const draggable: Draggable<State> = ({ state, d }) => (
       filter="url(#shadow)"
       dragologyOnDrag={() =>
         d.vary(state, param("value"), {
-          constraint: (s) => inOrder(0, s.value, W),
+          constraint: (s) => inOrder([0, s.value, W]),
         })
       }
     />

@@ -56,7 +56,7 @@ function makeDraggable(levels: number, tiltEnabled: boolean): Draggable<State> {
                 state,
                 [param("squareness"), tiltEnabled && param("tilt")],
                 {
-                  constraint: (s) => inOrder(-0.8, s.squareness, 0.8),
+                  constraint: (s) => inOrder([-0.8, s.squareness, 0.8]),
                 },
               )
             }

@@ -722,7 +722,7 @@ export const draggable: Draggable<State> = ({ state, d, draggedId }) => {
             d.vary(state, param("nodes", parentId, "expr", "radius"), {
               constraint: (s: State) => {
                 const expr = s.nodes[parentId].expr as WithSnapRadiusExpr;
-                return inOrder(0, expr.radius, 30);
+                return inOrder([0, expr.radius, 30]);
               },
             })
           }

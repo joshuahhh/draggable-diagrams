@@ -199,8 +199,8 @@ function makeDraggable(
                     constraint: (s) => {
                       const box = s.boxes[key];
                       return [
-                        inOrder(-G + box.size, box.x, G - box.size),
-                        inOrder(-G + box.size, box.z, G - box.size),
+                        inOrder([-G + box.size, box.x, G - box.size]),
+                        inOrder([-G + box.size, box.z, G - box.size]),
                       ];
                     },
                   },

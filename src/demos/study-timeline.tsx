@@ -59,7 +59,7 @@ export const draggable: Draggable<State> = ({ state, d, draggedId }) => (
                     param("blocks", i, "pos"),
                     {
                       constraint: (s) =>
-                        inOrder(0, s.blocks[i].pos, TRACK_W - BLOCK_W),
+                        inOrder([0, s.blocks[i].pos, TRACK_W - BLOCK_W]),
                     },
                   ),
                 ),

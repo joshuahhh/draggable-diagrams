@@ -139,7 +139,7 @@ import { param, inOrder } from "dragology";
 // Slider: vary a single value with constraints
 dragologyOnDrag={() =>
   d.vary(state, param("value"), {
-    constraint: (s) => inOrder(0, s.value, 240),
+    constraint: (s) => inOrder([0, s.value, 240]),
   })
 }
 
@@ -154,7 +154,7 @@ dragologyOnDrag={() => d.vary(state, param("angle"))}
 
 The `param(...)` helper specifies a path into the state object. `param("nodes", key, "x")` means `state.nodes[key].x`.
 
-**Constraints** limit the optimizer. `inOrder(a, b, c)` ensures `a ≤ b ≤ c`. You can also use `lessThan`, `moreThan`, and combine with `and(...)`.
+**Constraints** limit the optimizer. `inOrder([a, b, c])` ensures `a ≤ b ≤ c`. You can also use `lessThan`, `moreThan`, and combine with `and(...)`.
 
 ## Composing Specs
 
@@ -170,7 +170,7 @@ dragologyOnDrag={() =>
       d.vary(
         produce(state, (draft) => { draft.blocks[i].track = track }),
         param("blocks", i, "pos"),
-        { constraint: (s) => inOrder(0, s.blocks[i].pos, TRACK_W - BLOCK_W) },
+        { constraint: (s) => inOrder([0, s.blocks[i].pos, TRACK_W - BLOCK_W]) },
       )
     )
   ).withBranchTransition(100) // animate when switching tracks

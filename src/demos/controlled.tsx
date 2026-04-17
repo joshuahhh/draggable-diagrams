@@ -64,7 +64,7 @@ const sliderDraggable: Draggable<SliderState> = ({ state, d }) => (
       r={8}
       dragologyOnDrag={() =>
         d.vary(state, param("t"), {
-          constraint: (s) => inOrder(0, s.t, 1),
+          constraint: (s) => inOrder([0, s.t, 1]),
         })
       }
     />

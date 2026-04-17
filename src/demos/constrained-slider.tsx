@@ -87,7 +87,7 @@ const draggable: Draggable<State> = ({ state, d }) => {
         fill="black"
         dragologyOnDrag={() =>
           d.vary(state, param("value"), {
-            constraint: (s) => inOrder(20, s.value, 80),
+            constraint: (s) => inOrder([20, s.value, 80]),
           })
         }
       />
