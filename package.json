@@ -5,7 +5,8 @@
   "main": "dist-lib/index.js",
   "types": "dist-lib/index.d.ts",
   "files": [
-    "dist-lib"
+    "dist-lib",
+    "AGENTS.md"
   ],
   "scripts": {
     "dev": "vite",
