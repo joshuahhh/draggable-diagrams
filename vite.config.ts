@@ -2,16 +2,20 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { execSync } from "node:child_process";
-import { readFileSync } from "node:fs";
-import gitignore from "parse-gitignore";
+
 import { defineConfig } from "vite";
 import { qrcode } from "vite-plugin-qrcode";
 import { reactProd } from "./vite-plugin-react-prod";
 
 const commitHash = execSync("git rev-parse --short HEAD").toString().trim();
 
-const { patterns } = gitignore.parse(readFileSync(".gitignore"));
-const gitignoreExclude = patterns.map((p: string) => `**/${p}/**`);
+const gitIgnored = execSync(
+  "git ls-files --others --ignored --exclude-standard --directory",
+)
+  .toString()
+  .trim()
+  .split("\n")
+  .map((p) => (p.endsWith("/") ? `${p}**` : p));
 
 export default defineConfig({
   base: "./",
@@ -20,7 +24,7 @@ export default defineConfig({
   },
   plugins: [react(), reactProd(), tailwindcss(), qrcode()],
   test: {
-    exclude: gitignoreExclude,
+    exclude: gitIgnored,
     typecheck: {
       enabled: true,
       tsconfig: "./tsconfig.app.json",

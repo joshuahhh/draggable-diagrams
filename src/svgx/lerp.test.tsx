@@ -585,12 +585,12 @@ describe("lerpSvgNode", () => {
   it("handles string siblings alongside element siblings", () => {
     const a = (
       <text x={0}>
-        hello <tspan fill="red">world</tspan>
+        hello<tspan fill="red">world</tspan>
       </text>
     );
     const b = (
       <text x={100}>
-        hello <tspan fill="blue">world</tspan>
+        hello<tspan fill="blue">world</tspan>
       </text>
     );
 
